@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卡路里計算平台</title>
+    <style>
+        /* CSS 美化區域 */
+        :root {
+            --primary-color: #2ecc71; /* 健康綠 */
+            --secondary-color: #27ae60;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Microsoft JhengHei, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            display: grid;
+            gap: 20px;
+        }
+
+        h1, h2 { text-align: center; color: var(--secondary-color); margin-bottom: 10px;}
+        
+        /* 卡片通用樣式 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        /* 表單樣式 */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box; 
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        button:hover { background-color: var(--secondary-color); }
+
+        /* 結果儀表板網格 */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            text-align: center;
+        }
+
+        .stat-box {
+            background: #e8f8f5;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .stat-value { font-size: 24px; font-weight: bold; color: var(--secondary-color); }
+        .stat-label { font-size: 14px; color: #7f8c8d; }
+
+        /* 食物清單 */
+        #food-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 15px;
+        }
+        #food-list li {
+            background: #f9f9f9;
+            border-bottom: 1px solid #eee;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .total-cal {
+            text-align: right;
+            font-size: 20px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        
+        .advice-box {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+            color: #856404;
+            border-radius: 5px;
+            display: none; 
+        }
+
+        /* 食物輸入區塊佈局優化 */
+        .food-input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 分為兩個欄位 */
+            gap: 10px;
+        }
+        .food-manual-input {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .search-button {
+            background-color: #3498db;
+            color: white;
+            width: auto;
+            padding: 5px 10px;
+            font-size: 14px;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🥗 健康體態控制台</h1>
+
+    <div class="card">
+        <h2>步驟一：設定個人檔案</h2>
+        <div class="form-group">
+            <label>性別</label>
+            <select id="gender">
+                <option value="male">男</option>
+                <option value="female">女</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>年齡 (歲)</label>
+            <input type="number" id="age" placeholder="例如: 25">
+        </div>
+        <div class="form-group">
+            <label>身高 (cm)</label>
+            <input type="number" id="height" placeholder="例如: 175">
+        </div>
+        <div class="form-group">
+            <label>體重 (kg)</label>
+            <input type="number" id="weight" placeholder="例如: 70">
+        </div>
+        <div class="form-group">
+            <label>日常活動量</label>
+            <select id="activity">
+                <option value="1.2">久坐 (幾乎不運動)</option>
+                <option value="1.375">輕度活動 (每週運動 1-3 天)</option>
+                <option value="1.55">中度活動 (每週運動 3-5 天)</option>
+                <option value="1.725">高度活動 (每週運動 6-7 天)</option>
+            </select>
+        </div>
+        <button onclick="calculateProfile()">計算我的健康數據</button>
+    </div>
+
+    <div class="card" id="result-section" style="display:none;">
+        <h2>您的每日目標</h2>
+        <div class="dashboard-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="tdee-val">0</div>
+                <div class="stat-label">TDEE (維持體重)</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="water-val">0</div>
+                <div class="stat-label">建議飲水量 (ml)</div>
+            </div>
+            <div class="stat-box" style="background-color: #d4edda;">
+                <div class="stat-value" id="diet-cal-val">0</div>
+                <div class="stat-label">減重建議攝取</div>
+            </div>
+        </div>
+        <div class="advice-box" id="advice-text">
+            </div>
+    </div>
+
+    <div class="card">
+        <h2>步驟二：今日飲食紀錄</h2>
+
+        <div class="form-group">
+            <label>選擇常見食物（快速紀錄）</label>
+            <div style="display: flex; gap: 10px;">
+                <select id="quick-food" onchange="fillCalorie()" style="flex: 2;">
+                    <option value="0">--- 請選擇食物 ---</option>
+                    </select>
+                <input type="number" id="quick-food-cal" placeholder="熱量 (卡)" disabled style="flex: 1; background-color: #eee;">
+            </div>
+            <button onclick="addQuickFood()">加入清單 (選單)</button>
+        </div>
+
+
+        <div class="food-manual-input">
+            <label>手動輸入食物（智慧搜尋熱量）</label>
+            <div class="food-input-group">
+                <input type="text" id="food-name" placeholder="食物名稱 (例如: 珍珠奶茶)">
+                <input type="number" id="food-cal" placeholder="熱量 (大卡)">
+                <button onclick="searchCalorie()" class="search-button">智慧搜尋熱量 🔍</button>
+                <button onclick="addFood()">加入清單 (手動)</button>
+            </div>
+        </div>
+
+        <ul id="food-list">
+            </ul>
+        
+        <div class="total-cal">
+            今日已攝取: <span id="total-intake" style="color: var(--primary-color);">0</span> kcal
+            <div style="font-size: 14px; color: #666; margin-top: 5px;">
+                減重目標剩餘額度: <span id="remaining-cal">請先計算個人數據</span> kcal
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 全域變數，用來儲存計算結果
+    let currentTDEE = 0;
+    let dietCalories = 0;
+    let totalIntake = 0;
+
+    // 食物資料庫 (Food Database) - 實現功能 1
+    const FOOD_DB = {
+        '水煮蛋 (1顆)': 78,
+        '香蕉 (1根)': 105,
+        '御飯糰 (鮪魚)': 200,
+        '雞胸肉 (100克)': 165,
+        '白飯 (1碗/200克)': 280,
+        '滷肉飯 (1碗)': 650,
+        '雞腿便當 (去皮)': 600,
+        '珍珠奶茶 (全糖)': 550,
+        '美式咖啡 (大杯)': 10
+    };
+
+    // 頁面載入時，先生成食物選單
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const select = document.getElementById('quick-food');
+        for (const [name, cal] of Object.entries(FOOD_DB)) {
+            const option = document.createElement('option');
+            option.value = cal;
+            option.textContent = name;
+            select.appendChild(option);
+        }
+    });
+
+    // 功能：當選擇常見食物時，自動填入熱量 - 實現功能 1
+    function fillCalorie() {
+        const cal = document.getElementById('quick-food').value;
+        document.getElementById('quick-food-cal').value = cal > 0 ? cal : '';
+    }
+
+    // 功能：加入常見食物 - 實現功能 1
+    function addQuickFood() {
+        const selectElement = document.getElementById('quick-food');
+        const cal = parseFloat(selectElement.value);
+        const name = selectElement.options[selectElement.selectedIndex].text;
+
+        if (cal <= 0 || name === '--- 請選擇食物 ---') {
+            alert("請選擇一個食物項目！");
+            return;
+        }
+
+        addFoodToDOM(name, cal);
+
+        // 清空選單
+        selectElement.value = '0';
+        document.getElementById('quick-food-cal').value = '';
+    }
+    
+    // 功能：智慧搜尋熱量 - 實現功能 2 (優化方案)
+    function searchCalorie() {
+        const foodName = document.getElementById('food-name').value;
+        if (!foodName) {
+            alert("請先輸入您要查詢的食物名稱！");
+            return;
+        }
+        
+        // 構造 Google 搜尋鏈接，在新分頁打開，方便使用者快速查找
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(foodName + " 熱量 大卡")}`;
+        window.open(searchUrl, '_blank');
+    }
+
+    // 功能：加入手動輸入的食物 - 實現功能 1 (部分)
+    function addFood() {
+        const name = document.getElementById('food-name').value;
+        const cal = parseFloat(document.getElementById('food-cal').value);
+
+        if (!name || isNaN(cal) || cal <= 0) {
+            alert("請輸入正確的食物名稱和熱量數字！");
+            return;
+        }
+
+        addFoodToDOM(name, cal);
+
+        // 清空輸入欄位
+        document.getElementById('food-name').value = '';
+        document.getElementById('food-cal').value = '';
+    }
+
+    // 核心：將食物加入清單的共用邏輯
+    function addFoodToDOM(name, cal) {
+        // 增加到總攝取
+        totalIntake += cal;
+
+        // 新增到列表 UI
+        const list = document.getElementById('food-list');
+        const li = document.createElement('li');
+        // 增加一個刪除按鈕
+        li.innerHTML = `
+            <span>${name}</span> 
+            <span>${cal} kcal
+                <button onclick="deleteFood(this, ${cal})" style="width: auto; padding: 2px 5px; margin-left: 10px; background-color: #e74c3c;">X</button>
+            </span>
+        `;
+        list.appendChild(li);
+
+        // 更新總數顯示
+        document.getElementById('total-intake').innerText = totalIntake;
+        updateRemaining();
+    }
+
+    // 功能：刪除食物項目
+    function deleteFood(buttonElement, calToRemove) {
+        // 1. 從總計中扣除熱量
+        totalIntake -= calToRemove;
+        document.getElementById('total-intake').innerText = totalIntake;
+
+        // 2. 從 DOM 中移除列表項
+        const listItem = buttonElement.closest('li');
+        listItem.remove();
+
+        // 3. 更新剩餘額度
+        updateRemaining();
+    }
+
+
+    // 功能 1 & 2 & 4: 計算個人數據 (BMR, TDEE, 水)
+    function calculateProfile() {
+        // 1. 獲取輸入值
+        const gender = document.getElementById('gender').value;
+        const age = parseFloat(document.getElementById('age').value);
+        const height = parseFloat(document.getElementById('height').value);
+        const weight = parseFloat(document.getElementById('weight').value);
+        const activity = parseFloat(document.getElementById('activity').value);
+
+        if (!age || !height || !weight || age <= 0 || height <= 0 || weight <= 0) {
+            alert("請完整填寫有效的個人資料 (年齡、身高、體重必須大於 0)！");
+            return;
+        }
+
+        // 2. 計算 BMR (Mifflin-St Jeor 公式)
+        let bmr = 0;
+        if (gender === 'male') {
+            bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+        } else {
+            bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+        }
+
+        // 3. 計算 TDEE
+        currentTDEE = Math.round(bmr * activity);
+
+        // 4. 計算飲水量 (體重 * 35cc)
+        const water = Math.round(weight * 35);
+
+        // 5. 計算減重建議熱量 (TDEE - 500, 但不低於 BMR)
+        dietCalories = currentTDEE - 500;
+        if (dietCalories < bmr) {
+             dietCalories = Math.round(bmr); 
+        }
+
+        // 6. 更新 UI 顯示
+        document.getElementById('tdee-val').innerText = currentTDEE;
+        document.getElementById('water-val').innerText = water;
+        document.getElementById('diet-cal-val').innerText = dietCalories;
+        
+        // 功能 3: 瘦身建議
+        const adviceDiv = document.getElementById('advice-text');
+        adviceDiv.style.display = 'block';
+        adviceDiv.innerHTML = `
+            <strong>💡 瘦身小建議：</strong><br>
+            為了達到每週約減重 0.5 公斤，建議您每日攝取 <b>${dietCalories}</b> 大卡。<br>
+            請記得每天至少喝 <b>${water}cc</b> 的水來幫助代謝！
+        `;
+
+        // 顯示結果區塊
+        document.getElementById('result-section').style.display = 'block';
+        
+        // 更新剩餘額度
+        updateRemaining();
+    }
+
+    // 更新剩餘卡路里
+    function updateRemaining() {
+        const remainingSpan = document.getElementById('remaining-cal');
+
+        // 如果還沒計算過個人資料
+        if (dietCalories === 0) {
+            remainingSpan.innerText = "請先計算個人數據";
+            remainingSpan.style.color = "#666";
+            return;
+        }
+
+        const remaining = dietCalories - totalIntake;
+        
+        remainingSpan.innerText = remaining;
+
+        // 如果吃超過了，變紅色提醒
+        if (remaining < 0) {
+            remainingSpan.style.color = "red";
+            remainingSpan.innerText = Math.abs(remaining) + " (已超標!)";
+        } else {
+            remainingSpan.style.color = "var(--secondary-color)";
+        }
+    }
+</script>
+
+</body>
+</html>
