@@ -5,144 +5,132 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>快樂小狗打擊卡路里</title>
     <style>
-        /* CSS 升級區域: 高級感視覺風格 */
+        /* CSS 美化區域 */
         :root {
-            --primary-color: #00bcd4; /* 主要強調色: 冷青色/Teal */
-            --secondary-color: #0097a7; /* 深色強調色 */
-            --bg-color: #f5f7fa; /* 淺色背景: 微冷調灰 */
+            --primary-color: #2ecc71; /* 健康綠 */
+            --secondary-color: #27ae60;
+            --bg-color: #f4f7f6;
             --card-bg: #ffffff;
-            --dark-text: #2c3e50; /* 主文字色: 炭灰/深藍 */
-            --shadow: 0 6px 20px rgba(0, 0, 0, 0.08); /* 細膩陰影 */
-            --border-radius: 12px;
+            --text-color: #2c3e50;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, "Microsoft JhengHei", sans-serif;
+            font-family: 'Segoe UI', Microsoft JhengHei, sans-serif;
             background-color: var(--bg-color);
-            color: var(--dark-text);
+            color: var(--text-color);
             margin: 0;
-            padding: 30px 20px; /* 增加上下間距 */
+            padding: 20px;
             display: flex;
             justify-content: center;
         }
 
         .container {
-            max-width: 850px;
+            max-width: 800px;
             width: 100%;
             display: grid;
-            gap: 25px; /* 增加區塊間距 */
+            gap: 20px;
         }
 
-        h1 { 
-            text-align: center; 
-            color: var(--secondary-color); 
-            margin-bottom: 15px;
-            font-size: 2.2em;
-            font-weight: 300; /* 讓標題更現代、纖細 */
-            letter-spacing: 1px;
-        }
-        h2 { 
-            text-align: center; 
-            color: var(--dark-text); 
-            margin-bottom: 20px;
-            font-size: 1.5em;
-            border-bottom: 2px solid var(--primary-color);
-            padding-bottom: 5px;
-            display: inline-block;
-            margin-left: auto;
-            margin-right: auto;
-        }
+        h1, h2 { text-align: center; color: var(--secondary-color); margin-bottom: 10px;}
         
         /* 卡片通用樣式 */
         .card {
             background: var(--card-bg);
-            border-radius: var(--border-radius);
-            padding: 30px; 
-            box-shadow: var(--shadow); /* 應用高級陰影 */
-            transition: transform 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-2px); /* 輕微上浮效果 */
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         /* 表單樣式 */
-        label { margin-bottom: 8px; font-weight: 600; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
         input, select {
-            padding: 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            transition: border-color 0.3s;
-        }
-        input:focus, select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 5px rgba(0, 188, 212, 0.3);
-            outline: none;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box; 
         }
 
         button {
-            padding: 14px;
+            width: 100%;
+            padding: 12px;
             background-color: var(--primary-color);
-            box-shadow: 0 4px 10px rgba(0, 188, 212, 0.4);
-            transition: background 0.3s, box-shadow 0.3s;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
         }
-        button:hover { 
-            background-color: var(--secondary-color); 
-            box-shadow: 0 4px 12px rgba(0, 151, 167, 0.6);
-        }
+        button:hover { background-color: var(--secondary-color); }
 
         /* 結果儀表板網格 */
         .dashboard-grid {
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* 增加最小寬度 */
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            text-align: center;
         }
 
         .stat-box {
-            background: var(--bg-color); /* 數據背景色與頁面背景色一致 */
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-            padding: 20px 10px;
+            background: #e8f8f5;
+            padding: 15px;
+            border-radius: 10px;
         }
-        .stat-value { 
-            font-size: 32px; /* 放大數值 */
-            font-weight: 700; 
-            color: var(--secondary-color); /* 深色強調 */
-            letter-spacing: -0.5px;
-        }
-        .stat-label { font-size: 15px; color: #7f8c8d; margin-top: 5px; }
-
-        /* 減重建議特別強調 */
-        #diet-cal-val {
-            color: #d35400; /* 使用強烈暖色強調目標 */
-        }
-        .stat-box[style*="d4edda"] {
-             background-color: #fff3e0 !important; /* 淺橘/黃色 */
-             border-color: #ffb74d !important;
-        }
+        .stat-value { font-size: 24px; font-weight: bold; color: var(--secondary-color); }
+        .stat-label { font-size: 14px; color: #7f8c8d; }
 
         /* 食物清單 */
+        #food-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 15px;
+        }
         #food-list li {
-            background: var(--card-bg);
-            border-bottom: none;
-            border-radius: 4px;
-            margin-bottom: 5px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* 輕微邊框陰影 */
+            background: #f9f9f9;
+            border-bottom: 1px solid #eee;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .total-cal {
-            border-top: 2px solid var(--dark-text);
-            padding-top: 15px;
-            margin-top: 20px;
+            text-align: right;
+            font-size: 20px;
+            margin-top: 15px;
+            font-weight: bold;
         }
         
         .advice-box {
-            background-color: #e0f7fa; /* 淺青色底 */
-            border-left: 5px solid var(--primary-color);
-            color: var(--dark-text);
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+            color: #856404;
+            border-radius: 5px;
+            display: none; 
+        }
+
+        /* 食物輸入區塊佈局優化 */
+        .food-input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 分為兩個欄位 */
+            gap: 10px;
+        }
+        .food-manual-input {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
         }
         .search-button {
-            background-color: #34495e; /* 深炭灰色 */
-            box-shadow: none;
-        }
-        .search-button:hover {
-             background-color: #1f3044;
+            background-color: #3498db;
+            color: white;
+            width: auto;
+            padding: 5px 10px;
+            font-size: 14px;
+            margin-top: 0;
         }
     </style>
 </head>
@@ -213,7 +201,7 @@
                 <select id="quick-food" onchange="fillCalorie()" style="flex: 2;">
                     <option value="0">--- 請選擇食物 ---</option>
                     </select>
-                <input type="number" id="quick-food-cal" placeholder="熱量 (卡)" disabled style="flex: 1; background-color: #f1f1f1;">
+                <input type="number" id="quick-food-cal" placeholder="熱量 (卡)" disabled style="flex: 1; background-color: #eee;">
             </div>
             <button onclick="addQuickFood()">加入清單 (選單)</button>
         </div>
@@ -246,6 +234,7 @@
     let currentTDEE = 0;
     let dietCalories = 0;
     let totalIntake = 0;
+    // 新增：儲存所有食物物件的陣列，用於LocalStorage記憶
     let foodItems = []; 
 
     // 食物資料庫 (Food Database)
@@ -305,7 +294,8 @@
         // 2. 載入食物清單
         const storedFoods = localStorage.getItem('foodItems');
         if (storedFoods) {
-            foodItems = JSON.parse(storedFoods); 
+            foodItems = JSON.parse(storedFoods); // 將 JSON 字串轉回陣列
+            // 重新計算總熱量並渲染清單
             totalIntake = 0;
             foodItems.forEach(item => {
                 // 重新渲染食物清單到 DOM (傳入 false 表示這次是載入，不需要再次儲存)
@@ -316,6 +306,7 @@
 
         // 3. 嘗試自動計算個人數據
         if (localStorage.getItem('age') && localStorage.getItem('height') && localStorage.getItem('weight')) {
+             // 傳入 true 表示是載入時的自動計算，這樣就不會跳出警告視窗
              calculateProfile(true); 
         }
     }
@@ -329,12 +320,13 @@
         const weight = parseFloat(document.getElementById('weight').value);
         const activity = parseFloat(document.getElementById('activity').value);
 
+        // 如果不是自動載入，且有欄位是空的，就跳出警告
         if (!isAutoLoad && (!age || !height || !weight || age <= 0 || height <= 0 || weight <= 0)) {
             alert("請完整填寫有效的個人資料 (年齡、身高、體重必須大於 0)！");
             return;
         }
 
-        // 儲存最新的個人資料
+        // 只有當使用者手動點擊計算或成功載入時才儲存
         saveProfile(); 
         
         // BMR/TDEE/Water 計算邏輯
@@ -388,7 +380,7 @@
             return;
         }
 
-        addFoodToDOM(name, cal, true); 
+        addFoodToDOM(name, cal, true); // 儲存清單
         
         selectElement.value = '0';
         document.getElementById('quick-food-cal').value = '';
@@ -416,7 +408,7 @@
             return;
         }
 
-        addFoodToDOM(name, cal, true); 
+        addFoodToDOM(name, cal, true); // 儲存清單
 
         document.getElementById('food-name').value = '';
         document.getElementById('food-cal').value = '';
@@ -426,14 +418,16 @@
     function addFoodToDOM(name, cal, shouldSave) {
         // 如果是新增，則加入 foodItems 陣列並重新計算總熱量
         if (shouldSave) {
+            // 將食物物件加入到全域陣列
             foodItems.push({ name: name, cal: cal }); 
-            totalIntake += cal; 
-            saveProfile(); 
+            totalIntake += cal; // 累積總熱量
+            saveProfile(); // 儲存到 LocalStorage
         }
 
         // 新增到列表 UI
         const list = document.getElementById('food-list');
         const li = document.createElement('li');
+        // 為每個 li 設置一個屬性，用於後續刪除時識別
         li.setAttribute('data-name', name);
         li.setAttribute('data-cal', cal);
 
@@ -456,6 +450,7 @@
         const nameToRemove = listItem.getAttribute('data-name');
         
         // 1. 從 foodItems 陣列中移除該項目
+        // 找出第一個符合名稱和熱量的項目並移除
         const index = foodItems.findIndex(item => item.name === nameToRemove && item.cal === calToRemove);
         if (index > -1) {
             foodItems.splice(index, 1);
