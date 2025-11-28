@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>卡路里計算器</title>
+    <title>卡路里指標控制台</title>
     <style>
         /* CSS 美化區域 */
         :root {
@@ -137,7 +137,7 @@
 <body>
 
 <div class="container">
-    <h1>🥗 健康體態控制台</h1>
+    <h1>🥗 卡路里指標控制台</h1>
 
     <div class="card">
         <h2>步驟一：設定個人檔案</h2>
@@ -234,8 +234,10 @@
     let currentTDEE = 0;
     let dietCalories = 0;
     let totalIntake = 0;
+    // 新增：儲存所有食物物件的陣列，用於LocalStorage記憶
+    let foodItems = []; 
 
-    // 食物資料庫 (Food Database) - 實現功能 1
+    // 食物資料庫 (Food Database)
     const FOOD_DB = {
         '水煮蛋 (1顆)': 78,
         '香蕉 (1根)': 105,
@@ -248,8 +250,10 @@
         '美式咖啡 (大杯)': 10
     };
 
-    // 頁面載入時，先生成食物選單
+    // --- 載入與儲存個人資料及飲食紀錄功能 ---
+
     document.addEventListener('DOMContentLoaded', (event) => {
+        // 生成食物選單
         const select = document.getElementById('quick-food');
         for (const [name, cal] of Object.entries(FOOD_DB)) {
             const option = document.createElement('option');
@@ -257,15 +261,115 @@
             option.textContent = name;
             select.appendChild(option);
         }
+        
+        // 載入所有資料 (個人檔案 + 食物清單)
+        loadProfile();
     });
 
-    // 功能：當選擇常見食物時，自動填入熱量 - 實現功能 1
+    // 儲存資料函數：包含個人檔案和食物清單
+    function saveProfile() {
+        // 1. 儲存個人檔案
+        const profileFields = ['gender', 'age', 'height', 'weight', 'activity'];
+        profileFields.forEach(id => {
+            const value = document.getElementById(id).value;
+            localStorage.setItem(id, value);
+        });
+
+        // 2. 儲存食物清單 (將 foodItems 陣列轉換成 JSON 字串)
+        localStorage.setItem('foodItems', JSON.stringify(foodItems));
+    }
+
+    // 載入資料函數：包含個人檔案和食物清單
+    function loadProfile() {
+        // 1. 載入個人檔案
+        const profileFields = ['gender', 'age', 'height', 'weight', 'activity'];
+        profileFields.forEach(id => {
+            const value = localStorage.getItem(id);
+            const element = document.getElementById(id);
+            if (value && element) {
+                element.value = value;
+            }
+        });
+
+        // 2. 載入食物清單
+        const storedFoods = localStorage.getItem('foodItems');
+        if (storedFoods) {
+            foodItems = JSON.parse(storedFoods); // 將 JSON 字串轉回陣列
+            // 重新計算總熱量並渲染清單
+            totalIntake = 0;
+            foodItems.forEach(item => {
+                // 重新渲染食物清單到 DOM (傳入 false 表示這次是載入，不需要再次儲存)
+                addFoodToDOM(item.name, item.cal, false); 
+            });
+            document.getElementById('total-intake').innerText = totalIntake;
+        }
+
+        // 3. 嘗試自動計算個人數據
+        if (localStorage.getItem('age') && localStorage.getItem('height') && localStorage.getItem('weight')) {
+             // 傳入 true 表示是載入時的自動計算，這樣就不會跳出警告視窗
+             calculateProfile(true); 
+        }
+    }
+
+
+    // 功能 1 & 2 & 4: 計算個人數據 (BMR, TDEE, 水)
+    function calculateProfile(isAutoLoad = false) {
+        const gender = document.getElementById('gender').value;
+        const age = parseFloat(document.getElementById('age').value);
+        const height = parseFloat(document.getElementById('height').value);
+        const weight = parseFloat(document.getElementById('weight').value);
+        const activity = parseFloat(document.getElementById('activity').value);
+
+        // 如果不是自動載入，且有欄位是空的，就跳出警告
+        if (!isAutoLoad && (!age || !height || !weight || age <= 0 || height <= 0 || weight <= 0)) {
+            alert("請完整填寫有效的個人資料 (年齡、身高、體重必須大於 0)！");
+            return;
+        }
+
+        // 只有當使用者手動點擊計算或成功載入時才儲存
+        saveProfile(); 
+        
+        // BMR/TDEE/Water 計算邏輯
+        let bmr = 0;
+        if (gender === 'male') {
+            bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+        } else {
+            bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+        }
+
+        currentTDEE = Math.round(bmr * activity);
+        const water = Math.round(weight * 35);
+        dietCalories = currentTDEE - 500;
+        if (dietCalories < bmr) {
+             dietCalories = Math.round(bmr); 
+        }
+
+        // 更新 UI 顯示
+        document.getElementById('tdee-val').innerText = currentTDEE;
+        document.getElementById('water-val').innerText = water;
+        document.getElementById('diet-cal-val').innerText = dietCalories;
+        
+        // 瘦身建議
+        const adviceDiv = document.getElementById('advice-text');
+        adviceDiv.style.display = 'block';
+        adviceDiv.innerHTML = `
+            <strong>💡 瘦身小建議：</strong><br>
+            為了達到每週約減重 0.5 公斤，建議您每日攝取 <b>${dietCalories}</b> 大卡。<br>
+            請記得每天至少喝 <b>${water}cc</b> 的水來幫助代謝！
+        `;
+
+        document.getElementById('result-section').style.display = 'block';
+        
+        updateRemaining();
+    }
+
+    // 功能：當選擇常見食物時，自動填入熱量
     function fillCalorie() {
         const cal = document.getElementById('quick-food').value;
         document.getElementById('quick-food-cal').value = cal > 0 ? cal : '';
     }
 
-    // 功能：加入常見食物 - 實現功能 1
+    // 功能：加入常見食物
     function addQuickFood() {
         const selectElement = document.getElementById('quick-food');
         const cal = parseFloat(selectElement.value);
@@ -276,14 +380,13 @@
             return;
         }
 
-        addFoodToDOM(name, cal);
-
-        // 清空選單
+        addFoodToDOM(name, cal, true); // 儲存清單
+        
         selectElement.value = '0';
         document.getElementById('quick-food-cal').value = '';
     }
     
-    // 功能：智慧搜尋熱量 - 實現功能 2 (優化方案)
+    // 功能：智慧搜尋熱量
     function searchCalorie() {
         const foodName = document.getElementById('food-name').value;
         if (!foodName) {
@@ -291,12 +394,11 @@
             return;
         }
         
-        // 構造 Google 搜尋鏈接，在新分頁打開，方便使用者快速查找
         const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(foodName + " 熱量 大卡")}`;
         window.open(searchUrl, '_blank');
     }
 
-    // 功能：加入手動輸入的食物 - 實現功能 1 (部分)
+    // 功能：加入手動輸入的食物
     function addFood() {
         const name = document.getElementById('food-name').value;
         const cal = parseFloat(document.getElementById('food-cal').value);
@@ -306,110 +408,72 @@
             return;
         }
 
-        addFoodToDOM(name, cal);
+        addFoodToDOM(name, cal, true); // 儲存清單
 
-        // 清空輸入欄位
         document.getElementById('food-name').value = '';
         document.getElementById('food-cal').value = '';
     }
 
     // 核心：將食物加入清單的共用邏輯
-    function addFoodToDOM(name, cal) {
-        // 增加到總攝取
-        totalIntake += cal;
+    function addFoodToDOM(name, cal, shouldSave) {
+        // 如果是新增，則加入 foodItems 陣列並重新計算總熱量
+        if (shouldSave) {
+            // 將食物物件加入到全域陣列
+            foodItems.push({ name: name, cal: cal }); 
+            totalIntake += cal; // 累積總熱量
+            saveProfile(); // 儲存到 LocalStorage
+        }
 
         // 新增到列表 UI
         const list = document.getElementById('food-list');
         const li = document.createElement('li');
-        // 增加一個刪除按鈕
+        // 為每個 li 設置一個屬性，用於後續刪除時識別
+        li.setAttribute('data-name', name);
+        li.setAttribute('data-cal', cal);
+
         li.innerHTML = `
             <span>${name}</span> 
             <span>${cal} kcal
-                <button onclick="deleteFood(this, ${cal})" style="width: auto; padding: 2px 5px; margin-left: 10px; background-color: #e74c3c;">X</button>
+                <button onclick="deleteFood(this)" style="width: auto; padding: 2px 5px; margin-left: 10px; background-color: #e74c3c;">X</button>
             </span>
         `;
         list.appendChild(li);
 
-        // 更新總數顯示
         document.getElementById('total-intake').innerText = totalIntake;
         updateRemaining();
     }
 
     // 功能：刪除食物項目
-    function deleteFood(buttonElement, calToRemove) {
-        // 1. 從總計中扣除熱量
+    function deleteFood(buttonElement) {
+        const listItem = buttonElement.closest('li');
+        const calToRemove = parseFloat(listItem.getAttribute('data-cal'));
+        const nameToRemove = listItem.getAttribute('data-name');
+        
+        // 1. 從 foodItems 陣列中移除該項目
+        // 找出第一個符合名稱和熱量的項目並移除
+        const index = foodItems.findIndex(item => item.name === nameToRemove && item.cal === calToRemove);
+        if (index > -1) {
+            foodItems.splice(index, 1);
+        }
+
+        // 2. 從總計中扣除熱量
         totalIntake -= calToRemove;
         document.getElementById('total-intake').innerText = totalIntake;
 
-        // 2. 從 DOM 中移除列表項
-        const listItem = buttonElement.closest('li');
+        // 3. 從 DOM 中移除列表項
         listItem.remove();
 
-        // 3. 更新剩餘額度
+        // 4. 重新儲存清單
+        saveProfile(); 
+
+        // 5. 更新剩餘額度
         updateRemaining();
     }
-
-
-    // 功能 1 & 2 & 4: 計算個人數據 (BMR, TDEE, 水)
-    function calculateProfile() {
-        // 1. 獲取輸入值
-        const gender = document.getElementById('gender').value;
-        const age = parseFloat(document.getElementById('age').value);
-        const height = parseFloat(document.getElementById('height').value);
-        const weight = parseFloat(document.getElementById('weight').value);
-        const activity = parseFloat(document.getElementById('activity').value);
-
-        if (!age || !height || !weight || age <= 0 || height <= 0 || weight <= 0) {
-            alert("請完整填寫有效的個人資料 (年齡、身高、體重必須大於 0)！");
-            return;
-        }
-
-        // 2. 計算 BMR (Mifflin-St Jeor 公式)
-        let bmr = 0;
-        if (gender === 'male') {
-            bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
-        } else {
-            bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
-        }
-
-        // 3. 計算 TDEE
-        currentTDEE = Math.round(bmr * activity);
-
-        // 4. 計算飲水量 (體重 * 35cc)
-        const water = Math.round(weight * 35);
-
-        // 5. 計算減重建議熱量 (TDEE - 500, 但不低於 BMR)
-        dietCalories = currentTDEE - 500;
-        if (dietCalories < bmr) {
-             dietCalories = Math.round(bmr); 
-        }
-
-        // 6. 更新 UI 顯示
-        document.getElementById('tdee-val').innerText = currentTDEE;
-        document.getElementById('water-val').innerText = water;
-        document.getElementById('diet-cal-val').innerText = dietCalories;
-        
-        // 功能 3: 瘦身建議
-        const adviceDiv = document.getElementById('advice-text');
-        adviceDiv.style.display = 'block';
-        adviceDiv.innerHTML = `
-            <strong>💡 瘦身小建議：</strong><br>
-            為了達到每週約減重 0.5 公斤，建議您每日攝取 <b>${dietCalories}</b> 大卡。<br>
-            請記得每天至少喝 <b>${water}cc</b> 的水來幫助代謝！
-        `;
-
-        // 顯示結果區塊
-        document.getElementById('result-section').style.display = 'block';
-        
-        // 更新剩餘額度
-        updateRemaining();
-    }
-
+    
     // 更新剩餘卡路里
     function updateRemaining() {
         const remainingSpan = document.getElementById('remaining-cal');
 
-        // 如果還沒計算過個人資料
         if (dietCalories === 0) {
             remainingSpan.innerText = "請先計算個人數據";
             remainingSpan.style.color = "#666";
@@ -420,7 +484,6 @@
         
         remainingSpan.innerText = remaining;
 
-        // 如果吃超過了，變紅色提醒
         if (remaining < 0) {
             remainingSpan.style.color = "red";
             remainingSpan.innerText = Math.abs(remaining) + " (已超標!)";
@@ -431,5 +494,4 @@
 </script>
 
 </body>
-
 </html>
