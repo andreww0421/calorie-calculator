@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> AI快樂狗狗控制台 </title>
+    <title>AI 智能營養管家 (安全版)</title>
     <style>
         /* CSS 美化區域 */
         :root {
@@ -172,7 +172,7 @@
 <body>
 
 <div class="container">
-    <h1>🥗 AI快樂狗狗管家 🥗</h1>
+    <h1>🥗 AI 智能營養管家 🥗</h1>
 
     <div class="card">
         <h2>步驟一：設定個人檔案</h2>
@@ -288,13 +288,6 @@
 </div>
 
 <script>
-    // ==========================================
-    // 🔑 請將您的 API Key 貼在下方引號中
-    // ==========================================
-    const MY_API_KEY = "AIzaSyB6xltde0FKjAfdsg3MXNd-NbmO4oLBKr0"; 
-    // 例如: const MY_API_KEY = "AIzaSyDxxxxxxxxx...";
-
-
     // --- 全域變數 ---
     let currentTDEE = 0;
     let dietCalories = 0;
@@ -323,19 +316,10 @@
     // --- AI 核心功能 ---
     async function previewAndAnalyze(input) {
         const file = input.files[0];
-        // 直接使用內建的變數
-        const apiKey = MY_API_KEY; 
-        
         const preview = document.getElementById('image-preview');
         const loading = document.getElementById('ai-loading');
 
         if (!file) return;
-
-        // 檢查是否已設定金鑰 (簡單防呆)
-        if (!apiKey || apiKey.includes("在此處貼上")) {
-             alert("您尚未設定 API Key！請用文字編輯器打開 HTML 檔案，在第 225 行附近填入您的金鑰。"); 
-             return; 
-        }
 
         // 顯示預覽
         const reader = new FileReader();
@@ -349,7 +333,7 @@
         loading.style.display = 'block';
         try {
             const base64Image = await toBase64(file);
-            const result = await callGeminiAI(apiKey, base64Image);
+            const result = await callGeminiAI(base64Image); // 不再需要傳 API Key
             
             if (result) {
                 const msg = `AI 分析完成！\n食物：${result.foodName}\n熱量：${result.calories} kcal\n蛋白質：${result.protein} g\n\n是否加入清單？`;
@@ -365,9 +349,10 @@
         }
     }
 
-    // 呼叫 Gemini API
-    async function callGeminiAI(key, base64Data) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+    // 呼叫 Cloudflare Worker
+    async function callGeminiAI(base64Data) {
+        // [設定] 使用您部署的 Cloudflare Worker 網址
+        const workerUrl = "https://nameless-meadow-cf7b.jtwen12345us.workers.dev/"; 
         
         const prompt = `
         你是一位專業營養師。請分析圖片中的食物，並回傳一份包含「八大營養指標」的 JSON 資料。
@@ -389,7 +374,8 @@
         }
         `;
 
-        const response = await fetch(url, {
+        // 傳送資料給 Worker (不直接對 Google)
+        const response = await fetch(workerUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -404,7 +390,8 @@
 
         const data = await response.json();
         
-        if (data.error) throw new Error(data.error.message);
+        // 處理錯誤
+        if (data.error) throw new Error(data.error.message || data.error);
         if (!data.candidates || data.candidates.length === 0) throw new Error("AI 無法辨識圖片");
 
         let textResult = data.candidates[0].content.parts[0].text;
