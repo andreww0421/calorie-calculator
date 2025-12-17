@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>快樂狗狗控制台</title>
+    <title> AI快樂狗狗控制台 </title>
     <style>
         /* CSS 美化區域 */
         :root {
@@ -172,7 +172,7 @@
 <body>
 
 <div class="container">
-    <h1>🥗AI快樂狗狗管家🥗</h1>
+    <h1>🥗 AI快樂狗狗管家 🥗</h1>
 
     <div class="card">
         <h2>步驟一：設定個人檔案</h2>
@@ -229,13 +229,7 @@
     <div class="card ai-section">
         <h2 style="color: var(--accent-color);">📸 步驟二：AI 飲食紀錄</h2>
         
-        <div class="form-group">
-            <label>Gemini API Key (初次使用請輸入)</label>
-            <input type="password" id="api-key" placeholder="在此貼上您的 Google Gemini API Key">
-            <small style="color:#666;">* 金鑰僅儲存於您的瀏覽器，不會上傳伺服器。</small>
-        </div>
-
-        <div style="text-align: center;">
+        <div style="text-align: center; margin-top: 10px;">
             <input type="file" id="image-upload" accept="image/*" capture="environment" style="display: none;" onchange="previewAndAnalyze(this)">
             <button class="btn-ai" onclick="document.getElementById('image-upload').click()">📸 拍照或上傳食物圖片</button>
         </div>
@@ -294,20 +288,25 @@
 </div>
 
 <script>
+    // ==========================================
+    // 🔑 請將您的 API Key 貼在下方引號中
+    // ==========================================
+    const MY_API_KEY = "AIzaSyB6xltde0FKjAfdsg3MXNd-NbmO4oLBKr0"; 
+    // 例如: const MY_API_KEY = "AIzaSyDxxxxxxxxx...";
+
+
     // --- 全域變數 ---
     let currentTDEE = 0;
     let dietCalories = 0;
-    // foodItems 結構範例: { name: "蘋果", nutrition: { calories: 50, protein: 0.5, ... } }
     let foodItems = []; 
 
-    // 簡易食物資料庫 (僅含熱量，用於快速選單)
+    // 簡易食物資料庫
     const FOOD_DB = {
         '水煮蛋 (1顆)': 78, '香蕉 (1根)': 105, '御飯糰 (鮪魚)': 200,
         '雞胸肉 (100克)': 165, '白飯 (1碗)': 280, '燙青菜': 40,
         '珍珠奶茶 (全糖)': 550, '美式咖啡': 10
     };
 
-    // --- 初始化 ---
     document.addEventListener('DOMContentLoaded', () => {
         // 1. 生成快速選單
         const select = document.getElementById('quick-food');
@@ -317,27 +316,26 @@
             option.textContent = name;
             select.appendChild(option);
         }
-
-        // 2. 載入 API Key
-        const savedKey = localStorage.getItem('gemini_api_key');
-        if (savedKey) document.getElementById('api-key').value = savedKey;
-
-        // 3. 載入個人檔案與紀錄
+        // 2. 載入個人檔案與紀錄
         loadProfile();
     });
 
     // --- AI 核心功能 ---
     async function previewAndAnalyze(input) {
         const file = input.files[0];
-        const apiKey = document.getElementById('api-key').value.trim();
+        // 直接使用內建的變數
+        const apiKey = MY_API_KEY; 
+        
         const preview = document.getElementById('image-preview');
         const loading = document.getElementById('ai-loading');
 
         if (!file) return;
 
-        // 儲存 Key 方便下次使用
-        if (apiKey) localStorage.setItem('gemini_api_key', apiKey);
-        else { alert("請輸入 Gemini API Key 才能使用 AI 功能！"); return; }
+        // 檢查是否已設定金鑰 (簡單防呆)
+        if (!apiKey || apiKey.includes("在此處貼上")) {
+             alert("您尚未設定 API Key！請用文字編輯器打開 HTML 檔案，在第 225 行附近填入您的金鑰。"); 
+             return; 
+        }
 
         // 顯示預覽
         const reader = new FileReader();
@@ -367,7 +365,7 @@
         }
     }
 
-    // 呼叫 Gemini API (八大指標 Prompt)
+    // 呼叫 Gemini API
     async function callGeminiAI(key, base64Data) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
         
@@ -406,22 +404,16 @@
 
         const data = await response.json();
         
-        // 錯誤處理
         if (data.error) throw new Error(data.error.message);
         if (!data.candidates || data.candidates.length === 0) throw new Error("AI 無法辨識圖片");
 
         let textResult = data.candidates[0].content.parts[0].text;
-        // 清理可能存在的 Markdown 標記
         textResult = textResult.replace(/```json|```/g, '').trim();
-        
         return JSON.parse(textResult);
     }
 
     // --- 資料處理邏輯 ---
-
-    // 統一加入食物的入口
     function addFoodItem(name, nutritionData) {
-        // 確保所有欄位存在，若無則補 0
         const safeData = {
             calories: Number(nutritionData.calories) || 0,
             protein: Number(nutritionData.protein) || 0,
@@ -438,21 +430,13 @@
         renderFoodList();
     }
 
-    // 渲染清單與計算總和
     function renderFoodList() {
         const list = document.getElementById('food-list');
         list.innerHTML = '';
-        
-        // 初始化總計
         let totals = { calories:0, protein:0, fat:0, saturatedFat:0, transFat:0, carbohydrate:0, sugar:0, sodium:0 };
 
         foodItems.forEach((item, index) => {
-            // 累加
-            for (let key in totals) {
-                totals[key] += item.nutrition[key];
-            }
-
-            // 顯示列表
+            for (let key in totals) totals[key] += item.nutrition[key];
             const li = document.createElement('li');
             li.innerHTML = `
                 <div>
@@ -467,13 +451,10 @@
             `;
             list.appendChild(li);
         });
-
         updateDashboard(totals);
     }
 
-    // 更新儀表板
     function updateDashboard(totals) {
-        // 更新八大指標顯示
         document.getElementById('sum-cal').innerText = Math.round(totals.calories);
         document.getElementById('sum-protein').innerText = totals.protein.toFixed(1);
         document.getElementById('sum-fat').innerText = totals.fat.toFixed(1);
@@ -483,7 +464,6 @@
         document.getElementById('sum-sat-fat').innerText = totals.saturatedFat.toFixed(1);
         document.getElementById('sum-trans-fat').innerText = totals.transFat.toFixed(1);
 
-        // 更新剩餘熱量
         const remainingSpan = document.getElementById('remaining-cal');
         if (dietCalories > 0) {
             const remaining = dietCalories - totals.calories;
@@ -493,14 +473,12 @@
         }
     }
 
-    // 刪除項目
     function deleteFood(index) {
         foodItems.splice(index, 1);
         saveProfile();
         renderFoodList();
     }
 
-    // --- 舊有手動輸入功能 (相容模式) ---
     function addQuickFood() {
         const select = document.getElementById('quick-food');
         const cal = parseFloat(select.value);
@@ -521,7 +499,6 @@
         }
     }
 
-    // --- 設定檔存取 (TDEE 計算) ---
     function calculateProfile(isAuto = false) {
         const gender = document.getElementById('gender').value;
         const age = parseFloat(document.getElementById('age').value);
@@ -529,13 +506,9 @@
         const weight = parseFloat(document.getElementById('weight').value);
         const activity = parseFloat(document.getElementById('activity').value);
 
-        if (!isAuto && (!age || !height || !weight)) {
-            alert("請完整填寫個人資料！");
-            return;
-        }
+        if (!isAuto && (!age || !height || !weight)) { alert("請完整填寫個人資料！"); return; }
         if (age && height && weight) {
             saveProfile();
-            
             let bmr = (10 * weight) + (6.25 * height) - (5 * age) + (gender === 'male' ? 5 : -161);
             currentTDEE = Math.round(bmr * activity);
             dietCalories = currentTDEE - 500;
@@ -546,12 +519,8 @@
             document.getElementById('water-val').innerText = water;
             document.getElementById('diet-cal-val').innerText = dietCalories;
             document.getElementById('result-section').style.display = 'block';
-            
-            // 更新建議文字
             document.getElementById('advice-text').style.display = 'block';
             document.getElementById('advice-text').innerHTML = `💡 建議您每日攝取 <b>${dietCalories}</b> 大卡，並喝水 <b>${water}cc</b>。`;
-            
-            // 重新計算剩餘熱量
             renderFoodList();
         }
     }
@@ -563,7 +532,7 @@
             height: document.getElementById('height').value,
             weight: document.getElementById('weight').value,
             activity: document.getElementById('activity').value,
-            foodItems: foodItems // 儲存食物清單
+            foodItems: foodItems
         };
         localStorage.setItem('calories_profile_v2', JSON.stringify(profile));
     }
@@ -577,16 +546,11 @@
             document.getElementById('height').value = profile.height;
             document.getElementById('weight').value = profile.weight;
             document.getElementById('activity').value = profile.activity;
-            
-            if (profile.foodItems) {
-                foodItems = profile.foodItems;
-            }
-            // 自動計算一次
+            if (profile.foodItems) foodItems = profile.foodItems;
             calculateProfile(true);
         }
     }
 
-    // 輔助工具: 圖片轉 Base64
     function toBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
