@@ -44,9 +44,7 @@
             background: white; padding: 10px; border-radius: 12px; margin-bottom: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        .date-control input {
-            width: auto; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px;
-        }
+        .date-control input { width: auto; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
 
         /* --- 儀表板 --- */
         .dashboard-header {
@@ -96,6 +94,15 @@
             color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;
         }
         button.btn-ai { background: linear-gradient(135deg, #6c5ce7 0%, #5b4cc4 100%); }
+        
+        /* 新增：送出分析按鈕 (醒目的紅色/橘色系) */
+        button.btn-analyze {
+            background: linear-gradient(135deg, #ff7675 0%, #d63031 100%);
+            margin-top: 15px;
+            display: none; /* 預設隱藏 */
+            box-shadow: 0 4px 10px rgba(214, 48, 49, 0.3);
+        }
+
         button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; font-size: 12px; border-radius: 6px; margin-left: 10px; }
 
         /* --- 彈跳視窗 --- */
@@ -148,10 +155,14 @@
     <div class="card">
         <h2 style="color: var(--accent-color);">📸 AI 飲食分析</h2>
         <div style="text-align: center;">
-            <input type="file" id="image-upload" accept="image/*" capture="environment" style="display: none;" onchange="previewAndAnalyze(this)">
-            <button class="btn-ai" onclick="document.getElementById('image-upload').click()">📸 拍照 / 上傳食物照</button>
+            <input type="file" id="image-upload" accept="image/*" capture="environment" style="display: none;" onchange="handleFileSelect(this)">
+            
+            <button class="btn-ai" onclick="document.getElementById('image-upload').click()">📸 1. 拍照 / 選擇圖片</button>
+            
+            <button id="analyze-btn" class="btn-analyze" onclick="startAnalysis()">✨ 2. 送出圖片分析</button>
         </div>
-        <div class="loading-spinner" id="ai-loading">🤖 AI 正在分析食物營養...</div>
+
+        <div class="loading-spinner" id="ai-loading">🤖 AI 正在分析食物營養，請稍候...</div>
         <img id="image-preview">
     </div>
 
@@ -251,36 +262,90 @@
     let foodItems = []; 
     let targetCalories = 2000;
     let tempAIResult = null;
-    let selectedDate = new Date().toISOString().split('T')[0]; // 預設今天
+    let selectedDate = new Date().toISOString().split('T')[0];
 
-    // --- 初始化 ---
     document.addEventListener('DOMContentLoaded', () => {
-        // 設定日期選擇器為今天
         document.getElementById('current-date').value = selectedDate;
         loadProfile();
         loadFoodData(selectedDate);
     });
 
-    // --- 核心 1: 日期切換 ---
+    // --- 核心 1: 檔案選擇處理 (不分析) ---
+    function handleFileSelect(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        // 1. 顯示預覽圖
+        const preview = document.getElementById('image-preview');
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+
+        // 2. 顯示「送出分析」按鈕
+        const analyzeBtn = document.getElementById('analyze-btn');
+        analyzeBtn.style.display = 'inline-block';
+        
+        // 3. 隱藏之前的 Loading (如果有)
+        document.getElementById('ai-loading').style.display = 'none';
+    }
+
+    // --- 核心 2: 開始分析 (按下按鈕後觸發) ---
+    async function startAnalysis() {
+        const input = document.getElementById('image-upload');
+        const file = input.files[0];
+        if (!file) {
+            alert("請先選擇圖片！");
+            return;
+        }
+
+        // UI 狀態切換
+        document.getElementById('analyze-btn').style.display = 'none'; // 隱藏按鈕避免重複按
+        document.getElementById('ai-loading').style.display = 'block';
+
+        try {
+            const base64 = await toBase64(file);
+            const result = await callCloudflareAI(base64);
+
+            if (result) {
+                tempAIResult = {
+                    name: result.foodName,
+                    nutri: {
+                        calories: Number(result.calories) || 0,
+                        protein: Number(result.protein) || 0,
+                        fat: Number(result.fat) || 0,
+                        carbohydrate: Number(result.carbohydrate) || 0,
+                        sugar: Number(result.sugar) || 0,
+                        sodium: Number(result.sodium) || 0,
+                        saturatedFat: Number(result.saturatedFat) || 0,
+                        transFat: Number(result.transFat) || 0
+                    }
+                };
+                showModal();
+            }
+        } catch (e) {
+            console.error(e);
+            alert("AI 分析失敗：" + e.message);
+            // 失敗時把按鈕顯示回來，讓使用者可以重試
+            document.getElementById('analyze-btn').style.display = 'inline-block';
+        } finally {
+            document.getElementById('ai-loading').style.display = 'none';
+        }
+    }
+
+    // --- 其他邏輯保持不變 ---
+
     function changeDate() {
         selectedDate = document.getElementById('current-date').value;
         document.getElementById('display-date-text').innerText = selectedDate;
         loadFoodData(selectedDate);
     }
 
-    // --- 核心 2: 存取資料 (依日期) ---
     function saveFoodData() {
-        // 儲存 key 為 "record_2023-12-19" 格式
         localStorage.setItem(`record_${selectedDate}`, JSON.stringify(foodItems));
     }
 
     function loadFoodData(date) {
         const stored = localStorage.getItem(`record_${date}`);
-        if (stored) {
-            foodItems = JSON.parse(stored);
-        } else {
-            foodItems = [];
-        }
+        foodItems = stored ? JSON.parse(stored) : [];
         renderListAndStats();
     }
 
@@ -308,7 +373,6 @@
         }
     }
 
-    // --- 核心 3: 渲染 ---
     function renderListAndStats() {
         ['breakfast', 'lunch', 'dinner', 'snack'].forEach(type => {
             document.getElementById(`list-${type}`).innerHTML = '';
@@ -327,9 +391,7 @@
             total.sat += (Number(item.nutri.saturatedFat) || 0);
             total.trans += (Number(item.nutri.transFat) || 0);
 
-            if(mealTotals[item.type] !== undefined) {
-                mealTotals[item.type] += (Number(item.nutri.calories) || 0);
-            }
+            if(mealTotals[item.type] !== undefined) mealTotals[item.type] += (Number(item.nutri.calories) || 0);
 
             const li = document.createElement('li');
             li.innerHTML = `
@@ -339,12 +401,10 @@
                 </div>
                 <button class="btn-delete" onclick="deleteItem(${index})">刪除</button>
             `;
-            const listId = `list-${item.type}` || `list-snack`;
-            const listEl = document.getElementById(listId);
-            if(listEl) listEl.appendChild(li);
+            const listEl = document.getElementById(`list-${item.type}`) || document.getElementById('list-snack');
+            listEl.appendChild(li);
         });
 
-        // 更新介面
         for(let type in mealTotals) {
             const el = document.getElementById(`prog-${type}`);
             const goalEl = document.getElementById(`goal-${type}`);
@@ -372,44 +432,6 @@
         }
     }
 
-    // --- AI 辨識 ---
-    async function previewAndAnalyze(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        const preview = document.getElementById('image-preview');
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = 'block';
-        document.getElementById('ai-loading').style.display = 'block';
-
-        try {
-            const base64 = await toBase64(file);
-            const result = await callCloudflareAI(base64);
-
-            if (result) {
-                tempAIResult = {
-                    name: result.foodName,
-                    nutri: {
-                        calories: Number(result.calories) || 0,
-                        protein: Number(result.protein) || 0,
-                        fat: Number(result.fat) || 0,
-                        carbohydrate: Number(result.carbohydrate) || 0,
-                        sugar: Number(result.sugar) || 0,
-                        sodium: Number(result.sodium) || 0,
-                        saturatedFat: Number(result.saturatedFat) || 0,
-                        transFat: Number(result.transFat) || 0
-                    }
-                };
-                showModal();
-            }
-        } catch (e) {
-            console.error(e);
-            alert("AI 分析失敗：" + e.message);
-        } finally {
-            document.getElementById('ai-loading').style.display = 'none';
-        }
-    }
-
     async function callCloudflareAI(base64) {
         const url = "https://nameless-meadow-cf7b.jtwen12345us.workers.dev/";
         const prompt = `你是一位營養師。請分析圖片食物的「八大營養指標」。回傳純 JSON 格式。欄位：foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat。`;
@@ -429,7 +451,6 @@
         return JSON.parse(text);
     }
 
-    // --- 輔助功能 ---
     function showModal() {
         const d = tempAIResult;
         document.getElementById('analysis-content').innerHTML = `
@@ -442,6 +463,7 @@
 
     function closeModal() {
         document.getElementById('analysis-modal').style.display = 'none';
+        tempAIResult = null;
     }
 
     function confirmAddFood(type) {
