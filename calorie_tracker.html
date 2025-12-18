@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 智能營養管家 (安全版)</title>
+    <title>快樂小狗打擊卡路里</title>
     <style>
         /* CSS 美化區域 */
         :root {
@@ -13,7 +13,6 @@
             --bg-color: #f4f7f6;
             --card-bg: #ffffff;
             --text-color: #2c3e50;
-            --danger-color: #e74c3c;
         }
 
         body {
@@ -34,8 +33,7 @@
         }
 
         h1, h2 { text-align: center; color: var(--secondary-color); margin-bottom: 10px;}
-        h3 { margin-top: 0; margin-bottom: 15px; }
-
+        
         /* 卡片通用樣式 */
         .card {
             background: var(--card-bg);
@@ -74,7 +72,7 @@
             margin-top: 10px;
         }
         button:hover { background-color: var(--secondary-color); }
-        
+
         button.btn-ai {
             background-color: var(--accent-color);
         }
@@ -82,47 +80,12 @@
             background-color: #5b4cc4;
         }
 
-        /* 結果儀表板網格 (TDEE) */
+        /* 結果儀表板網格 */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
             text-align: center;
-        }
-
-        /* 八大指標儀表板 */
-        .nutrition-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            background-color: #fafafa;
-            padding: 15px;
-            border-radius: 10px;
-        }
-        
-        @media (min-width: 600px) {
-            .nutrition-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-
-        .nutri-item {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-            text-align: center;
-            font-size: 14px;
-        }
-        .nutri-item .val {
-            display: block;
-            font-size: 18px;
-            font-weight: bold;
-            color: var(--text-color);
-            margin-top: 5px;
-        }
-        .nutri-item.main-stat {
-            border-bottom: 3px solid var(--primary-color);
         }
 
         .stat-box {
@@ -150,6 +113,13 @@
             border-radius: 5px;
         }
         
+        .total-cal {
+            text-align: right;
+            font-size: 20px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        
         .advice-box {
             margin-top: 15px;
             padding: 15px;
@@ -158,6 +128,26 @@
             color: #856404;
             border-radius: 5px;
             display: none; 
+        }
+
+        /* 食物輸入區塊佈局優化 */
+        .food-input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px;
+        }
+        .food-manual-input {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .search-button {
+            background-color: #3498db;
+            color: white;
+            width: auto;
+            padding: 5px 10px;
+            font-size: 14px;
+            margin-top: 0;
         }
 
         .loading-spinner {
@@ -242,76 +232,173 @@
 
     <div class="card">
         <h3>📝 手動補充 / 快速紀錄</h3>
+
         <div class="form-group">
-            <label>快速選擇 (僅熱量)</label>
+            <label>選擇常見食物（快速紀錄）</label>
             <div style="display: flex; gap: 10px;">
-                <select id="quick-food" style="flex: 2;">
-                    <option value="0">--- 常見食物 ---</option>
+                <select id="quick-food" onchange="fillCalorie()" style="flex: 2;">
+                    <option value="0">--- 請選擇食物 ---</option>
                 </select>
-                <button onclick="addQuickFood()" style="flex: 1; margin-top:0;">加入</button>
+                <input type="number" id="quick-food-cal" placeholder="熱量 (卡)" disabled style="flex: 1; background-color: #eee;">
+            </div>
+            <button onclick="addQuickFood()">加入清單 (選單)</button>
+        </div>
+
+        <div class="food-manual-input">
+            <label>手動輸入食物（智慧搜尋熱量）</label>
+            <div class="food-input-group">
+                <input type="text" id="food-name" placeholder="食物名稱 (例如: 珍珠奶茶)">
+                <input type="number" id="food-cal" placeholder="熱量 (大卡)">
+                <button onclick="searchCalorie()" class="search-button">智慧搜尋熱量 🔍</button>
+                <button onclick="addFood()">加入清單 (手動)</button>
             </div>
         </div>
 
-        <div class="form-group" style="border-top: 1px solid #eee; padding-top: 15px;">
-            <label>手動輸入 (僅熱量)</label>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="food-name" placeholder="食物名稱">
-                <input type="number" id="food-cal" placeholder="熱量">
-                <button onclick="addFood()" style="width: auto; margin-top:0; white-space: nowrap;">加入</button>
-            </div>
-        </div>
-
-        <h3>📋 今日攝取清單</h3>
         <ul id="food-list">
-            </ul>
-    </div>
-
-    <div class="card" style="border: 2px solid var(--primary-color);">
-        <h2>📊 今日八大營養總覽</h2>
+        </ul>
         
-        <div class="nutrition-grid">
-            <div class="nutri-item main-stat">🔥 熱量 <span class="val" id="sum-cal">0</span> <small>kcal</small></div>
-            <div class="nutri-item main-stat">🥩 蛋白質 <span class="val" id="sum-protein">0</span> <small>g</small></div>
-            <div class="nutri-item main-stat">🥑 脂肪 <span class="val" id="sum-fat">0</span> <small>g</small></div>
-            <div class="nutri-item main-stat">🍞 碳水 <span class="val" id="sum-carb">0</span> <small>g</small></div>
-            
-            <div class="nutri-item">🍬 糖分 <span class="val" id="sum-sugar">0</span> <small>g</small></div>
-            <div class="nutri-item">🧂 鈉含量 <span class="val" id="sum-sodium">0</span> <small>mg</small></div>
-            <div class="nutri-item">🥓 飽和脂肪 <span class="val" id="sum-sat-fat">0</span> <small>g</small></div>
-            <div class="nutri-item">🚫 反式脂肪 <span class="val" id="sum-trans-fat">0</span> <small>g</small></div>
-        </div>
-
-        <div style="margin-top: 15px; text-align: center; color: #666;">
-            減重目標剩餘熱量: <span id="remaining-cal" style="font-weight: bold; font-size: 1.2em;">請先計算</span>
+        <div class="total-cal">
+            今日已攝取: <span id="total-intake" style="color: var(--primary-color);">0</span> kcal
+            <div style="font-size: 14px; color: #666; margin-top: 5px;">
+                減重目標剩餘額度: <span id="remaining-cal">請先計算個人數據</span> kcal
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- 全域變數 ---
+    // 全域變數，用來儲存計算結果
     let currentTDEE = 0;
     let dietCalories = 0;
+    let totalIntake = 0;
+    // 新增：儲存所有食物物件的陣列，用於LocalStorage記憶
     let foodItems = []; 
 
-    // 簡易食物資料庫
+    // 食物資料庫 (Food Database)
     const FOOD_DB = {
-        '水煮蛋 (1顆)': 78, '香蕉 (1根)': 105, '御飯糰 (鮪魚)': 200,
-        '雞胸肉 (100克)': 165, '白飯 (1碗)': 280, '燙青菜': 40,
-        '珍珠奶茶 (全糖)': 550, '美式咖啡': 10
+        '水煮蛋 (1顆)': 78,
+        '香蕉 (1根)': 105,
+        '御飯糰 (鮪魚)': 200,
+        '雞胸肉 (100克)': 165,
+        '白飯 (1碗/200克)': 280,
+        '滷肉飯 (1碗)': 650,
+        '雞腿便當 (去皮)': 600,
+        '珍珠奶茶 (全糖)': 550,
+        '美式咖啡 (大杯)': 10
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // 1. 生成快速選單
+    // --- 載入與儲存個人資料及飲食紀錄功能 ---
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+        // 生成食物選單
         const select = document.getElementById('quick-food');
         for (const [name, cal] of Object.entries(FOOD_DB)) {
             const option = document.createElement('option');
-            option.value = cal; 
+            option.value = cal;
             option.textContent = name;
             select.appendChild(option);
         }
-        // 2. 載入個人檔案與紀錄
+        
+        // 載入所有資料 (個人檔案 + 食物清單)
         loadProfile();
     });
+
+    // 儲存資料函數：包含個人檔案和食物清單
+    function saveProfile() {
+        // 1. 儲存個人檔案
+        const profileFields = ['gender', 'age', 'height', 'weight', 'activity'];
+        profileFields.forEach(id => {
+            const value = document.getElementById(id).value;
+            localStorage.setItem(id, value);
+        });
+
+        // 2. 儲存食物清單 (將 foodItems 陣列轉換成 JSON 字串)
+        localStorage.setItem('foodItems', JSON.stringify(foodItems));
+    }
+
+    // 載入資料函數：包含個人檔案和食物清單
+    function loadProfile() {
+        // 1. 載入個人檔案
+        const profileFields = ['gender', 'age', 'height', 'weight', 'activity'];
+        profileFields.forEach(id => {
+            const value = localStorage.getItem(id);
+            const element = document.getElementById(id);
+            if (value && element) {
+                element.value = value;
+            }
+        });
+
+        // 2. 載入食物清單
+        const storedFoods = localStorage.getItem('foodItems');
+        if (storedFoods) {
+            foodItems = JSON.parse(storedFoods); // 將 JSON 字串轉回陣列
+            // 重新計算總熱量並渲染清單
+            totalIntake = 0;
+            foodItems.forEach(item => {
+                // 重新渲染食物清單到 DOM (傳入 false 表示這次是載入，不需要再次儲存)
+                addFoodToDOM(item.name, item.cal, false); 
+            });
+            document.getElementById('total-intake').innerText = totalIntake;
+        }
+
+        // 3. 嘗試自動計算個人數據
+        if (localStorage.getItem('age') && localStorage.getItem('height') && localStorage.getItem('weight')) {
+             // 傳入 true 表示是載入時的自動計算，這樣就不會跳出警告視窗
+             calculateProfile(true); 
+        }
+    }
+
+
+    // 功能 1 & 2 & 4: 計算個人數據 (BMR, TDEE, 水)
+    function calculateProfile(isAutoLoad = false) {
+        const gender = document.getElementById('gender').value;
+        const age = parseFloat(document.getElementById('age').value);
+        const height = parseFloat(document.getElementById('height').value);
+        const weight = parseFloat(document.getElementById('weight').value);
+        const activity = parseFloat(document.getElementById('activity').value);
+
+        // 如果不是自動載入，且有欄位是空的，就跳出警告
+        if (!isAutoLoad && (!age || !height || !weight || age <= 0 || height <= 0 || weight <= 0)) {
+            alert("請完整填寫有效的個人資料 (年齡、身高、體重必須大於 0)！");
+            return;
+        }
+
+        // 只有當使用者手動點擊計算或成功載入時才儲存
+        saveProfile(); 
+        
+        // BMR/TDEE/Water 計算邏輯
+        let bmr = 0;
+        if (gender === 'male') {
+            bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+        } else {
+            bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+        }
+
+        currentTDEE = Math.round(bmr * activity);
+        const water = Math.round(weight * 35);
+        dietCalories = currentTDEE - 500;
+        if (dietCalories < bmr) {
+             dietCalories = Math.round(bmr); 
+        }
+
+        // 更新 UI 顯示
+        document.getElementById('tdee-val').innerText = currentTDEE;
+        document.getElementById('water-val').innerText = water;
+        document.getElementById('diet-cal-val').innerText = dietCalories;
+        
+        // 瘦身建議
+        const adviceDiv = document.getElementById('advice-text');
+        adviceDiv.style.display = 'block';
+        adviceDiv.innerHTML = `
+            <strong>💡 瘦身小建議：</strong><br>
+            為了達到每週約減重 0.5 公斤，建議您每日攝取 <b>${dietCalories}</b> 大卡。<br>
+            請記得每天至少喝 <b>${water}cc</b> 的水來幫助代謝！
+        `;
+
+        document.getElementById('result-section').style.display = 'block';
+        
+        updateRemaining();
+    }
 
     // --- AI 核心功能 ---
     async function previewAndAnalyze(input) {
@@ -321,7 +408,6 @@
 
         if (!file) return;
 
-        // 顯示預覽
         const reader = new FileReader();
         reader.onload = (e) => {
             preview.src = e.target.result;
@@ -329,22 +415,26 @@
         };
         reader.readAsDataURL(file);
 
-        // 開始分析
         loading.style.display = 'block';
         try {
             const base64Image = await toBase64(file);
-            // 呼叫 Cloudflare Worker，不再需要傳入 API Key
+            // 呼叫 Cloudflare，不再傳 API Key
             const result = await callGeminiAI(base64Image); 
             
             if (result) {
-                const msg = `AI 分析完成！\n食物：${result.foodName}\n熱量：${result.calories} kcal\n蛋白質：${result.protein} g\n\n是否加入清單？`;
+                // 這裡 AI 回傳了詳細營養素，但目前的 UI 只有熱量欄位
+                // 我們取用它的熱量 (calories) 並顯示詳細資訊給使用者看
+                const msg = `AI 分析完成！\n食物：${result.foodName}\n熱量：${result.calories} kcal\n\n(詳細資訊：蛋白質 ${result.protein}g, 脂肪 ${result.fat}g, 碳水 ${result.carbohydrate}g)\n\n是否加入清單？`;
+                
                 if (confirm(msg)) {
-                    addFoodItem(result.foodName, result);
+                    // 自動填入熱量並加入
+                    addFoodToDOM(result.foodName, result.calories, true);
                 }
             }
         } catch (error) {
             console.error(error);
-            alert("AI 分析失敗：\n" + error.message);
+            // 顯示詳細錯誤，方便除錯
+            alert("⚠️ AI 分析失敗：\n" + error.message);
         } finally {
             loading.style.display = 'none';
         }
@@ -352,7 +442,7 @@
 
     // 呼叫 Cloudflare Worker
     async function callGeminiAI(base64Data) {
-        // 您的 Cloudflare Worker 網址
+        // 👇 您的 Cloudflare Worker 網址 (請確保這行是正確的)
         const workerUrl = "https://nameless-meadow-cf7b.jtwen12345us.workers.dev/"; 
         
         const prompt = `
@@ -375,7 +465,6 @@
         }
         `;
 
-        // 傳送資料給 Worker
         const response = await fetch(workerUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -391,161 +480,18 @@
 
         const data = await response.json();
         
-        // 錯誤處理 (如果 Cloudflare 回傳錯誤詳細資訊，顯示給使用者)
+        // 處理 Cloudflare 或 Google 的錯誤
         if (data.error) {
-            console.error("Cloudflare/Google Error:", data);
-            const detailMsg = data.details 
-                ? JSON.stringify(data.details, null, 2) 
-                : (data.error.message || data.error);
-            throw new Error(detailMsg);
+            let errorMsg = data.error.message || JSON.stringify(data.error);
+            // 這裡會把錯誤丟出去，被 previewAndAnalyze 的 catch 抓到並 alert
+            throw new Error("Google API 錯誤: " + errorMsg);
         }
 
-        if (!data.candidates || data.candidates.length === 0) throw new Error("AI 無法辨識圖片，請重試");
+        if (!data.candidates || data.candidates.length === 0) throw new Error("AI 無法辨識圖片 (沒有回傳內容)");
 
         let textResult = data.candidates[0].content.parts[0].text;
         textResult = textResult.replace(/```json|```/g, '').trim();
         return JSON.parse(textResult);
-    }
-
-    // --- 資料處理邏輯 ---
-    function addFoodItem(name, nutritionData) {
-        const safeData = {
-            calories: Number(nutritionData.calories) || 0,
-            protein: Number(nutritionData.protein) || 0,
-            fat: Number(nutritionData.fat) || 0,
-            saturatedFat: Number(nutritionData.saturatedFat) || 0,
-            transFat: Number(nutritionData.transFat) || 0,
-            carbohydrate: Number(nutritionData.carbohydrate) || 0,
-            sugar: Number(nutritionData.sugar) || 0,
-            sodium: Number(nutritionData.sodium) || 0
-        };
-
-        foodItems.push({ name: name, nutrition: safeData });
-        saveProfile();
-        renderFoodList();
-    }
-
-    function renderFoodList() {
-        const list = document.getElementById('food-list');
-        list.innerHTML = '';
-        let totals = { calories:0, protein:0, fat:0, saturatedFat:0, transFat:0, carbohydrate:0, sugar:0, sodium:0 };
-
-        foodItems.forEach((item, index) => {
-            for (let key in totals) totals[key] += item.nutrition[key];
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div style="font-weight:bold;">${item.name}</div>
-                        <div style="font-size:12px; color:#888;">
-                            🔥${item.nutrition.calories} | P:${item.nutrition.protein} | F:${item.nutrition.fat} | C:${item.nutrition.carbohydrate}
-                        </div>
-                    </div>
-                    <div>
-                        <button onclick="deleteFood(${index})" style="background:#e74c3c; padding:5px 10px; margin:0;">刪除</button>
-                    </div>
-                </div>
-            `;
-            list.appendChild(li);
-        });
-        updateDashboard(totals);
-    }
-
-    function updateDashboard(totals) {
-        document.getElementById('sum-cal').innerText = Math.round(totals.calories);
-        document.getElementById('sum-protein').innerText = totals.protein.toFixed(1);
-        document.getElementById('sum-fat').innerText = totals.fat.toFixed(1);
-        document.getElementById('sum-carb').innerText = totals.carbohydrate.toFixed(1);
-        document.getElementById('sum-sugar').innerText = totals.sugar.toFixed(1);
-        document.getElementById('sum-sodium').innerText = Math.round(totals.sodium);
-        document.getElementById('sum-sat-fat').innerText = totals.saturatedFat.toFixed(1);
-        document.getElementById('sum-trans-fat').innerText = totals.transFat.toFixed(1);
-
-        const remainingSpan = document.getElementById('remaining-cal');
-        if (dietCalories > 0) {
-            const remaining = dietCalories - totals.calories;
-            remainingSpan.innerText = `${Math.round(remaining)} kcal`;
-            remainingSpan.style.color = remaining < 0 ? "#e74c3c" : "#27ae60";
-            if (remaining < 0) remainingSpan.innerText += " (已超標)";
-        }
-    }
-
-    function deleteFood(index) {
-        foodItems.splice(index, 1);
-        saveProfile();
-        renderFoodList();
-    }
-
-    function addQuickFood() {
-        const select = document.getElementById('quick-food');
-        const cal = parseFloat(select.value);
-        const name = select.options[select.selectedIndex].text;
-        if (cal > 0) addFoodItem(name, { calories: cal });
-        else alert("請選擇食物");
-    }
-
-    function addFood() {
-        const name = document.getElementById('food-name').value;
-        const cal = parseFloat(document.getElementById('food-cal').value);
-        if (name && cal > 0) {
-            addFoodItem(name, { calories: cal });
-            document.getElementById('food-name').value = '';
-            document.getElementById('food-cal').value = '';
-        } else {
-            alert("請輸入名稱與熱量");
-        }
-    }
-
-    function calculateProfile(isAuto = false) {
-        const gender = document.getElementById('gender').value;
-        const age = parseFloat(document.getElementById('age').value);
-        const height = parseFloat(document.getElementById('height').value);
-        const weight = parseFloat(document.getElementById('weight').value);
-        const activity = parseFloat(document.getElementById('activity').value);
-
-        if (!isAuto && (!age || !height || !weight)) { alert("請完整填寫個人資料！"); return; }
-        if (age && height && weight) {
-            saveProfile();
-            let bmr = (10 * weight) + (6.25 * height) - (5 * age) + (gender === 'male' ? 5 : -161);
-            currentTDEE = Math.round(bmr * activity);
-            dietCalories = currentTDEE - 500;
-            if (dietCalories < bmr) dietCalories = Math.round(bmr);
-            const water = Math.round(weight * 35);
-
-            document.getElementById('tdee-val').innerText = currentTDEE;
-            document.getElementById('water-val').innerText = water;
-            document.getElementById('diet-cal-val').innerText = dietCalories;
-            document.getElementById('result-section').style.display = 'block';
-            document.getElementById('advice-text').style.display = 'block';
-            document.getElementById('advice-text').innerHTML = `💡 建議您每日攝取 <b>${dietCalories}</b> 大卡，並喝水 <b>${water}cc</b>。`;
-            renderFoodList();
-        }
-    }
-
-    function saveProfile() {
-        const profile = {
-            gender: document.getElementById('gender').value,
-            age: document.getElementById('age').value,
-            height: document.getElementById('height').value,
-            weight: document.getElementById('weight').value,
-            activity: document.getElementById('activity').value,
-            foodItems: foodItems
-        };
-        localStorage.setItem('calories_profile_v2', JSON.stringify(profile));
-    }
-
-    function loadProfile() {
-        const data = localStorage.getItem('calories_profile_v2');
-        if (data) {
-            const profile = JSON.parse(data);
-            document.getElementById('gender').value = profile.gender;
-            document.getElementById('age').value = profile.age;
-            document.getElementById('height').value = profile.height;
-            document.getElementById('weight').value = profile.weight;
-            document.getElementById('activity').value = profile.activity;
-            if (profile.foodItems) foodItems = profile.foodItems;
-            calculateProfile(true);
-        }
     }
 
     function toBase64(file) {
@@ -555,6 +501,135 @@
             reader.onload = () => resolve(reader.result.split(',')[1]);
             reader.onerror = error => reject(error);
         });
+    }
+
+    // 功能：當選擇常見食物時，自動填入熱量
+    function fillCalorie() {
+        const cal = document.getElementById('quick-food').value;
+        document.getElementById('quick-food-cal').value = cal > 0 ? cal : '';
+    }
+
+    // 功能：加入常見食物
+    function addQuickFood() {
+        const selectElement = document.getElementById('quick-food');
+        const cal = parseFloat(selectElement.value);
+        const name = selectElement.options[selectElement.selectedIndex].text;
+
+        if (cal <= 0 || name === '--- 請選擇食物 ---') {
+            alert("請選擇一個食物項目！");
+            return;
+        }
+
+        addFoodToDOM(name, cal, true); // 儲存清單
+        
+        selectElement.value = '0';
+        document.getElementById('quick-food-cal').value = '';
+    }
+    
+    // 功能：智慧搜尋熱量
+    function searchCalorie() {
+        const foodName = document.getElementById('food-name').value;
+        if (!foodName) {
+            alert("請先輸入您要查詢的食物名稱！");
+            return;
+        }
+        
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(foodName + " 熱量 大卡")}`;
+        window.open(searchUrl, '_blank');
+    }
+
+    // 功能：加入手動輸入的食物
+    function addFood() {
+        const name = document.getElementById('food-name').value;
+        const cal = parseFloat(document.getElementById('food-cal').value);
+
+        if (!name || isNaN(cal) || cal <= 0) {
+            alert("請輸入正確的食物名稱和熱量數字！");
+            return;
+        }
+
+        addFoodToDOM(name, cal, true); // 儲存清單
+
+        document.getElementById('food-name').value = '';
+        document.getElementById('food-cal').value = '';
+    }
+
+    // 核心：將食物加入清單的共用邏輯
+    function addFoodToDOM(name, cal, shouldSave) {
+        // 如果是新增，則加入 foodItems 陣列並重新計算總熱量
+        if (shouldSave) {
+            // 將食物物件加入到全域陣列
+            foodItems.push({ name: name, cal: cal }); 
+            totalIntake += cal; // 累積總熱量
+            saveProfile(); // 儲存到 LocalStorage
+        }
+
+        // 新增到列表 UI
+        const list = document.getElementById('food-list');
+        const li = document.createElement('li');
+        // 為每個 li 設置一個屬性，用於後續刪除時識別
+        li.setAttribute('data-name', name);
+        li.setAttribute('data-cal', cal);
+
+        li.innerHTML = `
+            <span>${name}</span> 
+            <span>${cal} kcal
+                <button onclick="deleteFood(this)" style="width: auto; padding: 2px 5px; margin-left: 10px; background-color: #e74c3c;">X</button>
+            </span>
+        `;
+        list.appendChild(li);
+
+        document.getElementById('total-intake').innerText = totalIntake;
+        updateRemaining();
+    }
+
+    // 功能：刪除食物項目
+    function deleteFood(buttonElement) {
+        const listItem = buttonElement.closest('li');
+        const calToRemove = parseFloat(listItem.getAttribute('data-cal'));
+        const nameToRemove = listItem.getAttribute('data-name');
+        
+        // 1. 從 foodItems 陣列中移除該項目
+        // 找出第一個符合名稱和熱量的項目並移除
+        const index = foodItems.findIndex(item => item.name === nameToRemove && item.cal === calToRemove);
+        if (index > -1) {
+            foodItems.splice(index, 1);
+        }
+
+        // 2. 從總計中扣除熱量
+        totalIntake -= calToRemove;
+        document.getElementById('total-intake').innerText = totalIntake;
+
+        // 3. 從 DOM 中移除列表項
+        listItem.remove();
+
+        // 4. 重新儲存清單
+        saveProfile(); 
+
+        // 5. 更新剩餘額度
+        updateRemaining();
+    }
+    
+    // 更新剩餘卡路里
+    function updateRemaining() {
+        const remainingSpan = document.getElementById('remaining-cal');
+
+        if (dietCalories === 0) {
+            remainingSpan.innerText = "請先計算個人數據";
+            remainingSpan.style.color = "#666";
+            return;
+        }
+
+        const remaining = dietCalories - totalIntake;
+        
+        remainingSpan.innerText = remaining;
+
+        if (remaining < 0) {
+            remainingSpan.style.color = "red";
+            remainingSpan.innerText = Math.abs(remaining) + " (已超標!)";
+        } else {
+            remainingSpan.style.color = "var(--secondary-color)";
+        }
     }
 </script>
 
