@@ -172,7 +172,7 @@
 <body>
 
 <div class="container">
-    <h1>🥗 AI 智能營養管家 🥗</h1>
+    <h1>🐶卡路里儀表板🐶</h1>
 
     <div class="card">
         <h2>步驟一：設定個人檔案</h2>
@@ -333,7 +333,8 @@
         loading.style.display = 'block';
         try {
             const base64Image = await toBase64(file);
-            const result = await callGeminiAI(base64Image); // 不再需要傳 API Key
+            // 呼叫 Cloudflare Worker，不再需要傳入 API Key
+            const result = await callGeminiAI(base64Image); 
             
             if (result) {
                 const msg = `AI 分析完成！\n食物：${result.foodName}\n熱量：${result.calories} kcal\n蛋白質：${result.protein} g\n\n是否加入清單？`;
@@ -343,7 +344,7 @@
             }
         } catch (error) {
             console.error(error);
-            alert("AI 分析失敗：" + error.message);
+            alert("AI 分析失敗：\n" + error.message);
         } finally {
             loading.style.display = 'none';
         }
@@ -351,7 +352,7 @@
 
     // 呼叫 Cloudflare Worker
     async function callGeminiAI(base64Data) {
-        // [設定] 使用您部署的 Cloudflare Worker 網址
+        // 您的 Cloudflare Worker 網址
         const workerUrl = "https://nameless-meadow-cf7b.jtwen12345us.workers.dev/"; 
         
         const prompt = `
@@ -374,7 +375,7 @@
         }
         `;
 
-        // 傳送資料給 Worker (不直接對 Google)
+        // 傳送資料給 Worker
         const response = await fetch(workerUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -390,9 +391,16 @@
 
         const data = await response.json();
         
-        // 處理錯誤
-        if (data.error) throw new Error(data.error.message || data.error);
-        if (!data.candidates || data.candidates.length === 0) throw new Error("AI 無法辨識圖片");
+        // 錯誤處理 (如果 Cloudflare 回傳錯誤詳細資訊，顯示給使用者)
+        if (data.error) {
+            console.error("Cloudflare/Google Error:", data);
+            const detailMsg = data.details 
+                ? JSON.stringify(data.details, null, 2) 
+                : (data.error.message || data.error);
+            throw new Error(detailMsg);
+        }
+
+        if (!data.candidates || data.candidates.length === 0) throw new Error("AI 無法辨識圖片，請重試");
 
         let textResult = data.candidates[0].content.parts[0].text;
         textResult = textResult.replace(/```json|```/g, '').trim();
@@ -426,14 +434,16 @@
             for (let key in totals) totals[key] += item.nutrition[key];
             const li = document.createElement('li');
             li.innerHTML = `
-                <div>
-                    <div style="font-weight:bold;">${item.name}</div>
-                    <div style="font-size:12px; color:#888;">
-                        🔥${item.nutrition.calories} | P:${item.nutrition.protein} | F:${item.nutrition.fat} | C:${item.nutrition.carbohydrate}
+                <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-weight:bold;">${item.name}</div>
+                        <div style="font-size:12px; color:#888;">
+                            🔥${item.nutrition.calories} | P:${item.nutrition.protein} | F:${item.nutrition.fat} | C:${item.nutrition.carbohydrate}
+                        </div>
                     </div>
-                </div>
-                <div>
-                    <button onclick="deleteFood(${index})" style="background:#e74c3c; padding:5px 10px; margin:0;">刪除</button>
+                    <div>
+                        <button onclick="deleteFood(${index})" style="background:#e74c3c; padding:5px 10px; margin:0;">刪除</button>
+                    </div>
                 </div>
             `;
             list.appendChild(li);
