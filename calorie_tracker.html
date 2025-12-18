@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🐶 快樂小狗營養管家</title>
+    
     <style>
         /* --- 核心樣式 --- */
         :root {
@@ -95,7 +96,6 @@
         }
         button.btn-ai { background: linear-gradient(135deg, #6c5ce7 0%, #5b4cc4 100%); }
         
-        /* 新增：送出分析按鈕 (醒目的紅色/橘色系) */
         button.btn-analyze {
             background: linear-gradient(135deg, #ff7675 0%, #d63031 100%);
             margin-top: 15px;
@@ -155,11 +155,10 @@
     <div class="card">
         <h2 style="color: var(--accent-color);">📸 AI 飲食分析</h2>
         <div style="text-align: center;">
-            <input type="file" id="image-upload" accept="image/*" capture="environment" style="display: none;" onchange="handleFileSelect(this)">
+            <input type="file" id="image-upload" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
             
-            <button class="btn-ai" onclick="document.getElementById('image-upload').click()">📸 拍照/選擇圖片</button>
-            
-            <button id="analyze-btn" class="btn-analyze" onclick="startAnalysis()">✨ 送出圖片分析</button>
+            <button class="btn-ai" onclick="document.getElementById('image-upload').click()">📸 1. 拍照 / 選擇圖片</button>
+            <button id="analyze-btn" class="btn-analyze" onclick="startAnalysis()">✨ 2. 送出圖片分析</button>
         </div>
 
         <div class="loading-spinner" id="ai-loading">🤖 AI 正在分析食物營養，請稍候...</div>
@@ -270,25 +269,22 @@
         loadFoodData(selectedDate);
     });
 
-    // --- 核心 1: 檔案選擇處理 (不分析) ---
+    // --- 核心 1: 檔案選擇處理 ---
     function handleFileSelect(input) {
         const file = input.files[0];
         if (!file) return;
 
-        // 1. 顯示預覽圖
         const preview = document.getElementById('image-preview');
         preview.src = URL.createObjectURL(file);
         preview.style.display = 'block';
 
-        // 2. 顯示「送出分析」按鈕
         const analyzeBtn = document.getElementById('analyze-btn');
         analyzeBtn.style.display = 'inline-block';
         
-        // 3. 隱藏之前的 Loading (如果有)
         document.getElementById('ai-loading').style.display = 'none';
     }
 
-    // --- 核心 2: 開始分析 (按下按鈕後觸發) ---
+    // --- 核心 2: 開始分析 ---
     async function startAnalysis() {
         const input = document.getElementById('image-upload');
         const file = input.files[0];
@@ -297,8 +293,7 @@
             return;
         }
 
-        // UI 狀態切換
-        document.getElementById('analyze-btn').style.display = 'none'; // 隱藏按鈕避免重複按
+        document.getElementById('analyze-btn').style.display = 'none';
         document.getElementById('ai-loading').style.display = 'block';
 
         try {
@@ -324,14 +319,13 @@
         } catch (e) {
             console.error(e);
             alert("AI 分析失敗：" + e.message);
-            // 失敗時把按鈕顯示回來，讓使用者可以重試
             document.getElementById('analyze-btn').style.display = 'inline-block';
         } finally {
             document.getElementById('ai-loading').style.display = 'none';
         }
     }
 
-    // --- 其他邏輯保持不變 ---
+    // --- 其他功能 ---
 
     function changeDate() {
         selectedDate = document.getElementById('current-date').value;
@@ -531,4 +525,3 @@
 
 </body>
 </html>
-
