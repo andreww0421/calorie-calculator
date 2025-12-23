@@ -7,7 +7,6 @@
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2ecc71">
-    
     <link rel="apple-touch-icon" href="calorie_icon.png">
     <link rel="icon" type="image/png" href="calorie_icon.png">
     
@@ -81,7 +80,7 @@
         .nutri-box .n-label { font-size: 0.75em; opacity: 0.9; }
 
         /* --- 餐點區塊 --- */
-        .meal-section { border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 15px; overflow: hidden; }
+        .meal-section { border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 15px; overflow: hidden; transition: all 0.3s; }
         .meal-header {
             background-color: var(--meal-header-bg); padding: 12px 15px;
             display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee;
@@ -182,33 +181,33 @@
     <div class="card">
         <h3>🍽️ <span id="display-date-text">今日</span> 飲食紀錄</h3>
         
-        <div class="meal-section">
+        <div class="meal-section" id="section-breakfast">
             <div class="meal-header">
-                <div><span class="meal-title">🍳 早餐</span> <span class="meal-goal">(建議: <span id="goal-breakfast">0</span>)</span></div>
+                <div><span class="meal-title" id="title-breakfast">🍳 早餐</span> <span class="meal-goal">(建議: <span id="goal-breakfast">0</span>)</span></div>
                 <div class="meal-progress" id="prog-breakfast">0 kcal</div>
             </div>
             <ul class="meal-list" id="list-breakfast"></ul>
         </div>
 
-        <div class="meal-section">
+        <div class="meal-section" id="section-lunch">
             <div class="meal-header">
-                <div><span class="meal-title">🍱 午餐</span> <span class="meal-goal">(建議: <span id="goal-lunch">0</span>)</span></div>
+                <div><span class="meal-title" id="title-lunch">🍱 午餐</span> <span class="meal-goal">(建議: <span id="goal-lunch">0</span>)</span></div>
                 <div class="meal-progress" id="prog-lunch">0 kcal</div>
             </div>
             <ul class="meal-list" id="list-lunch"></ul>
         </div>
 
-        <div class="meal-section">
+        <div class="meal-section" id="section-dinner">
             <div class="meal-header">
-                <div><span class="meal-title">🍲 晚餐</span> <span class="meal-goal">(建議: <span id="goal-dinner">0</span>)</span></div>
+                <div><span class="meal-title" id="title-dinner">🍲 晚餐</span> <span class="meal-goal">(建議: <span id="goal-dinner">0</span>)</span></div>
                 <div class="meal-progress" id="prog-dinner">0 kcal</div>
             </div>
             <ul class="meal-list" id="list-dinner"></ul>
         </div>
 
-        <div class="meal-section">
+        <div class="meal-section" id="section-snack">
             <div class="meal-header">
-                <div><span class="meal-title">🍪 點心</span> <span class="meal-goal">(建議: <span id="goal-snack">0</span>)</span></div>
+                <div><span class="meal-title" id="title-snack">🍪 點心</span> <span class="meal-goal">(建議: <span id="goal-snack">0</span>)</span></div>
                 <div class="meal-progress" id="prog-snack">0 kcal</div>
             </div>
             <ul class="meal-list" id="list-snack"></ul>
@@ -221,11 +220,7 @@
                 <input type="number" id="manual-cal" placeholder="卡路里">
             </div>
             <select id="manual-type" style="margin-bottom: 10px;">
-                <option value="breakfast">早餐</option>
-                <option value="lunch" selected>午餐</option>
-                <option value="dinner">晚餐</option>
-                <option value="snack">點心</option>
-            </select>
+                </select>
             <button onclick="addManualFood()" style="background-color: #95a5a6;">➕ 加入紀錄</button>
         </div>
     </div>
@@ -239,6 +234,7 @@
                 <div><label>身高</label><input type="number" id="height" placeholder="170"></div>
                 <div><label>體重</label><input type="number" id="weight" placeholder="60"></div>
             </div>
+            
             <label style="margin-top: 10px;">活動量</label>
             <select id="activity">
                 <option value="1.2">久坐 (辦公室)</option>
@@ -246,7 +242,16 @@
                 <option value="1.55">中度 (每週運動3-5天)</option>
                 <option value="1.725">高度 (每週運動6-7天)</option>
             </select>
-            <button onclick="calculateProfile()" style="margin-top: 15px;">🔄 計算數據</button>
+            
+            <label style="margin-top: 10px; color: var(--accent-color);">🍽️ 每日餐數模式</label>
+            <select id="meal-mode" onchange="calculateProfile()">
+                <option value="4" selected>標準 (3餐+點心)</option>
+                <option value="3">3餐 (無點心)</option>
+                <option value="2">2餐 (168斷食)</option>
+                <option value="1">1餐 (OMAD)</option>
+            </select>
+
+            <button onclick="calculateProfile()" style="margin-top: 15px;">🔄 儲存並更新介面</button>
         </div>
         
         <div id="goal-result" class="goal-section">
@@ -260,12 +265,8 @@
         <h3>✨ AI 分析報告</h3>
         <div class="analysis-result" id="analysis-content"></div>
         <p>請問這是哪一餐？</p>
-        <div class="meal-selector">
-            <button class="meal-btn breakfast" onclick="confirmAddFood('breakfast')">🍳 早餐</button>
-            <button class="meal-btn lunch" onclick="confirmAddFood('lunch')">🍱 午餐</button>
-            <button class="meal-btn dinner" onclick="confirmAddFood('dinner')">🍲 晚餐</button>
-            <button class="meal-btn snack" onclick="confirmAddFood('snack')">🍪 點心</button>
-        </div>
+        <div class="meal-selector" id="modal-meal-buttons">
+            </div>
         <button onclick="closeModal()" style="margin-top: 15px; background: #95a5a6;">取消</button>
     </div>
 </div>
@@ -276,6 +277,7 @@
     let targetCalories = 2000;
     let tempAIResult = null;
     let selectedDate = new Date().toISOString().split('T')[0];
+    let currentMealMode = "4"; // 預設 4 餐
 
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('current-date').value = selectedDate;
@@ -283,29 +285,116 @@
         loadFoodData(selectedDate);
     });
 
-    // --- 核心 1: 檔案選擇處理 ---
+    // --- 核心功能：介面更新與餐數邏輯 ---
+    function updateMealUI() {
+        // 定義各模式的設定
+        const configs = {
+            "4": { // 標準
+                sections: ['breakfast', 'lunch', 'dinner', 'snack'],
+                titles: { breakfast: '🍳 早餐', lunch: '🍱 午餐', dinner: '🍲 晚餐', snack: '🍪 點心' },
+                ratios: { breakfast: 0.25, lunch: 0.35, dinner: 0.30, snack: 0.10 }
+            },
+            "3": { // 無點心
+                sections: ['breakfast', 'lunch', 'dinner'],
+                titles: { breakfast: '🍳 早餐', lunch: '🍱 午餐', dinner: '🍲 晚餐' },
+                ratios: { breakfast: 0.30, lunch: 0.40, dinner: 0.30 }
+            },
+            "2": { // 168 (只用 Lunch 和 Dinner 區塊)
+                sections: ['lunch', 'dinner'],
+                titles: { lunch: '🍽️ 第一餐', dinner: '🍽️ 第二餐' },
+                ratios: { lunch: 0.50, dinner: 0.50 }
+            },
+            "1": { // OMAD (只用 Dinner 區塊)
+                sections: ['dinner'],
+                titles: { dinner: '🏆 唯一大餐' },
+                ratios: { dinner: 1.0 }
+            }
+        };
+
+        const config = configs[currentMealMode];
+        const allTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+        // 1. 控制區塊顯示/隱藏 與 標題更新
+        allTypes.forEach(type => {
+            const section = document.getElementById(`section-${type}`);
+            if (config.sections.includes(type)) {
+                section.style.display = 'block';
+                // 更新標題
+                document.getElementById(`title-${type}`).innerText = config.titles[type];
+                // 更新目標熱量
+                const goal = Math.round(targetCalories * (config.ratios[type] || 0));
+                document.getElementById(`goal-${type}`).innerText = goal;
+            } else {
+                section.style.display = 'none';
+            }
+        });
+
+        // 2. 更新「手動輸入」的下拉選單
+        const manualSelect = document.getElementById('manual-type');
+        manualSelect.innerHTML = '';
+        config.sections.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.text = config.titles[type];
+            manualSelect.appendChild(option);
+        });
+
+        // 3. 更新「AI 分析視窗」的按鈕
+        const modalBtns = document.getElementById('modal-meal-buttons');
+        modalBtns.innerHTML = '';
+        config.sections.forEach(type => {
+            const btn = document.createElement('button');
+            btn.className = `meal-btn ${type}`;
+            btn.innerText = config.titles[type];
+            btn.onclick = () => confirmAddFood(type);
+            modalBtns.appendChild(btn);
+        });
+    }
+
+    // --- 計算檔案與熱量 ---
+    function calculateProfile(auto=false) {
+        const h = parseFloat(document.getElementById('height').value);
+        const w = parseFloat(document.getElementById('weight').value);
+        const a = parseFloat(document.getElementById('age').value);
+        const act = parseFloat(document.getElementById('activity').value);
+        const g = document.getElementById('gender').value;
+        const mode = document.getElementById('meal-mode').value;
+
+        if (!h || !w || !a) { if(!auto) alert("請填寫資料"); return; }
+
+        let bmr = (g === 'male') ? (10*w + 6.25*h - 5*a + 5) : (10*w + 6.25*h - 5*a - 161);
+        let tdee = Math.round(bmr * act);
+        targetCalories = tdee - 500;
+        if(targetCalories < bmr) targetCalories = Math.round(bmr);
+        
+        currentMealMode = mode; // 更新全域變數
+
+        document.getElementById('tdee-val').innerText = tdee;
+        document.getElementById('target-cal-val').innerText = targetCalories;
+        document.getElementById('target-cal-display').innerText = targetCalories;
+        document.getElementById('water-val').innerText = Math.round(w * 35);
+        document.getElementById('goal-result').style.display = 'block';
+
+        saveProfile();
+        updateMealUI();      // 更新介面結構
+        renderListAndStats(); // 重新渲染數值
+    }
+
+    // --- 檔案處理與 AI ---
     function handleFileSelect(input) {
         const file = input.files[0];
         if (!file) return;
-
         const preview = document.getElementById('image-preview');
         preview.src = URL.createObjectURL(file);
         preview.style.display = 'block';
-
-        const analyzeBtn = document.getElementById('analyze-btn');
-        analyzeBtn.style.display = 'inline-block';
-        
+        document.getElementById('analyze-btn').style.display = 'inline-block';
         document.getElementById('ai-loading').style.display = 'none';
     }
 
-    // --- 核心 2: 開始分析 ---
     async function startAnalysis() {
         const input = document.getElementById('image-upload');
         const file = input.files[0];
-        if (!file) {
-            alert("請先選擇圖片！");
-            return;
-        }
+        if (!file) { alert("請先選擇圖片！"); return; }
 
         document.getElementById('analyze-btn').style.display = 'none';
         document.getElementById('ai-loading').style.display = 'block';
@@ -313,7 +402,6 @@
         try {
             const base64 = await toBase64(file);
             const result = await callCloudflareAI(base64);
-
             if (result) {
                 tempAIResult = {
                     name: result.foodName,
@@ -339,8 +427,7 @@
         }
     }
 
-    // --- 其他功能 ---
-
+    // --- 資料存取 ---
     function changeDate() {
         selectedDate = document.getElementById('current-date').value;
         document.getElementById('display-date-text').innerText = selectedDate;
@@ -363,13 +450,14 @@
             age: document.getElementById('age').value,
             height: document.getElementById('height').value,
             weight: document.getElementById('weight').value,
-            activity: document.getElementById('activity').value
+            activity: document.getElementById('activity').value,
+            mealMode: document.getElementById('meal-mode').value // 新增儲存餐數模式
         };
-        localStorage.setItem('myProfile_v4', JSON.stringify(profile));
+        localStorage.setItem('myProfile_v5', JSON.stringify(profile));
     }
 
     function loadProfile() {
-        const stored = localStorage.getItem('myProfile_v4');
+        const stored = localStorage.getItem('myProfile_v5');
         if (stored) {
             const p = JSON.parse(stored);
             document.getElementById('gender').value = p.gender;
@@ -377,11 +465,16 @@
             document.getElementById('height').value = p.height;
             document.getElementById('weight').value = p.weight;
             document.getElementById('activity').value = p.activity;
+            if(p.mealMode) document.getElementById('meal-mode').value = p.mealMode;
             calculateProfile(true);
+        } else {
+            // 如果沒有存檔，預設跑一次 updateUI 讓它顯示標準模式
+            updateMealUI();
         }
     }
 
     function renderListAndStats() {
+        // 清空清單
         ['breakfast', 'lunch', 'dinner', 'snack'].forEach(type => {
             document.getElementById(`list-${type}`).innerHTML = '';
         });
@@ -409,17 +502,21 @@
                 </div>
                 <button class="btn-delete" onclick="deleteItem(${index})">刪除</button>
             `;
-            const listEl = document.getElementById(`list-${item.type}`) || document.getElementById('list-snack');
-            listEl.appendChild(li);
+            const listEl = document.getElementById(`list-${item.type}`);
+            if(listEl) listEl.appendChild(li);
         });
 
+        // 更新進度條
         for(let type in mealTotals) {
             const el = document.getElementById(`prog-${type}`);
             const goalEl = document.getElementById(`goal-${type}`);
-            const current = Math.round(mealTotals[type]);
-            const goal = parseInt(goalEl.innerText) || 0;
-            el.innerText = `${current} kcal`;
-            el.style.color = (goal > 0 && current > goal) ? '#e74c3c' : 'var(--text-color)';
+            // 只有當該區塊是顯示狀態才更新顏色，避免隱藏區塊報錯
+            if(el && goalEl && el.offsetParent !== null) {
+                const current = Math.round(mealTotals[type]);
+                const goal = parseInt(goalEl.innerText) || 0;
+                el.innerText = `${current} kcal`;
+                el.style.color = (goal > 0 && current > goal) ? '#e74c3c' : 'var(--text-color)';
+            }
         }
 
         document.getElementById('total-cal-display').innerText = Math.round(total.cal);
@@ -485,7 +582,6 @@
         const name = document.getElementById('manual-name').value;
         const cal = parseFloat(document.getElementById('manual-cal').value);
         const type = document.getElementById('manual-type').value;
-
         if (name && cal) {
             foodItems.push({ 
                 type: type, name: name, 
@@ -496,35 +592,6 @@
             document.getElementById('manual-name').value = '';
             document.getElementById('manual-cal').value = '';
         } else { alert("請輸入名稱與熱量"); }
-    }
-
-    function calculateProfile(auto=false) {
-        const h = parseFloat(document.getElementById('height').value);
-        const w = parseFloat(document.getElementById('weight').value);
-        const a = parseFloat(document.getElementById('age').value);
-        const act = parseFloat(document.getElementById('activity').value);
-        const g = document.getElementById('gender').value;
-
-        if (!h || !w || !a) { if(!auto) alert("請填寫資料"); return; }
-
-        let bmr = (g === 'male') ? (10*w + 6.25*h - 5*a + 5) : (10*w + 6.25*h - 5*a - 161);
-        let tdee = Math.round(bmr * act);
-        targetCalories = tdee - 500;
-        if(targetCalories < bmr) targetCalories = Math.round(bmr);
-
-        document.getElementById('tdee-val').innerText = tdee;
-        document.getElementById('target-cal-val').innerText = targetCalories;
-        document.getElementById('target-cal-display').innerText = targetCalories;
-        document.getElementById('water-val').innerText = Math.round(w * 35);
-        document.getElementById('goal-result').style.display = 'block';
-
-        document.getElementById('goal-breakfast').innerText = Math.round(targetCalories * 0.25);
-        document.getElementById('goal-lunch').innerText = Math.round(targetCalories * 0.35);
-        document.getElementById('goal-dinner').innerText = Math.round(targetCalories * 0.30);
-        document.getElementById('goal-snack').innerText = Math.round(targetCalories * 0.10);
-
-        saveProfile();
-        renderListAndStats();
     }
 
     function toBase64(file) {
