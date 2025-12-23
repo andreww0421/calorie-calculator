@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🐶 快樂小狗營養管家</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2ecc71">
+    
+    <link rel="apple-touch-icon" href="calorie_icon.png">
+    <link rel="icon" type="image/png" href="calorie_icon.png">
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('App 準備就緒'))
+                .catch((error) => console.log('App 註冊失敗:', error));
+        }
+    </script>
+
     <style>
         /* --- 核心樣式 --- */
         :root {
