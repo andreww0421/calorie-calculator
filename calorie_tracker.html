@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🐶 快樂小狗營養管家</title>
+    <title>快樂小狗營養管家</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2ecc71">
@@ -23,7 +23,6 @@
     <style>
         /* --- 核心樣式 (CSS 變數系統) --- */
         :root {
-            /* 預設亮色主題 */
             --primary-color: #2ecc71; 
             --primary-dark: #27ae60;
             --accent-color: #6c5ce7;  
@@ -35,13 +34,14 @@
             --input-border: #e0e0e0;
             --shadow-color: rgba(0,0,0,0.05);
             --modal-bg: #ffffff;
+            --lang-modal-bg: #2d3436; /* 語言選單專用深色底 */
+            --lang-text: #ffffff;
         }
 
-        /* 深色主題定義 */
         [data-theme="dark"] {
             --primary-color: #2ecc71; 
-            --primary-dark: #27ae60; /* 保持綠色系，或者可以微調更亮一點 */
-            --accent-color: #a29bfe;  /* 稍微調亮紫色以便在深色背景顯示 */
+            --primary-dark: #27ae60; 
+            --accent-color: #a29bfe;  
             --bg-color: #121212;
             --text-color: #e0e0e0;
             --card-bg: #1e1e1e;
@@ -61,7 +61,7 @@
             padding-bottom: 90px;
             display: flex;
             justify-content: center;
-            transition: background-color 0.3s, color 0.3s; /* 平滑過渡 */
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .container { max-width: 800px; width: 100%; display: grid; gap: 20px; }
@@ -114,7 +114,6 @@
         .chart-container { position: relative; height: 250px; width: 100%; margin-bottom: 20px; }
         .chart-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 600px) { .chart-grid { grid-template-columns: 1fr 1fr; } }
-        /* 圖表標題在深色模式下也要變色 */
         .chart-title { text-align:center; font-size:0.9em; color: #888; transition: color 0.3s; }
         [data-theme="dark"] .chart-title { color: #bbb; }
 
@@ -133,7 +132,7 @@
         .meal-list li {
             padding: 12px 15px; border-bottom: 1px solid var(--input-border); 
             display: flex; justify-content: space-between; align-items: center; 
-            background: var(--card-bg); /* 跟隨卡片背景 */
+            background: var(--card-bg); 
             transition: background-color 0.3s;
         }
         .meal-list li:last-child { border-bottom: none; }
@@ -174,20 +173,51 @@
         .fav-item-row:last-child { border-bottom: none; }
         .fav-item-name { font-weight: bold; cursor: pointer; flex-grow: 1; color: var(--text-color); }
         
-        /* --- 彈跳視窗 --- */
+        /* --- 彈跳視窗 (通用) --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000;
+            backdrop-filter: blur(3px);
         }
         .modal {
             background: var(--modal-bg); padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; text-align: center;
-            color: var(--text-color);
+            color: var(--text-color); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
+        
+        /* --- 語言選擇視窗 (仿圖樣式) --- */
+        .lang-modal-box {
+            background: var(--lang-modal-bg); /* 深色背景 */
+            width: 85%; max-width: 350px;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .lang-modal-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; color: white; }
+        .lang-list { display: flex; flex-direction: column; gap: 10px; }
+        .lang-option {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.2s;
+            color: white;
+        }
+        .lang-option:active { background: rgba(255,255,255,0.2); }
+        .lang-cancel-btn {
+            background: transparent; border: 1px solid rgba(255,255,255,0.3);
+            margin-top: 20px; width: 100%; padding: 12px; color: #aaa;
+        }
+
+        /* --- 其他 --- */
         .analysis-result { background: var(--bg-color); padding: 15px; border-radius: 10px; text-align: left; margin: 15px 0; }
         .meal-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         .meal-btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         
-        /* 餐點按鈕顏色 (固定顏色或微調) */
         .meal-btn.breakfast { background-color: #fab1a0; color: #2d3436; }
         .meal-btn.lunch { background-color: #55efc4; color: #2d3436; }
         .meal-btn.dinner { background-color: #74b9ff; color: #2d3436; }
@@ -215,13 +245,6 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 14px; cursor: pointer; font-weight: bold;
             display: flex; align-items: center; gap: 5px; border: 1px solid var(--input-border);
         }
-        .fab-divider { height: 1px; background: #eee; width: 100%; margin: 5px 0; }
-        
-        .lang-btn {
-            padding: 5px 10px; font-size: 12px; border: 1px solid var(--input-border); background: var(--bg-color); 
-            border-radius: 15px; margin-left: 5px; cursor: pointer; color: var(--text-color);
-        }
-        .lang-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
     </style>
 </head>
 <body>
@@ -372,6 +395,9 @@
     <div class="modal">
         <h3>✨ <span id="txt-modal-title">AI 分析報告</span></h3>
         <div class="analysis-result" id="analysis-content"></div>
+        
+        <button onclick="saveAIResultToFavorites()" class="btn-fav-save" style="margin-bottom: 15px; width: 100%;">❤️ <span id="btn-fav-ai">加入最愛</span></button>
+        
         <p id="txt-modal-ask">請問這是哪一餐？</p>
         <div class="meal-selector" id="modal-meal-buttons"></div>
         <button onclick="closeModal('analysis-modal')" style="margin-top: 15px; background: #95a5a6;" id="btn-cancel">取消</button>
@@ -387,22 +413,23 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="lang-modal" style="display:none;">
+    <div class="lang-modal-box">
+        <div class="lang-modal-title" id="txt-lang-title">語言</div>
+        <div class="lang-list">
+            <div class="lang-option" onclick="setLang('zh-TW'); closeModal('lang-modal')">繁體中文 (Traditional Chinese)</div>
+            <div class="lang-option" onclick="setLang('zh-CN'); closeModal('lang-modal')">简体中文 (Simplified Chinese)</div>
+            <div class="lang-option" onclick="setLang('en'); closeModal('lang-modal')">English</div>
+            <div class="lang-option" onclick="setLang('ja'); closeModal('lang-modal')">日本語 (Japanese)</div>
+        </div>
+        <button class="lang-cancel-btn" onclick="closeModal('lang-modal')" id="btn-lang-cancel">取消</button>
+    </div>
+</div>
+
 <div class="fab-container">
     <div class="fab-menu" id="fab-menu">
-        
-        <div class="fab-item" onclick="toggleTheme()">
-            🌓 <span id="menu-theme">深色模式</span>
-        </div>
-
-        <div class="fab-item" style="cursor: default;">
-            🌐 
-            <span class="lang-btn" onclick="setLang('zh-TW')">繁</span>
-            <span class="lang-btn" onclick="setLang('zh-CN')">简</span>
-            <span class="lang-btn" onclick="setLang('en')">EN</span>
-            <span class="lang-btn" onclick="setLang('ja')">日</span>
-        </div>
-        
-        <label class="fab-item" onclick="triggerImport()">
+        <div class="fab-item" onclick="toggleTheme()">🌓 <span id="menu-theme">深色模式</span></div>
+        <div class="fab-item" onclick="openLangModal()">🌐 <span id="menu-lang">語言</span></div> <label class="fab-item" onclick="triggerImport()">
             📥 <span id="menu-import">匯入還原</span>
             <input type="file" id="import-file" style="display:none" onchange="importData(this)" accept=".json">
         </label>
@@ -424,14 +451,15 @@
             chartTitle: "📊 營養與熱量分析", chartMacro: "今日三大營養素 (PFC)", chartWeekly: "本週熱量趨勢",
             aiTitle: "📸 AI 飲食分析", btnPhoto: "📸 1. 拍照 / 選擇圖片", btnAnalyze: "送出圖片分析", aiLoading: "AI 正在分析食物營養，請稍候...",
             recordTitle: "飲食紀錄", manualLabel: "手動補充 (僅熱量)", placeholderName: "食物名稱", placeholderCal: "卡路里",
-            btnAdd: "➕ 加入紀錄", btnFavSave: "加入最愛", btnFavLoad: "選擇常吃食物",
+            btnAdd: "➕ 加入紀錄", btnFavSave: "加入最愛", btnFavLoad: "選擇常吃食物", btnFavAi: "加入最愛",
             settingsTitle: "⚙️ 個人數據設定", gender: "性別", male: "男", female: "女", age: "年齡", height: "身高", weight: "體重",
             activity: "活動量", act1: "久坐 (辦公室)", act2: "輕度 (每週運動1-3天)", act3: "中度 (每週運動3-5天)", act4: "高度 (每週運動6-7天)",
             mealMode: "🍽️ 每日餐數模式", mode4: "標準 (3餐+點心)", mode3: "3餐 (無點心)", mode2: "2餐 (168斷食)", mode1: "1餐 (OMAD)",
             btnCalc: "🔄 儲存並更新介面", resTdee: "TDEE", resTarget: "減重目標",
             modalTitle: "AI 分析報告", modalAsk: "請問這是哪一餐？", btnCancel: "取消",
             favTitle: "常吃食物清單", btnClose: "關閉",
-            menuImport: "匯入還原", menuExport: "匯出備份", menuTheme: "切換主題", suggest: "建議",
+            menuImport: "匯入還原", menuExport: "匯出備份", menuTheme: "切換主題", menuLang: "語言", suggest: "建議",
+            langTitle: "語言", langCancel: "取消",
             meals: { breakfast: "🍳 早餐", lunch: "🍱 午餐", dinner: "🍲 晚餐", snack: "🍪 點心", meal1: "🍽️ 第一餐", meal2: "🍽️ 第二餐", mealBig: "🏆 唯一大餐" },
             alertDel: "確定要刪除？", alertFavAdded: "已加入最愛！", alertFavExist: "這個食物已經在最愛清單囉！", alertSelImg: "請先選擇圖片！", alertAiFail: "AI 分析失敗：", alertFill: "請填寫資料", alertNameCal: "請輸入名稱與熱量", alertImportOk: "🎉 資料還原成功！", alertImportFail: "❌ 檔案格式錯誤"
         },
@@ -441,14 +469,15 @@
             chartTitle: "📊 营养与热量分析", chartMacro: "今日三大营养素 (PFC)", chartWeekly: "本周热量趋势",
             aiTitle: "📸 AI 饮食分析", btnPhoto: "📸 1. 拍照 / 选择图片", btnAnalyze: "发送图片分析", aiLoading: "AI 正在分析食物营养，请稍候...",
             recordTitle: "饮食记录", manualLabel: "手动补充 (仅热量)", placeholderName: "食物名称", placeholderCal: "卡路里",
-            btnAdd: "➕ 加入记录", btnFavSave: "加入收藏", btnFavLoad: "选择常吃食物",
+            btnAdd: "➕ 加入记录", btnFavSave: "加入收藏", btnFavLoad: "选择常吃食物", btnFavAi: "加入收藏",
             settingsTitle: "⚙️ 个人数据设定", gender: "性别", male: "男", female: "女", age: "年龄", height: "身高", weight: "体重",
             activity: "活动量", act1: "久坐 (办公室)", act2: "轻度 (每周运动1-3天)", act3: "中度 (每周运动3-5天)", act4: "高度 (每周运动6-7天)",
             mealMode: "🍽️ 每日餐数模式", mode4: "标准 (3餐+点心)", mode3: "3餐 (无点心)", mode2: "2餐 (168断食)", mode1: "1餐 (OMAD)",
             btnCalc: "🔄 保存并更新界面", resTdee: "TDEE", resTarget: "减重目标",
             modalTitle: "AI 分析报告", modalAsk: "请问这是哪一餐？", btnCancel: "取消",
             favTitle: "常吃食物清单", btnClose: "关闭",
-            menuImport: "导入还原", menuExport: "导出备份", menuTheme: "切换主题", suggest: "建议",
+            menuImport: "导入还原", menuExport: "导出备份", menuTheme: "切换主题", menuLang: "语言", suggest: "建议",
+            langTitle: "语言", langCancel: "取消",
             meals: { breakfast: "🍳 早餐", lunch: "🍱 午餐", dinner: "🍲 晚餐", snack: "🍪 点心", meal1: "🍽️ 第一餐", meal2: "🍽️ 第二餐", mealBig: "🏆 唯一大餐" },
             alertDel: "确定要删除？", alertFavAdded: "已加入收藏！", alertFavExist: "这个食物已经在收藏清单啰！", alertSelImg: "请先选择图片！", alertAiFail: "AI 分析失败：", alertFill: "请填写资料", alertNameCal: "请输入名称与热量", alertImportOk: "🎉 资料还原成功！", alertImportFail: "❌ 档案格式错误"
         },
@@ -458,14 +487,15 @@
             chartTitle: "📊 Nutrition Analysis", chartMacro: "Macros (PFC)", chartWeekly: "Weekly Calories",
             aiTitle: "📸 AI Analysis", btnPhoto: "📸 1. Select Photo", btnAnalyze: "Analyze", aiLoading: "AI is analyzing...",
             recordTitle: "Food Log", manualLabel: "Manual Entry (Calorie only)", placeholderName: "Food Name", placeholderCal: "Calories",
-            btnAdd: "➕ Add Log", btnFavSave: "Save Favorite", btnFavLoad: "Load Favorite",
+            btnAdd: "➕ Add Log", btnFavSave: "Save Favorite", btnFavLoad: "Load Favorite", btnFavAi: "Save to Favorites",
             settingsTitle: "⚙️ Profile Settings", gender: "Gender", male: "Male", female: "Female", age: "Age", height: "Height", weight: "Weight",
             activity: "Activity Level", act1: "Sedentary", act2: "Lightly Active", act3: "Moderately Active", act4: "Very Active",
             mealMode: "🍽️ Meal Mode", mode4: "Standard (3+Snack)", mode3: "3 Meals", mode2: "2 Meals (168)", mode1: "OMAD",
             btnCalc: "🔄 Save & Update", resTdee: "TDEE", resTarget: "Target",
             modalTitle: "AI Report", modalAsk: "Which meal is this?", btnCancel: "Cancel",
             favTitle: "Favorite Foods", btnClose: "Close",
-            menuImport: "Import Data", menuExport: "Export Data", menuTheme: "Switch Theme", suggest: "Goal",
+            menuImport: "Import Data", menuExport: "Export Data", menuTheme: "Switch Theme", menuLang: "Language", suggest: "Goal",
+            langTitle: "Language", langCancel: "Cancel",
             meals: { breakfast: "🍳 Breakfast", lunch: "🍱 Lunch", dinner: "🍲 Dinner", snack: "🍪 Snack", meal1: "🍽️ Meal 1", meal2: "🍽️ Meal 2", mealBig: "🏆 Big Meal" },
             alertDel: "Delete this item?", alertFavAdded: "Saved to favorites!", alertFavExist: "Already in favorites!", alertSelImg: "Select image first!", alertAiFail: "AI Failed: ", alertFill: "Fill all fields", alertNameCal: "Enter name and calories", alertImportOk: "🎉 Data Restored!", alertImportFail: "❌ Invalid File"
         },
@@ -475,14 +505,15 @@
             chartTitle: "📊 栄養分析", chartMacro: "三大栄養素 (PFC)", chartWeekly: "週間カロリー",
             aiTitle: "📸 AI食事分析", btnPhoto: "📸 1. 写真を選択", btnAnalyze: "分析開始", aiLoading: "AI分析中...",
             recordTitle: "食事記録", manualLabel: "手動入力 (カロリーのみ)", placeholderName: "食品名", placeholderCal: "kcal",
-            btnAdd: "➕ 記録追加", btnFavSave: "お気に入り保存", btnFavLoad: "お気に入りから選択",
+            btnAdd: "➕ 記録追加", btnFavSave: "お気に入り保存", btnFavLoad: "お気に入りから選択", btnFavAi: "お気に入りに保存",
             settingsTitle: "⚙️ プロフィール設定", gender: "性別", male: "男性", female: "女性", age: "年齢", height: "身長", weight: "体重",
             activity: "活動レベル", act1: "座り仕事", act2: "軽い運動 (週1-3)", act3: "中程度の運動 (週3-5)", act4: "激しい運動 (週6-7)",
             mealMode: "🍽️ 食事回数", mode4: "標準 (3食+間食)", mode3: "3食のみ", mode2: "2食 (168断食)", mode1: "1食 (OMAD)",
             btnCalc: "🔄 保存して更新", resTdee: "TDEE", resTarget: "目標",
             modalTitle: "AI分析レポート", modalAsk: "どの食事ですか？", btnCancel: "キャンセル",
             favTitle: "お気に入りリスト", btnClose: "閉じる",
-            menuImport: "復元", menuExport: "バックアップ", menuTheme: "テーマ切替", suggest: "目安",
+            menuImport: "復元", menuExport: "バックアップ", menuTheme: "テーマ切替", menuLang: "言語", suggest: "目安",
+            langTitle: "言語", langCancel: "キャンセル",
             meals: { breakfast: "🍳 朝食", lunch: "🍱 昼食", dinner: "🍲 夕食", snack: "🍪 間食", meal1: "🍽️ 食事1", meal2: "🍽️ 食事2", mealBig: "🏆 大盛り" },
             alertDel: "削除しますか？", alertFavAdded: "お気に入りに保存しました！", alertFavExist: "既に保存されています", alertSelImg: "画像を選択してください", alertAiFail: "AIエラー: ", alertFill: "全ての項目を入力してください", alertNameCal: "名称とカロリーを入力", alertImportOk: "🎉 復元完了！", alertImportFail: "❌ ファイルエラー"
         }
@@ -520,30 +551,34 @@
         curTheme = theme;
         localStorage.setItem('appTheme', theme);
         document.documentElement.setAttribute('data-theme', theme);
-        // 更新圖表顏色
         updateChartTheme(theme);
     }
     
-    // --- 語言切換邏輯 ---
+    // --- 語言切換 ---
+    function openLangModal() {
+        document.getElementById('lang-modal').style.display = 'flex';
+        toggleFabMenu(); // 關閉主選單
+    }
+
     function setLang(lang) {
         curLang = lang;
         localStorage.setItem('appLang', lang);
         const t = i18n[lang];
 
-        // 簡單對應 ID 與 文字
         const mapping = {
             'txt-date-label': t.dateLabel, 'txt-total-intake': t.totalIntake, 'txt-goal-label': t.goal,
             'lbl-pro': t.pro, 'lbl-fat': t.fat, 'lbl-carb': t.carb, 'lbl-sugar': t.sugar, 'lbl-sod': t.sod, 'lbl-sat': t.sat, 'lbl-trans': t.trans, 'lbl-water': t.water,
             'txt-chart-title': t.chartTitle, 'txt-chart-macro': t.chartMacro, 'txt-chart-weekly': t.chartWeekly,
             'txt-ai-title': t.aiTitle, 'btn-take-photo': t.btnPhoto, 'txt-analyze-btn': t.btnAnalyze, 'txt-ai-loading': t.aiLoading,
-            'txt-record-title': t.recordTitle, 'txt-manual-label': t.manualLabel, 'btn-add-record': t.btnAdd, 'btn-fav-save': t.btnFavSave, 'btn-fav-load': t.btnFavLoad,
+            'txt-record-title': t.recordTitle, 'txt-manual-label': t.manualLabel, 'btn-add-record': t.btnAdd, 'btn-fav-save': t.btnFavSave, 'btn-fav-load': t.btnFavLoad, 'btn-fav-ai': t.btnFavAi,
             'txt-settings-title': t.settingsTitle, 'lbl-gender': t.gender, 'opt-male': t.male, 'opt-female': t.female,
             'lbl-age': t.age, 'lbl-height': t.height, 'lbl-weight': t.weight, 'lbl-activity': t.activity,
             'opt-act-1': t.act1, 'opt-act-2': t.act2, 'opt-act-3': t.act3, 'opt-act-4': t.act4,
             'lbl-meal-mode': t.mealMode, 'opt-mode-4': t.mode4, 'opt-mode-3': t.mode3, 'opt-mode-2': t.mode2, 'opt-mode-1': t.mode1,
             'btn-calc': t.btnCalc, 'txt-res-tdee': t.resTdee, 'txt-res-target': t.resTarget,
             'txt-modal-title': t.modalTitle, 'txt-modal-ask': t.modalAsk, 'btn-cancel': t.btnCancel,
-            'txt-fav-title': t.favTitle, 'btn-fav-close': t.btnClose, 'menu-import': t.menuImport, 'menu-export': t.menuExport, 'menu-theme': t.menuTheme
+            'txt-fav-title': t.favTitle, 'btn-fav-close': t.btnClose, 'menu-import': t.menuImport, 'menu-export': t.menuExport, 'menu-theme': t.menuTheme, 'menu-lang': t.menuLang,
+            'txt-lang-title': t.langTitle, 'btn-lang-cancel': t.langCancel
         };
 
         for(let id in mapping) {
@@ -554,7 +589,6 @@
         document.getElementById('manual-name').placeholder = t.placeholderName;
         document.getElementById('manual-cal').placeholder = t.placeholderCal;
         document.querySelectorAll('.txt-suggest').forEach(el => el.innerText = t.suggest);
-        document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
         
         updateMealUI(); 
         if(macroChart) {
@@ -563,7 +597,7 @@
         }
     }
 
-    // --- 我的最愛 ---
+    // --- 我的最愛 (手動與AI) ---
     function saveToFavorites() {
         const name = document.getElementById('manual-name').value;
         const cal = document.getElementById('manual-cal').value;
@@ -573,6 +607,18 @@
         localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
         alert(i18n[curLang].alertFavAdded);
     }
+
+    function saveAIResultToFavorites() {
+        if(!tempAIResult) return;
+        const name = tempAIResult.name;
+        const cal = tempAIResult.nutri.calories;
+        
+        if(favoriteFoods.some(f => f.name === name)) { alert(i18n[curLang].alertFavExist); return; }
+        favoriteFoods.push({ name: name, cal: cal });
+        localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
+        alert(i18n[curLang].alertFavAdded);
+    }
+
     function openFavModal() {
         const list = document.getElementById('fav-list-container');
         list.innerHTML = '';
@@ -665,7 +711,7 @@
         }
     }
 
-    // --- UI 更新與核心邏輯 ---
+    // --- 核心運算 ---
     function updateMealUI() {
         const t = i18n[curLang].meals;
         const configs = {
@@ -820,7 +866,6 @@
 
     function deleteItem(index) { if(confirm(i18n[curLang].alertDel)) { foodItems.splice(index, 1); saveFoodData(); renderListAndStats(); } }
     
-    // 懸浮選單與檔案
     function toggleFabMenu() { document.getElementById('fab-menu').classList.toggle('show'); }
     function exportData() {
         const data = {};
@@ -849,10 +894,10 @@
     async function callCloudflareAI(base64) {
         const url = "https://nameless-meadow-cf7b.jtwen12345us.workers.dev/";
         const promptMap = {
-            "zh-TW": "你是一位營養師。請分析圖片食物的「八大營養指標」。回傳純 JSON 格式。欄位：foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat。",
-            "zh-CN": "你是一位营养师。请分析图片食物的「八大营养指标」。回传纯 JSON 格式。栏位：foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat。",
-            "en": "You are a nutritionist. Analyze the image for 8 nutritional metrics. Return PURE JSON. Fields: foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat.",
-            "ja": "あなたは栄養士です。画像の食品の8つの栄養指標を分析してください。純粋なJSONで返してください。フィールド：foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat。"
+            "zh-TW": "你是一位營養師。請分析圖片食物的「八大營養指標」。回傳純 JSON 格式。欄位：foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat。\n\n重要規則：\n1. 請勿高估份量，若不確定請採用「標準市售份量」或「保守估計」。\n2. 除非圖片中有明顯大份量特徵，否則請以「一人份」為基準。\n",
+            "zh-CN": "你是一位营养师。请分析图片食物的「八大营养指标」。回传纯 JSON 格式。栏位：foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat。\n\n重要规则：\n1. 请勿高估份量，若不确定请采用「标准市售份量」或「保守估计」。\n2. 除非图片中有明显大份量特征，否则请以「一人份」为基准。\n",
+            "en": "You are a nutritionist. Analyze the image for 8 nutritional metrics. Return PURE JSON. Fields: foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat.\n\nCRITICAL INSTRUCTIONS:\n1. Do NOT overestimate portion sizes. Be conservative.\n2. Assume 'standard single serving' unless the image clearly shows a huge portion.\n",
+            "ja": "あなたは栄養士です。画像の食品の8つの栄養指標を分析してください。純粋なJSONで返してください。フィールド：foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat。\n\n重要なルール：\n1. 分量を過大評価しないでください。確信が持てない場合は「標準的な一人前」または「控えめな見積もり」を採用してください。\n"
         };
         const resp = await fetch(url, {
             method: 'POST', headers: {'Content-Type': 'application/json'},
