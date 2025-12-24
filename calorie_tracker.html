@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>快樂小狗營養管家</title>
+    <title>🐶 快樂小狗營養管家</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2ecc71">
@@ -23,6 +23,7 @@
     <style>
         /* --- 核心樣式 (CSS 變數系統) --- */
         :root {
+            /* 🌞 亮色模式變數 */
             --primary-color: #2ecc71; 
             --primary-dark: #27ae60;
             --accent-color: #6c5ce7;  
@@ -34,11 +35,17 @@
             --input-border: #e0e0e0;
             --shadow-color: rgba(0,0,0,0.05);
             --modal-bg: #ffffff;
-            --lang-modal-bg: #2d3436; /* 語言選單專用深色底 */
-            --lang-text: #ffffff;
+            
+            /* 語言選單專用 (亮色) */
+            --lang-modal-bg: #ffffff;
+            --lang-text: #2c3e50;
+            --lang-opt-bg: #f8f9fa;
+            --lang-opt-border: #e0e0e0;
+            --lang-cancel-color: #666;
         }
 
         [data-theme="dark"] {
+            /* 🌙 深色模式變數 */
             --primary-color: #2ecc71; 
             --primary-dark: #27ae60; 
             --accent-color: #a29bfe;  
@@ -50,6 +57,13 @@
             --input-border: #444444;
             --shadow-color: rgba(0,0,0,0.5);
             --modal-bg: #2d2d2d;
+
+            /* 語言選單專用 (深色) */
+            --lang-modal-bg: #2d3436;
+            --lang-text: #ffffff;
+            --lang-opt-bg: rgba(255,255,255,0.1);
+            --lang-opt-border: rgba(255,255,255,0.2);
+            --lang-cancel-color: #aaa;
         }
 
         body {
@@ -143,7 +157,7 @@
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.95em; }
         
-        input, select { 
+        input, select, textarea { 
             width: 100%; padding: 12px; 
             border: 2px solid var(--input-border); 
             background-color: var(--input-bg);
@@ -184,33 +198,35 @@
             color: var(--text-color); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
         
-        /* --- 語言選擇視窗 (仿圖樣式) --- */
+        /* --- 語言選擇視窗 (主題連動) --- */
         .lang-modal-box {
-            background: var(--lang-modal-bg); /* 深色背景 */
+            background: var(--lang-modal-bg); /* 使用變數 */
             width: 85%; max-width: 350px;
             border-radius: 12px;
             padding: 20px;
             text-align: center;
-            color: white;
+            color: var(--lang-text); /* 使用變數 */
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: background-color 0.3s, color 0.3s;
         }
-        .lang-modal-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; color: white; }
+        .lang-modal-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
         .lang-list { display: flex; flex-direction: column; gap: 10px; }
         .lang-option {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: var(--lang-opt-bg); /* 使用變數 */
+            border: 1px solid var(--lang-opt-border); /* 使用變數 */
             padding: 15px;
             border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
             text-align: left;
             transition: background 0.2s;
-            color: white;
+            color: var(--lang-text);
         }
-        .lang-option:active { background: rgba(255,255,255,0.2); }
+        .lang-option:active { opacity: 0.8; }
         .lang-cancel-btn {
-            background: transparent; border: 1px solid rgba(255,255,255,0.3);
-            margin-top: 20px; width: 100%; padding: 12px; color: #aaa;
+            background: transparent; border: 1px solid var(--lang-opt-border);
+            margin-top: 20px; width: 100%; padding: 12px; color: var(--lang-cancel-color);
+            border-radius: 8px; cursor: pointer;
         }
 
         /* --- 其他 --- */
@@ -297,6 +313,11 @@
             <input type="file" id="image-upload" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
             
             <button class="btn-ai" onclick="document.getElementById('image-upload').click()" id="btn-take-photo">📸 1. 拍照 / 選擇圖片</button>
+            
+            <div id="ai-desc-group" style="display:none; margin-top: 15px;">
+                <textarea id="ai-desc" rows="2" style="width:100%; padding:10px; border-radius:10px; font-size:15px; resize: none;" placeholder=""></textarea>
+            </div>
+
             <button id="analyze-btn" class="btn-analyze" onclick="startAnalysis()">✨ 2. <span id="txt-analyze-btn">送出圖片分析</span></button>
         </div>
 
@@ -429,7 +450,8 @@
 <div class="fab-container">
     <div class="fab-menu" id="fab-menu">
         <div class="fab-item" onclick="toggleTheme()">🌓 <span id="menu-theme">深色模式</span></div>
-        <div class="fab-item" onclick="openLangModal()">🌐 <span id="menu-lang">語言</span></div> <label class="fab-item" onclick="triggerImport()">
+        <div class="fab-item" onclick="openLangModal()">🌐 <span id="menu-lang">語言</span></div>
+        <label class="fab-item" onclick="triggerImport()">
             📥 <span id="menu-import">匯入還原</span>
             <input type="file" id="import-file" style="display:none" onchange="importData(this)" accept=".json">
         </label>
@@ -450,6 +472,7 @@
             pro: "蛋白質", fat: "脂肪", carb: "碳水", sugar: "糖", sod: "鈉(mg)", sat: "飽和脂", trans: "反式脂", water: "目標水",
             chartTitle: "📊 營養與熱量分析", chartMacro: "今日三大營養素 (PFC)", chartWeekly: "本週熱量趨勢",
             aiTitle: "📸 AI 飲食分析", btnPhoto: "📸 1. 拍照 / 選擇圖片", btnAnalyze: "送出圖片分析", aiLoading: "AI 正在分析食物營養，請稍候...",
+            aiDescPlaceholder: "📝 補充說明 (例如：這是一碗牛肉麵，沒加蔥)...",
             recordTitle: "飲食紀錄", manualLabel: "手動補充 (僅熱量)", placeholderName: "食物名稱", placeholderCal: "卡路里",
             btnAdd: "➕ 加入紀錄", btnFavSave: "加入最愛", btnFavLoad: "選擇常吃食物", btnFavAi: "加入最愛",
             settingsTitle: "⚙️ 個人數據設定", gender: "性別", male: "男", female: "女", age: "年齡", height: "身高", weight: "體重",
@@ -468,6 +491,7 @@
             pro: "蛋白质", fat: "脂肪", carb: "碳水", sugar: "糖", sod: "钠(mg)", sat: "饱和脂", trans: "反式脂", water: "目标水",
             chartTitle: "📊 营养与热量分析", chartMacro: "今日三大营养素 (PFC)", chartWeekly: "本周热量趋势",
             aiTitle: "📸 AI 饮食分析", btnPhoto: "📸 1. 拍照 / 选择图片", btnAnalyze: "发送图片分析", aiLoading: "AI 正在分析食物营养，请稍候...",
+            aiDescPlaceholder: "📝 补充说明 (例如：这是一碗牛肉面，没加葱)...",
             recordTitle: "饮食记录", manualLabel: "手动补充 (仅热量)", placeholderName: "食物名称", placeholderCal: "卡路里",
             btnAdd: "➕ 加入记录", btnFavSave: "加入收藏", btnFavLoad: "选择常吃食物", btnFavAi: "加入收藏",
             settingsTitle: "⚙️ 个人数据设定", gender: "性别", male: "男", female: "女", age: "年龄", height: "身高", weight: "体重",
@@ -486,6 +510,7 @@
             pro: "Protein", fat: "Fat", carb: "Carb", sugar: "Sugar", sod: "Sodium", sat: "Sat. Fat", trans: "Trans Fat", water: "Water",
             chartTitle: "📊 Nutrition Analysis", chartMacro: "Macros (PFC)", chartWeekly: "Weekly Calories",
             aiTitle: "📸 AI Analysis", btnPhoto: "📸 1. Select Photo", btnAnalyze: "Analyze", aiLoading: "AI is analyzing...",
+            aiDescPlaceholder: "📝 Optional description (e.g. Beef noodles, no onions)...",
             recordTitle: "Food Log", manualLabel: "Manual Entry (Calorie only)", placeholderName: "Food Name", placeholderCal: "Calories",
             btnAdd: "➕ Add Log", btnFavSave: "Save Favorite", btnFavLoad: "Load Favorite", btnFavAi: "Save to Favorites",
             settingsTitle: "⚙️ Profile Settings", gender: "Gender", male: "Male", female: "Female", age: "Age", height: "Height", weight: "Weight",
@@ -504,6 +529,7 @@
             pro: "タンパク質", fat: "脂質", carb: "炭水化物", sugar: "糖質", sod: "塩分", sat: "飽和脂肪", trans: "トランス脂肪", water: "水分目標",
             chartTitle: "📊 栄養分析", chartMacro: "三大栄養素 (PFC)", chartWeekly: "週間カロリー",
             aiTitle: "📸 AI食事分析", btnPhoto: "📸 1. 写真を選択", btnAnalyze: "分析開始", aiLoading: "AI分析中...",
+            aiDescPlaceholder: "📝 補足説明 (例: 牛肉麺、ネギ抜き)...",
             recordTitle: "食事記録", manualLabel: "手動入力 (カロリーのみ)", placeholderName: "食品名", placeholderCal: "kcal",
             btnAdd: "➕ 記録追加", btnFavSave: "お気に入り保存", btnFavLoad: "お気に入りから選択", btnFavAi: "お気に入りに保存",
             settingsTitle: "⚙️ プロフィール設定", gender: "性別", male: "男性", female: "女性", age: "年齢", height: "身長", weight: "体重",
@@ -588,6 +614,7 @@
 
         document.getElementById('manual-name').placeholder = t.placeholderName;
         document.getElementById('manual-cal').placeholder = t.placeholderCal;
+        document.getElementById('ai-desc').placeholder = t.aiDescPlaceholder; // 更新敘述框的 placeholder
         document.querySelectorAll('.txt-suggest').forEach(el => el.innerText = t.suggest);
         
         updateMealUI(); 
@@ -785,18 +812,21 @@
         const preview = document.getElementById('image-preview');
         preview.src = URL.createObjectURL(file); preview.style.display = 'block';
         document.getElementById('analyze-btn').style.display = 'inline-block';
+        document.getElementById('ai-desc-group').style.display = 'block'; // 顯示敘述框
         document.getElementById('ai-loading').style.display = 'none';
     }
 
     async function startAnalysis() {
         const input = document.getElementById('image-upload');
         const file = input.files[0]; if (!file) { alert(i18n[curLang].alertSelImg); return; }
+        const desc = document.getElementById('ai-desc').value.trim(); // 取得使用者敘述
+
         document.getElementById('analyze-btn').style.display = 'none';
         document.getElementById('ai-loading').style.display = 'block';
 
         try {
             const base64 = await toBase64(file);
-            const result = await callCloudflareAI(base64);
+            const result = await callCloudflareAI(base64, desc); // 傳遞敘述
             if (result) {
                 tempAIResult = {
                     name: result.foodName,
@@ -891,7 +921,7 @@
         }; reader.readAsText(file); toggleFabMenu();
     }
 
-    async function callCloudflareAI(base64) {
+    async function callCloudflareAI(base64, userDesc) {
         const url = "https://nameless-meadow-cf7b.jtwen12345us.workers.dev/";
         const promptMap = {
             "zh-TW": "你是一位營養師。請分析圖片食物的「八大營養指標」。回傳純 JSON 格式。欄位：foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat。\n\n重要規則：\n1. 請勿高估份量，若不確定請採用「標準市售份量」或「保守估計」。\n2. 除非圖片中有明顯大份量特徵，否則請以「一人份」為基準。\n",
@@ -899,9 +929,16 @@
             "en": "You are a nutritionist. Analyze the image for 8 nutritional metrics. Return PURE JSON. Fields: foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat.\n\nCRITICAL INSTRUCTIONS:\n1. Do NOT overestimate portion sizes. Be conservative.\n2. Assume 'standard single serving' unless the image clearly shows a huge portion.\n",
             "ja": "あなたは栄養士です。画像の食品の8つの栄養指標を分析してください。純粋なJSONで返してください。フィールド：foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat。\n\n重要なルール：\n1. 分量を過大評価しないでください。確信が持てない場合は「標準的な一人前」または「控えめな見積もり」を採用してください。\n"
         };
+        
+        let prompt = promptMap[curLang];
+        // 如果使用者有輸入敘述，加入 Prompt
+        if(userDesc) {
+            prompt += `\n\n[User's supplementary description]: ${userDesc}\n(Please adjust the estimation based on this description.)`;
+        }
+
         const resp = await fetch(url, {
             method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ contents: [{ parts: [ { text: promptMap[curLang] }, { inline_data: { mime_type: "image/jpeg", data: base64 } } ] }] })
+            body: JSON.stringify({ contents: [{ parts: [ { text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64 } } ] }] })
         });
         const data = await resp.json();
         if (data.error) throw new Error(JSON.stringify(data.error));
