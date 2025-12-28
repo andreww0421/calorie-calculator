@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🐶 快樂小狗營養管家</title>
+    <title>快樂寵物營養管家</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2ecc71">
@@ -23,7 +23,6 @@
     <style>
         /* --- 核心樣式 (CSS 變數系統) --- */
         :root {
-            /* 🌞 亮色模式變數 */
             --primary-color: #2ecc71; 
             --primary-dark: #27ae60;
             --accent-color: #6c5ce7;  
@@ -35,8 +34,6 @@
             --input-border: #e0e0e0;
             --shadow-color: rgba(0,0,0,0.05);
             --modal-bg: #ffffff;
-            
-            /* 語言選單專用 (亮色) */
             --lang-modal-bg: #ffffff;
             --lang-text: #2c3e50;
             --lang-opt-bg: #f8f9fa;
@@ -45,7 +42,6 @@
         }
 
         [data-theme="dark"] {
-            /* 🌙 深色模式變數 */
             --primary-color: #2ecc71; 
             --primary-dark: #27ae60; 
             --accent-color: #a29bfe;  
@@ -57,8 +53,6 @@
             --input-border: #444444;
             --shadow-color: rgba(0,0,0,0.5);
             --modal-bg: #2d2d2d;
-
-            /* 語言選單專用 (深色) */
             --lang-modal-bg: #2d3436;
             --lang-text: #ffffff;
             --lang-opt-bg: rgba(255,255,255,0.1);
@@ -80,8 +74,10 @@
 
         .container { max-width: 800px; width: 100%; display: grid; gap: 20px; }
 
-        h1, h2, h3 { text-align: center; margin: 0 0 15px 0; color: var(--primary-dark); transition: color 0.3s; }
-        h1 { font-size: 1.8em; margin-bottom: 20px; }
+        /* 標題樣式調整 */
+        .app-header { text-align: center; margin-bottom: 10px; transition: color 0.3s; }
+        .app-header h1 { margin: 0; font-size: 1.8em; color: var(--primary-dark); }
+        .app-header .subtitle { font-size: 0.9em; color: #888; margin-top: 5px; }
         
         .card {
             background: var(--card-bg);
@@ -200,27 +196,17 @@
         
         /* --- 語言選擇視窗 (主題連動) --- */
         .lang-modal-box {
-            background: var(--lang-modal-bg); /* 使用變數 */
-            width: 85%; max-width: 350px;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            color: var(--lang-text); /* 使用變數 */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: var(--lang-modal-bg); width: 85%; max-width: 350px;
+            border-radius: 12px; padding: 20px; text-align: center;
+            color: var(--lang-text); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             transition: background-color 0.3s, color 0.3s;
         }
         .lang-modal-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
         .lang-list { display: flex; flex-direction: column; gap: 10px; }
         .lang-option {
-            background: var(--lang-opt-bg); /* 使用變數 */
-            border: 1px solid var(--lang-opt-border); /* 使用變數 */
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            text-align: left;
-            transition: background 0.2s;
-            color: var(--lang-text);
+            background: var(--lang-opt-bg); border: 1px solid var(--lang-opt-border);
+            padding: 15px; border-radius: 8px; font-size: 16px; cursor: pointer;
+            text-align: left; transition: background 0.2s; color: var(--lang-text);
         }
         .lang-option:active { opacity: 0.8; }
         .lang-cancel-btn {
@@ -228,6 +214,20 @@
             margin-top: 20px; width: 100%; padding: 12px; color: var(--lang-cancel-color);
             border-radius: 8px; cursor: pointer;
         }
+
+        /* --- 寵物設定視窗 (New) --- */
+        .pet-choice-container {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;
+        }
+        .pet-option {
+            border: 2px solid var(--input-border); border-radius: 12px; padding: 15px;
+            cursor: pointer; transition: all 0.2s; font-size: 40px;
+        }
+        .pet-option.selected {
+            border-color: var(--primary-color); background-color: rgba(46, 204, 113, 0.1);
+            transform: scale(1.05);
+        }
+        .pet-label { font-size: 16px; margin-top: 5px; display: block; color: var(--text-color); }
 
         /* --- 其他 --- */
         .analysis-result { background: var(--bg-color); padding: 15px; border-radius: 10px; text-align: left; margin: 15px 0; }
@@ -267,6 +267,11 @@
 
 <div class="container">
     
+    <div class="app-header">
+        <h1 id="app-title">快樂寵物營養管家</h1>
+        <div class="subtitle" id="app-subtitle">為您的夥伴紀錄每一餐</div>
+    </div>
+
     <div class="date-control">
         <label id="txt-date-label">📅 紀錄日期：</label>
         <input type="date" id="current-date" onchange="changeDate()">
@@ -412,6 +417,29 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="pet-modal" style="display:none; z-index:2000;">
+    <div class="modal">
+        <h3>✨ 歡迎來到快樂寵物！</h3>
+        <p>請選擇您的第一隻夥伴並為牠命名：</p>
+        
+        <div class="pet-choice-container">
+            <div class="pet-option selected" id="opt-dog" onclick="selectPetType('dog')">
+                🐶 <span class="pet-label">狗狗</span>
+            </div>
+            <div class="pet-option" id="opt-cat" onclick="selectPetType('cat')">
+                🐱 <span class="pet-label">貓貓</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <label style="text-align:left; display:block; font-weight:bold; margin-bottom:5px;">牠的名字是...</label>
+            <input type="text" id="pet-name-input" placeholder="例如：皮皮" style="font-size: 18px; text-align: center;">
+        </div>
+
+        <button onclick="savePetProfile()" style="margin-top: 20px; background: var(--primary-color);">🚀 開始旅程</button>
+    </div>
+</div>
+
 <div class="modal-overlay" id="analysis-modal">
     <div class="modal">
         <h3>✨ <span id="txt-modal-title">AI 分析報告</span></h3>
@@ -428,8 +456,7 @@
 <div class="modal-overlay" id="fav-modal">
     <div class="modal">
         <h3>❤️ <span id="txt-fav-title">常吃食物清單</span></h3>
-        <div style="max-height: 300px; overflow-y: auto; text-align: left;" id="fav-list-container">
-            </div>
+        <div style="max-height: 300px; overflow-y: auto; text-align: left;" id="fav-list-container"></div>
         <button onclick="closeModal('fav-modal')" style="margin-top: 15px; background: #95a5a6;" id="btn-fav-close">關閉</button>
     </div>
 </div>
@@ -555,6 +582,10 @@
     let selectedDate = new Date().toISOString().split('T')[0];
     let currentMealMode = "4";
     let favoriteFoods = JSON.parse(localStorage.getItem('myFavorites') || "[]");
+    
+    // 寵物設定
+    let myPet = JSON.parse(localStorage.getItem('myPetProfile') || "null");
+    let selectedPetType = 'dog'; // 預設選擇
 
     let macroChart = null;
     let weeklyChart = null;
@@ -562,11 +593,46 @@
     document.addEventListener('DOMContentLoaded', () => {
         setTheme(curTheme);
         setLang(curLang);
+        
+        // 檢查是否有寵物資料
+        if (!myPet) {
+            document.getElementById('pet-modal').style.display = 'flex';
+        } else {
+            updateAppTitle();
+        }
+
         document.getElementById('current-date').value = selectedDate;
         loadProfile();
         loadFoodData(selectedDate);
         initCharts();
     });
+
+    // --- 寵物系統 ---
+    function selectPetType(type) {
+        selectedPetType = type;
+        document.querySelectorAll('.pet-option').forEach(el => el.classList.remove('selected'));
+        document.getElementById(`opt-${type}`).classList.add('selected');
+    }
+
+    function savePetProfile() {
+        const name = document.getElementById('pet-name-input').value.trim();
+        if (!name) {
+            alert("請幫牠取個名字！");
+            return;
+        }
+        myPet = { type: selectedPetType, name: name };
+        localStorage.setItem('myPetProfile', JSON.stringify(myPet));
+        document.getElementById('pet-modal').style.display = 'none';
+        updateAppTitle();
+        alert(`歡迎 ${name} 加入！`);
+    }
+
+    function updateAppTitle() {
+        if (!myPet) return;
+        const icon = myPet.type === 'dog' ? '🐶' : '🐱';
+        document.title = `${icon} ${myPet.name} 的營養管家`;
+        document.getElementById('app-title').innerText = `${icon} ${myPet.name} 的營養管家`;
+    }
 
     // --- 主題切換 ---
     function toggleTheme() {
@@ -614,7 +680,7 @@
 
         document.getElementById('manual-name').placeholder = t.placeholderName;
         document.getElementById('manual-cal').placeholder = t.placeholderCal;
-        document.getElementById('ai-desc').placeholder = t.aiDescPlaceholder; // 更新敘述框的 placeholder
+        document.getElementById('ai-desc').placeholder = t.aiDescPlaceholder;
         document.querySelectorAll('.txt-suggest').forEach(el => el.innerText = t.suggest);
         
         updateMealUI(); 
@@ -812,21 +878,21 @@
         const preview = document.getElementById('image-preview');
         preview.src = URL.createObjectURL(file); preview.style.display = 'block';
         document.getElementById('analyze-btn').style.display = 'inline-block';
-        document.getElementById('ai-desc-group').style.display = 'block'; // 顯示敘述框
+        document.getElementById('ai-desc-group').style.display = 'block';
         document.getElementById('ai-loading').style.display = 'none';
     }
 
     async function startAnalysis() {
         const input = document.getElementById('image-upload');
         const file = input.files[0]; if (!file) { alert(i18n[curLang].alertSelImg); return; }
-        const desc = document.getElementById('ai-desc').value.trim(); // 取得使用者敘述
+        const desc = document.getElementById('ai-desc').value.trim();
 
         document.getElementById('analyze-btn').style.display = 'none';
         document.getElementById('ai-loading').style.display = 'block';
 
         try {
             const base64 = await toBase64(file);
-            const result = await callCloudflareAI(base64, desc); // 傳遞敘述
+            const result = await callCloudflareAI(base64, desc);
             if (result) {
                 tempAIResult = {
                     name: result.foodName,
@@ -901,7 +967,7 @@
         const data = {};
         for(let i=0; i<localStorage.length; i++) {
             const key = localStorage.key(i);
-            if(key.startsWith('record_') || key.startsWith('myProfile') || key === 'myFavorites') {
+            if(key.startsWith('record_') || key.startsWith('myProfile') || key === 'myFavorites' || key === 'myPetProfile') {
                 data[key] = localStorage.getItem(key);
             }
         }
@@ -931,7 +997,6 @@
         };
         
         let prompt = promptMap[curLang];
-        // 如果使用者有輸入敘述，加入 Prompt
         if(userDesc) {
             prompt += `\n\n[User's supplementary description]: ${userDesc}\n(Please adjust the estimation based on this description.)`;
         }
