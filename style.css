@@ -1,0 +1,240 @@
+/* --- 核心樣式 (CSS 變數系統) --- */
+:root {
+    /* 🌞 亮色模式變數 */
+    --primary-color: #2ecc71; 
+    --primary-dark: #27ae60;
+    --accent-color: #6c5ce7;  
+    --bg-color: #f0f2f5;
+    --text-color: #2c3e50;
+    --card-bg: #ffffff;
+    --meal-header-bg: #f1f8e9;
+    --input-bg: #ffffff;
+    --input-border: #e0e0e0;
+    --shadow-color: rgba(0,0,0,0.05);
+    --modal-bg: #ffffff;
+    
+    /* 語言選單專用 (亮色) */
+    --lang-modal-bg: #ffffff;
+    --lang-text: #2c3e50;
+    --lang-opt-bg: #f8f9fa;
+    --lang-opt-border: #e0e0e0;
+    --lang-cancel-color: #666;
+}
+
+[data-theme="dark"] {
+    /* 🌙 深色模式變數 */
+    --primary-color: #2ecc71; 
+    --primary-dark: #27ae60; 
+    --accent-color: #a29bfe;  
+    --bg-color: #121212;
+    --text-color: #e0e0e0;
+    --card-bg: #1e1e1e;
+    --meal-header-bg: #2d3436;
+    --input-bg: #2d2d2d;
+    --input-border: #444444;
+    --shadow-color: rgba(0,0,0,0.5);
+    --modal-bg: #2d2d2d;
+
+    /* 語言選單專用 (深色) */
+    --lang-modal-bg: #2d3436;
+    --lang-text: #ffffff;
+    --lang-opt-bg: rgba(255,255,255,0.1);
+    --lang-opt-border: rgba(255,255,255,0.2);
+    --lang-cancel-color: #aaa;
+}
+
+body {
+    font-family: 'Segoe UI', Microsoft JhengHei, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 15px;
+    padding-bottom: 90px;
+    display: flex;
+    justify-content: center;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.container { max-width: 800px; width: 100%; display: grid; gap: 20px; }
+
+h1, h2, h3 { text-align: center; margin: 0 0 15px 0; color: var(--primary-dark); transition: color 0.3s; }
+h1 { font-size: 1.8em; margin-bottom: 20px; }
+
+.card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 12px var(--shadow-color);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+/* --- 日期選擇器 --- */
+.date-control {
+    display: flex; justify-content: center; align-items: center; gap: 10px;
+    background: var(--card-bg); padding: 10px; border-radius: 12px; margin-bottom: 15px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    transition: background-color 0.3s;
+}
+.date-control input { 
+    width: auto; padding: 8px; 
+    border: 1px solid var(--input-border); 
+    background: var(--input-bg);
+    color: var(--text-color);
+    border-radius: 8px; font-size: 16px; 
+}
+
+/* --- 儀表板 --- */
+.dashboard-header {
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    color: white; padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 10px;
+}
+.dashboard-header .label { font-size: 0.9em; opacity: 0.9; }
+.dashboard-header .big-cal { font-size: 3em; font-weight: bold; line-height: 1.2; }
+
+.nutrition-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px;
+}
+.nutri-box {
+    background: rgba(255,255,255,0.2); padding: 8px 4px; border-radius: 8px;
+    text-align: center; backdrop-filter: blur(5px);
+}
+.nutri-box .n-val { display: block; font-weight: bold; font-size: 1.1em; }
+.nutri-box .n-label { font-size: 0.75em; opacity: 0.9; }
+
+/* --- 圖表 --- */
+.chart-container { position: relative; height: 250px; width: 100%; margin-bottom: 20px; }
+.chart-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+@media (min-width: 600px) { .chart-grid { grid-template-columns: 1fr 1fr; } }
+.chart-title { text-align:center; font-size:0.9em; color: #888; transition: color 0.3s; }
+[data-theme="dark"] .chart-title { color: #bbb; }
+
+/* --- 餐點區塊 --- */
+.meal-section { border: 1px solid var(--input-border); border-radius: 12px; margin-bottom: 15px; overflow: hidden; transition: all 0.3s; }
+.meal-header {
+    background-color: var(--meal-header-bg); padding: 12px 15px;
+    display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--input-border);
+    transition: background-color 0.3s;
+}
+.meal-title { font-weight: bold; font-size: 1.1em; color: var(--primary-dark); }
+.meal-goal { font-size: 0.85em; color: #7f8c8d; }
+.meal-progress { font-size: 0.9em; font-weight: bold; }
+
+.meal-list { list-style: none; padding: 0; margin: 0; }
+.meal-list li {
+    padding: 12px 15px; border-bottom: 1px solid var(--input-border); 
+    display: flex; justify-content: space-between; align-items: center; 
+    background: var(--card-bg); 
+    transition: background-color 0.3s;
+}
+.meal-list li:last-child { border-bottom: none; }
+.food-info .name { font-weight: bold; }
+.food-info .detail { font-size: 0.8em; color: #888; margin-top: 2px; }
+
+/* --- 元件 --- */
+.form-group { margin-bottom: 15px; }
+label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.95em; }
+
+input, select, textarea { 
+    width: 100%; padding: 12px; 
+    border: 2px solid var(--input-border); 
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-radius: 10px; box-sizing: border-box; font-size: 16px; 
+    transition: all 0.3s;
+}
+
+button {
+    width: 100%; padding: 14px; background-color: var(--primary-color);
+    color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;
+}
+button.btn-ai { background: linear-gradient(135deg, #6c5ce7 0%, #5b4cc4 100%); }
+button.btn-analyze {
+    background: linear-gradient(135deg, #ff7675 0%, #d63031 100%);
+    margin-top: 15px; display: none; box-shadow: 0 4px 10px rgba(214, 48, 49, 0.3);
+}
+button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; font-size: 12px; border-radius: 6px; margin-left: 10px; }
+
+/* 新增：最愛按鈕樣式 */
+.fav-controls { display: flex; gap: 8px; margin-top: 8px; }
+.btn-fav-save { background-color: #ff7675; width: auto; padding: 10px; flex:1; font-size: 14px; }
+.btn-fav-load { background-color: #0984e3; width: auto; padding: 10px; flex:1; font-size: 14px; }
+
+/* 最愛清單項目 */
+.fav-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--input-border); }
+.fav-item-row:last-child { border-bottom: none; }
+.fav-item-name { font-weight: bold; cursor: pointer; flex-grow: 1; color: var(--text-color); }
+
+/* --- 彈跳視窗 (通用) --- */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+.modal {
+    background: var(--modal-bg); padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; text-align: center;
+    color: var(--text-color); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* --- 語言選擇視窗 (主題連動) --- */
+.lang-modal-box {
+    background: var(--lang-modal-bg); /* 使用變數 */
+    width: 85%; max-width: 350px;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    color: var(--lang-text); /* 使用變數 */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: background-color 0.3s, color 0.3s;
+}
+.lang-modal-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
+.lang-list { display: flex; flex-direction: column; gap: 10px; }
+.lang-option {
+    background: var(--lang-opt-bg); /* 使用變數 */
+    border: 1px solid var(--lang-opt-border); /* 使用變數 */
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s;
+    color: var(--lang-text);
+}
+.lang-option:active { opacity: 0.8; }
+.lang-cancel-btn {
+    background: transparent; border: 1px solid var(--lang-opt-border);
+    margin-top: 20px; width: 100%; padding: 12px; color: var(--lang-cancel-color);
+    border-radius: 8px; cursor: pointer;
+}
+
+/* --- 其他 --- */
+.analysis-result { background: var(--bg-color); padding: 15px; border-radius: 10px; text-align: left; margin: 15px 0; }
+.meal-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+.meal-btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+.meal-btn.breakfast { background-color: #fab1a0; color: #2d3436; }
+.meal-btn.lunch { background-color: #55efc4; color: #2d3436; }
+.meal-btn.dinner { background-color: #74b9ff; color: #2d3436; }
+.meal-btn.snack { background-color: #ffeaa7; color: #2d3436; }
+
+.loading-spinner { display: none; text-align: center; padding: 20px; color: var(--accent-color); font-weight: bold; }
+#image-preview { width: 100%; border-radius: 10px; margin-top: 15px; display: none; }
+.goal-section { display: none; margin-top: 20px; background: rgba(46, 204, 113, 0.1); padding: 15px; border-radius: 10px; text-align: center; }
+
+/* --- 懸浮選單 --- */
+.fab-container {
+    position: fixed; bottom: 20px; right: 20px; z-index: 999;
+    display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 10px;
+}
+.fab-main {
+    width: 56px; height: 56px; background-color: var(--text-color); border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center;
+    cursor: pointer; color: var(--card-bg); font-size: 24px; transition: transform 0.3s;
+}
+.fab-main:active { transform: scale(0.9); }
+.fab-menu { display: none; flex-direction: column; gap: 10px; align-items: flex-end; }
+.fab-menu.show { display: flex; }
+.fab-item {
+    background-color: var(--card-bg); color: var(--text-color); padding: 8px 15px; border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 14px; cursor: pointer; font-weight: bold;
+    display: flex; align-items: center; gap: 5px; border: 1px solid var(--input-border);
+}
