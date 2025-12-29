@@ -11,6 +11,7 @@
     <link rel="icon" type="image/png" href="calorie_icon.png">
     
     <link rel="stylesheet" href="style.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
@@ -43,14 +44,14 @@
     </div>
 
     <div class="nutrition-grid">
-        <div class="nutri-box"><span class="n-val" id="sum-protein">0</span><span class="n-label">蛋白質</span></div>
-        <div class="nutri-box"><span class="n-val" id="sum-fat">0</span><span class="n-label">脂肪</span></div>
-        <div class="nutri-box"><span class="n-val" id="sum-carb">0</span><span class="n-label">碳水</span></div>
-        <div class="nutri-box"><span class="n-val" id="sum-sugar">0</span><span class="n-label">糖</span></div>
-        <div class="nutri-box"><span class="n-val" id="sum-sodium">0</span><span class="n-label">鈉(mg)</span></div>
-        <div class="nutri-box"><span class="n-val" id="sum-sat-fat">0</span><span class="n-label">飽和脂</span></div>
-        <div class="nutri-box"><span class="n-val" id="sum-trans-fat">0</span><span class="n-label">反式脂</span></div>
-        <div class="nutri-box"><span class="n-val" id="water-val">--</span><span class="n-label">目標水</span></div>
+        <div class="nutri-box"><span class="n-val" id="sum-protein">0</span><span class="n-label" id="lbl-pro">蛋白質</span></div>
+        <div class="nutri-box"><span class="n-val" id="sum-fat">0</span><span class="n-label" id="lbl-fat">脂肪</span></div>
+        <div class="nutri-box"><span class="n-val" id="sum-carb">0</span><span class="n-label" id="lbl-carb">碳水</span></div>
+        <div class="nutri-box"><span class="n-val" id="sum-sugar">0</span><span class="n-label" id="lbl-sugar">糖</span></div>
+        <div class="nutri-box"><span class="n-val" id="sum-sodium">0</span><span class="n-label" id="lbl-sod">鈉(mg)</span></div>
+        <div class="nutri-box"><span class="n-val" id="sum-sat-fat">0</span><span class="n-label" id="lbl-sat">飽和脂</span></div>
+        <div class="nutri-box"><span class="n-val" id="sum-trans-fat">0</span><span class="n-label" id="lbl-trans">反式脂</span></div>
+        <div class="nutri-box"><span class="n-val" id="water-val">--</span><span class="n-label" id="lbl-water">目標水</span></div>
     </div>
 
     <div class="date-control">
@@ -115,7 +116,7 @@
         <h3 id="txt-settings-title">⚙️ 個人數據設定</h3>
         <div class="form-group">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div><label id="lbl-gender">性別</label><select id="gender"><option value="male">男</option><option value="female">女</option></select></div>
+                <div><label id="lbl-gender">性別</label><select id="gender"><option value="male" id="opt-male">男</option><option value="female" id="opt-female">女</option></select></div>
                 <div><label id="lbl-age">年齡</label><input type="number" id="age" placeholder="25"></div>
                 <div><label id="lbl-height">身高</label><input type="number" id="height" placeholder="170"></div>
                 <div><label id="lbl-weight">體重</label><input type="number" id="weight" placeholder="60"></div>
@@ -123,18 +124,18 @@
             
             <label style="margin-top: 10px;" id="lbl-activity">活動量</label>
             <select id="activity">
-                <option value="1.2">久坐 (辦公室)</option>
-                <option value="1.375">輕度 (每週運動1-3天)</option>
-                <option value="1.55">中度 (每週運動3-5天)</option>
-                <option value="1.725">高度 (每週運動6-7天)</option>
+                <option value="1.2" id="opt-act-1">久坐 (辦公室)</option>
+                <option value="1.375" id="opt-act-2">輕度 (每週運動1-3天)</option>
+                <option value="1.55" id="opt-act-3">中度 (每週運動3-5天)</option>
+                <option value="1.725" id="opt-act-4">高度 (每週運動6-7天)</option>
             </select>
             
             <label style="margin-top: 10px; color: var(--accent-color);" id="lbl-meal-mode">🍽️ 每日餐數模式</label>
             <select id="meal-mode">
-                <option value="4" selected>標準 (3餐+點心)</option>
-                <option value="3">3餐 (無點心)</option>
-                <option value="2">2餐 (168斷食)</option>
-                <option value="1">1餐 (OMAD)</option>
+                <option value="4" selected id="opt-mode-4">標準 (3餐+點心)</option>
+                <option value="3" id="opt-mode-3">3餐 (無點心)</option>
+                <option value="2" id="opt-mode-2">2餐 (168斷食)</option>
+                <option value="1" id="opt-mode-1">1餐 (OMAD)</option>
             </select>
 
             <button id="btn-calc" style="margin-top: 15px;">🔄 儲存並更新介面</button>
