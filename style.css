@@ -51,11 +51,11 @@ body {
 
 .container { max-width: 800px; width: 100%; display: grid; gap: 20px; }
 
-/* --- 🐶 電子雞寵物區 (優化版) --- */
+/* --- 🐶 電子雞寵物區 (修復: 縮小尺寸) --- */
 .pet-room-card {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     border-radius: 20px;
-    padding: 15px; /* 縮減內距 */
+    padding: 15px;
     color: white;
     text-align: center;
     position: relative;
@@ -72,15 +72,16 @@ body {
 
 .pet-badge { background: #f1c40f; color: #333; padding: 2px 6px; border-radius: 6px; font-weight: bold; font-size: 0.8em; margin-right: 5px; }
 
+/* 縮減舞台高度 */
 .pet-stage {
-    height: 140px; /* 縮減高度 */
+    height: 140px; 
     display: flex; flex-direction: column;
     justify-content: center; align-items: center; position: relative;
 }
 
-/* 寵物顯示 (縮小版) */
+/* 寵物顯示 (縮小: 80px) */
 .pet-avatar {
-    width: 80px; /* 從 120px 縮小到 80px */
+    width: 80px; 
     height: auto;
     image-rendering: pixelated;
     filter: drop-shadow(0 5px 10px rgba(0,0,0,0.2));
@@ -90,7 +91,6 @@ body {
 }
 .pet-avatar:active { transform: scale(0.9); }
 
-/* 對話框 */
 .pet-speech-bubble {
     background: white; color: #333; padding: 6px 12px; border-radius: 15px;
     position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
@@ -118,8 +118,8 @@ body {
 
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
-/* --- 📊 八大營養指標 (恢復版) --- */
-.nutrition-dashboard {
+/* --- 📊 八大營養指標網格 (修復: 加入此樣式) --- */
+.nutrition-grid {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px;
 }
 .nutri-box {
