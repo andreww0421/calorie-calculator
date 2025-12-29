@@ -51,7 +51,7 @@ body {
 
 .container { max-width: 800px; width: 100%; display: grid; gap: 20px; }
 
-/* --- 🐶 電子雞寵物區 (修復: 縮小尺寸) --- */
+/* --- 🐶 電子雞寵物區 (尺寸優化) --- */
 .pet-room-card {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     border-radius: 20px;
@@ -72,16 +72,17 @@ body {
 
 .pet-badge { background: #f1c40f; color: #333; padding: 2px 6px; border-radius: 6px; font-weight: bold; font-size: 0.8em; margin-right: 5px; }
 
-/* 縮減舞台高度 */
+/* 舞台高度縮小 */
 .pet-stage {
-    height: 140px; 
+    height: 100px; 
     display: flex; flex-direction: column;
     justify-content: center; align-items: center; position: relative;
+    margin-top: 10px;
 }
 
-/* 寵物顯示 (縮小: 80px) */
+/* 寵物顯示 (寬度限制 70px) */
 .pet-avatar {
-    width: 80px; 
+    width: 70px;
     height: auto;
     image-rendering: pixelated;
     filter: drop-shadow(0 5px 10px rgba(0,0,0,0.2));
@@ -92,9 +93,9 @@ body {
 .pet-avatar:active { transform: scale(0.9); }
 
 .pet-speech-bubble {
-    background: white; color: #333; padding: 6px 12px; border-radius: 15px;
-    position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
-    font-size: 12px; font-weight: bold; opacity: 0; transition: all 0.3s;
+    background: white; color: #333; padding: 4px 10px; border-radius: 12px;
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    font-size: 11px; font-weight: bold; opacity: 0; transition: all 0.3s;
     white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 5;
     pointer-events: none;
 }
@@ -102,14 +103,14 @@ body {
     content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
     border-width: 6px 6px 0; border-style: solid; border-color: white transparent transparent transparent;
 }
-.pet-stage:hover .pet-speech-bubble { opacity: 1; top: -15px; }
+.pet-stage:hover .pet-speech-bubble { opacity: 1; top: -20px; }
 
 .pet-accessory {
-    position: absolute; font-size: 30px; top: 10px; right: 20px; z-index: 3;
+    position: absolute; font-size: 24px; top: 0px; right: 10px; z-index: 3;
     pointer-events: none; animation: float 3s ease-in-out infinite;
 }
 
-.pet-status-text { font-size: 0.85em; opacity: 0.9; margin-top: 5px; }
+.pet-status-text { font-size: 0.85em; opacity: 0.9; margin-top: 10px; }
 .exp-container {
     width: 80%; height: 6px; background: rgba(0,0,0,0.2); border-radius: 4px;
     margin: 5px auto 0; overflow: hidden; position: relative;
@@ -118,7 +119,7 @@ body {
 
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
-/* --- 📊 八大營養指標網格 (修復: 加入此樣式) --- */
+/* --- 📊 八大營養指標網格 (確保 4x2) --- */
 .nutrition-grid {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px;
 }
