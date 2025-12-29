@@ -20,13 +20,66 @@ const i18n = {
         alertDel: "確定要刪除？", alertFavAdded: "已加入最愛！", alertFavExist: "這個食物已經在最愛清單囉！", alertSelImg: "請先選擇圖片！", alertAiFail: "AI 分析失敗：", alertFill: "請填寫資料", alertNameCal: "請輸入名稱與熱量", alertImportOk: "🎉 資料還原成功！", alertImportFail: "❌ 檔案格式錯誤",
         msgNormal: "主人，今天吃什麼？", msgHappy: "太棒了！我覺得充滿活力！", msgFat: "呃...我好像吃太飽了...", msgThirsty: "水...我要喝水...", msgSad: "主人...別忘了照顧我..."
     },
-    // ... 其他語言保留 ...
+    "zh-CN": {
+        dateLabel: "📅 记录日期：", totalIntake: "今日摄取", goal: "目标",
+        pro: "蛋白质", fat: "脂肪", carb: "碳水", sugar: "糖", sod: "钠(mg)", sat: "饱和脂", trans: "反式脂", water: "目标水",
+        chartTitle: "📊 营养与热量分析", chartMacro: "今日三大营养素 (PFC)", chartWeekly: "本周热量趋势",
+        aiTitle: "📸 AI 饮食分析", btnPhoto: "📸 1. 拍照 / 选择图片", btnAnalyze: "发送图片分析", aiLoading: "AI 正在分析食物营养，请稍候...",
+        aiDescPlaceholder: "📝 补充说明 (例如：这是一碗牛肉面，没加葱)...",
+        recordTitle: "饮食记录", manualLabel: "手动补充 (仅热量)", placeholderName: "食物名称", placeholderCal: "卡路里",
+        btnAdd: "➕ 加入记录", btnFavSave: "加入收藏", btnFavLoad: "选择常吃食物", btnFavAi: "加入收藏",
+        settingsTitle: "⚙️ 个人数据设定", gender: "性别", male: "男", female: "女", age: "年龄", height: "身高", weight: "体重",
+        activity: "活动量", act1: "久坐 (办公室)", act2: "轻度 (每周运动1-3天)", act3: "中度 (每周运动3-5天)", act4: "高度 (每周运动6-7天)",
+        mealMode: "🍽️ 每日餐数模式", mode4: "标准 (3餐+点心)", mode3: "3餐 (无点心)", mode2: "2餐 (168断食)", mode1: "1餐 (OMAD)",
+        btnCalc: "🔄 保存并更新界面", resTdee: "TDEE", resTarget: "减重目标",
+        modalTitle: "AI 分析报告", modalAsk: "请问这是哪一餐？", btnCancel: "取消",
+        favTitle: "常吃食物清单", btnClose: "关闭",
+        menuImport: "导入还原", menuExport: "导出备份", menuTheme: "切换主题", menuLang: "语言", menuCollection: "收藏系统", suggest: "建议",
+        langTitle: "语言", langCancel: "取消",
+        meals: { breakfast: "🍳 早餐", lunch: "🍱 午餐", dinner: "🍲 晚餐", snack: "🍪 点心", meal1: "🍽️ 第一餐", meal2: "🍽️ 第二餐", mealBig: "🏆 唯一大餐" },
+        alertDel: "确定要删除？", alertFavAdded: "已加入收藏！", alertFavExist: "这个食物已经在收藏清单啰！", alertSelImg: "请先选择图片！", alertAiFail: "AI 分析失败：", alertFill: "请填写资料", alertNameCal: "请输入名称与热量", alertImportOk: "🎉 资料还原成功！", alertImportFail: "❌ 档案格式错误",
+        msgNormal: "主人，今天吃什么？", msgHappy: "太棒了！我觉得充满活力！", msgFat: "呃...我好像吃太饱了...", msgThirsty: "水...我要喝水...", msgSad: "主人...别忘了照顾我..."
+    },
     "en": {
         dateLabel: "📅 Date:", totalIntake: "Total Intake", goal: "Goal",
-        // ... (省略)
+        pro: "Protein", fat: "Fat", carb: "Carb", sugar: "Sugar", sod: "Sodium", sat: "Sat. Fat", trans: "Trans Fat", water: "Water",
+        chartTitle: "📊 Nutrition Analysis", chartMacro: "Macros (PFC)", chartWeekly: "Weekly Calories",
+        aiTitle: "📸 AI Analysis", btnPhoto: "📸 1. Select Photo", btnAnalyze: "Analyze", aiLoading: "AI is analyzing...",
+        aiDescPlaceholder: "📝 Optional description (e.g. Beef noodles, no onions)...",
+        recordTitle: "Food Log", manualLabel: "Manual Entry (Calorie only)", placeholderName: "Food Name", placeholderCal: "Calories",
+        btnAdd: "➕ Add Log", btnFavSave: "Save Favorite", btnFavLoad: "Load Favorite", btnFavAi: "Save to Favorites",
+        settingsTitle: "⚙️ Profile Settings", gender: "Gender", male: "Male", female: "Female", age: "Age", height: "Height", weight: "Weight",
+        activity: "Activity Level", act1: "Sedentary", act2: "Lightly Active", act3: "Moderately Active", act4: "Very Active",
+        mealMode: "🍽️ Meal Mode", mode4: "Standard (3+Snack)", mode3: "3 Meals", mode2: "2 Meals (168)", mode1: "OMAD",
+        btnCalc: "🔄 Save & Update", resTdee: "TDEE", resTarget: "Target",
+        modalTitle: "AI Report", modalAsk: "Which meal is this?", btnCancel: "Cancel",
+        favTitle: "Favorite Foods", btnClose: "Close",
+        menuImport: "Import Data", menuExport: "Export Data", menuTheme: "Switch Theme", menuLang: "Language", menuCollection: "Collection", suggest: "Goal",
+        langTitle: "Language", langCancel: "Cancel",
+        meals: { breakfast: "🍳 Breakfast", lunch: "🍱 Lunch", dinner: "🍲 Dinner", snack: "🍪 Snack", meal1: "🍽️ Meal 1", meal2: "🍽️ Meal 2", mealBig: "🏆 Big Meal" },
+        alertDel: "Delete this item?", alertFavAdded: "Saved to favorites!", alertFavExist: "Already in favorites!", alertSelImg: "Select image first!", alertAiFail: "AI Failed: ", alertFill: "Fill all fields", alertNameCal: "Enter name and calories", alertImportOk: "🎉 Data Restored!", alertImportFail: "❌ Invalid File",
         msgNormal: "What are we eating today?", msgHappy: "I feel great!", msgFat: "Ugh... too much food...", msgThirsty: "Water... please...", msgSad: "Don't forget me..."
+    },
+    "ja": {
+        dateLabel: "📅 日付：", totalIntake: "摂取カロリー", goal: "目標",
+        pro: "タンパク質", fat: "脂質", carb: "炭水化物", sugar: "糖質", sod: "塩分", sat: "飽和脂肪", trans: "トランス脂肪", water: "水分目標",
+        chartTitle: "📊 栄養分析", chartMacro: "三大栄養素 (PFC)", chartWeekly: "週間カロリー",
+        aiTitle: "📸 AI食事分析", btnPhoto: "📸 1. 写真を選択", btnAnalyze: "分析開始", aiLoading: "AI分析中...",
+        aiDescPlaceholder: "📝 補足説明 (例: 牛肉麺、ネギ抜き)...",
+        recordTitle: "食事記録", manualLabel: "手動入力 (カロリーのみ)", placeholderName: "食品名", placeholderCal: "kcal",
+        btnAdd: "➕ 記録追加", btnFavSave: "お気に入り保存", btnFavLoad: "お気に入りから選択", btnFavAi: "お気に入りに保存",
+        settingsTitle: "⚙️ プロフィール設定", gender: "性別", male: "男性", female: "女性", age: "年齢", height: "身長", weight: "体重",
+        activity: "活動レベル", act1: "座り仕事", act2: "軽い運動 (週1-3)", act3: "中程度の運動 (週3-5)", act4: "激しい運動 (週6-7)",
+        mealMode: "🍽️ 食事回数", mode4: "標準 (3食+間食)", mode3: "3食のみ", mode2: "2食 (168断食)", mode1: "1食 (OMAD)",
+        btnCalc: "🔄 保存して更新", resTdee: "TDEE", resTarget: "目標",
+        modalTitle: "AI分析レポート", modalAsk: "どの食事ですか？", btnCancel: "キャンセル",
+        favTitle: "お気に入りリスト", btnClose: "閉じる",
+        menuImport: "復元", menuExport: "バックアップ", menuTheme: "テーマ切替", menuLang: "言語", menuCollection: "コレクション", suggest: "目安",
+        langTitle: "言語", langCancel: "キャンセル",
+        meals: { breakfast: "🍳 朝食", lunch: "🍱 昼食", dinner: "🍲 夕食", snack: "🍪 間食", meal1: "🍽️ 食事1", meal2: "🍽️ 食事2", mealBig: "🏆 大盛り" },
+        alertDel: "削除しますか？", alertFavAdded: "お気に入りに保存しました！", alertFavExist: "既に保存されています", alertSelImg: "画像を選択してください", alertAiFail: "AIエラー: ", alertFill: "全ての項目を入力してください", alertNameCal: "名称とカロリーを入力", alertImportOk: "🎉 復元完了！", alertImportFail: "❌ ファイルエラー",
+        msgNormal: "今日は何を食べますか？", msgHappy: "最高！元気いっぱいです！", msgFat: "うぅ...食べ過ぎました...", msgThirsty: "水...水をください...", msgSad: "忘れないで..."
     }
-    // ... 
 };
 
 let curLang = localStorage.getItem('appLang') || "zh-TW";
@@ -62,14 +115,19 @@ let weeklyChart = null;
 
 // --- 初始化 ---
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. 先綁定事件，確保按鈕有效
+    setupEventListeners();
+    
+    // 2. 載入設定
     setTheme(curTheme);
     setLang(curLang);
-    initPetSystem();
     document.getElementById('current-date').value = selectedDate;
+    
+    // 3. 初始化功能
+    initPetSystem();
     loadProfile();
     loadFoodData(selectedDate);
     initCharts();
-    setupEventListeners();
 });
 
 // --- 事件綁定 ---
@@ -289,8 +347,8 @@ function setLang(lang) {
     curLang = lang;
     localStorage.setItem('appLang', lang);
     const t = i18n[lang];
-    // 文字更新 (僅列出部分示例)
     document.getElementById('txt-date-label').innerText = t.dateLabel;
+    // ... (其他文字更新邏輯略，會自動使用 updateMealUI) ...
     updateMealUI();
     if(macroChart) { macroChart.data.labels = [t.pro, t.fat, t.carb]; macroChart.update(); }
 }
@@ -435,7 +493,33 @@ function handleFileSelect(input) {
 }
 
 function startAnalysis() {
-    // ... (同上方實作)
+    const input = document.getElementById('image-upload');
+    const file = input.files[0]; if (!file) { alert(i18n[curLang].alertSelImg); return; }
+    const desc = document.getElementById('ai-desc').value.trim();
+
+    document.getElementById('analyze-btn').style.display = 'none';
+    document.getElementById('ai-loading').style.display = 'block';
+
+    toBase64(file).then(base64 => {
+        return callCloudflareAI(base64, desc);
+    }).then(result => {
+        if (result) {
+            tempAIResult = {
+                name: result.foodName,
+                nutri: {
+                    calories: Number(result.calories) || 0, protein: Number(result.protein) || 0, fat: Number(result.fat) || 0,
+                    carbohydrate: Number(result.carbohydrate) || 0, sugar: Number(result.sugar) || 0, sodium: Number(result.sodium) || 0,
+                    saturatedFat: Number(result.saturatedFat) || 0, transFat: Number(result.transFat) || 0
+                }
+            }; 
+            showModal();
+        }
+    }).catch(e => {
+        console.error(e); alert(i18n[curLang].alertAiFail + e.message);
+        document.getElementById('analyze-btn').style.display = 'inline-block';
+    }).finally(() => {
+        document.getElementById('ai-loading').style.display = 'none';
+    });
 }
 
 function changeDate() { selectedDate = document.getElementById('current-date').value; document.getElementById('display-date-text').innerText = selectedDate; loadFoodData(selectedDate); }
