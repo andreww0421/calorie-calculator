@@ -11,7 +11,6 @@
     <link rel="icon" type="image/png" href="calorie_icon.png">
     
     <link rel="stylesheet" href="style.css">
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
@@ -30,10 +29,9 @@
         
         <div class="pet-stage" onclick="petInteraction()">
             <div class="pet-speech-bubble" id="pet-msg">主人，今天吃什麼？</div>
-            
             <img src="dog_animation/dog_idle.gif" class="pet-avatar" id="pet-avatar" alt="Pet">
-            
-            <div class="pet-accessory" id="pet-accessory"></div> </div>
+            <div class="pet-accessory" id="pet-accessory"></div>
+        </div>
 
         <div class="pet-status-text">
             今日攝取: <span id="total-cal-display">0</span> / <span id="target-cal-display">--</span> kcal
@@ -44,10 +42,14 @@
         </div>
     </div>
 
-    <div class="mini-dashboard">
+    <div class="nutrition-dashboard">
         <div class="nutri-box"><span class="n-val" id="sum-protein">0</span><span class="n-label">蛋白質</span></div>
         <div class="nutri-box"><span class="n-val" id="sum-fat">0</span><span class="n-label">脂肪</span></div>
         <div class="nutri-box"><span class="n-val" id="sum-carb">0</span><span class="n-label">碳水</span></div>
+        <div class="nutri-box"><span class="n-val" id="sum-sugar">0</span><span class="n-label">糖</span></div>
+        <div class="nutri-box"><span class="n-val" id="sum-sodium">0</span><span class="n-label">鈉(mg)</span></div>
+        <div class="nutri-box"><span class="n-val" id="sum-sat-fat">0</span><span class="n-label">飽和脂</span></div>
+        <div class="nutri-box"><span class="n-val" id="sum-trans-fat">0</span><span class="n-label">反式脂</span></div>
         <div class="nutri-box"><span class="n-val" id="water-val">--</span><span class="n-label">目標水</span></div>
     </div>
 
@@ -79,18 +81,22 @@
         <div style="text-align: center;">
             <input type="file" id="image-upload" accept="image/*" style="display: none;">
             <button class="btn-ai" id="btn-take-photo">📸 1. 拍照 / 選擇圖片</button>
+            
             <div id="ai-desc-group" style="display:none; margin-top: 15px;">
                 <textarea id="ai-desc" rows="2" style="width:100%; padding:10px; border-radius:10px; font-size:15px; resize: none;" placeholder=""></textarea>
             </div>
+
             <button id="analyze-btn" class="btn-analyze">✨ 2. <span id="txt-analyze-btn">送出圖片分析</span></button>
         </div>
-        <div class="loading-spinner" id="ai-loading">🤖 <span id="txt-ai-loading">AI 正在分析...</span></div>
+        <div class="loading-spinner" id="ai-loading">🤖 <span id="txt-ai-loading">AI 正在分析食物營養，請稍候...</span></div>
         <img id="image-preview">
     </div>
 
     <div class="card">
         <h3>🍽️ <span id="display-date-text">今日</span> <span id="txt-record-title">飲食紀錄</span></h3>
-        <div id="meal-sections-container"></div> <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ddd;">
+        <div id="meal-sections-container"></div>
+        
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ddd;">
             <label id="txt-manual-label">手動補充 (僅熱量)</label>
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                 <input type="text" id="manual-name" placeholder="食物名稱">
@@ -114,15 +120,23 @@
                 <div><label id="lbl-height">身高</label><input type="number" id="height" placeholder="170"></div>
                 <div><label id="lbl-weight">體重</label><input type="number" id="weight" placeholder="60"></div>
             </div>
+            
             <label style="margin-top: 10px;" id="lbl-activity">活動量</label>
             <select id="activity">
-                <option value="1.2">久坐</option><option value="1.375">輕度</option>
-                <option value="1.55">中度</option><option value="1.725">高度</option>
+                <option value="1.2">久坐 (辦公室)</option>
+                <option value="1.375">輕度 (每週運動1-3天)</option>
+                <option value="1.55">中度 (每週運動3-5天)</option>
+                <option value="1.725">高度 (每週運動6-7天)</option>
             </select>
+            
             <label style="margin-top: 10px; color: var(--accent-color);" id="lbl-meal-mode">🍽️ 每日餐數模式</label>
             <select id="meal-mode">
-                <option value="4" selected>標準</option><option value="3">3餐</option><option value="2">2餐</option><option value="1">1餐</option>
+                <option value="4" selected>標準 (3餐+點心)</option>
+                <option value="3">3餐 (無點心)</option>
+                <option value="2">2餐 (168斷食)</option>
+                <option value="1">1餐 (OMAD)</option>
             </select>
+
             <button id="btn-calc" style="margin-top: 15px;">🔄 儲存並更新介面</button>
         </div>
         <div id="goal-result" class="goal-section">
@@ -135,8 +149,7 @@
     <div class="modal">
         <h3>🏆 寵物與配件收藏</h3>
         <p>目前連續簽到：<span style="color:var(--primary-color); font-weight:bold; font-size:1.2em;" id="streak-count-modal">0</span> 天</p>
-        <div class="collection-grid" id="collection-grid">
-            </div>
+        <div class="collection-grid" id="collection-grid"></div>
         <button id="btn-collection-close" style="margin-top: 15px; background: #95a5a6;">關閉</button>
     </div>
 </div>
@@ -145,12 +158,10 @@
     <div class="modal">
         <h3>✨ 歡迎來到快樂寵物！</h3>
         <p>請為您的第一隻夥伴命名：</p>
-        <div class="pet-display-preview">
-            <img src="dog_animation/dog_idle.gif" style="width:100px;">
+        <div style="margin: 20px 0;">
+            <img src="dog_animation/dog_idle.gif" style="width:80px;">
         </div>
-        <div style="margin-top: 20px;">
-            <input type="text" id="pet-name-input" placeholder="例如：皮皮" style="font-size: 18px; text-align: center;">
-        </div>
+        <input type="text" id="pet-name-input" placeholder="例如：皮皮" style="font-size: 18px; text-align: center; width: 100%; padding: 10px; box-sizing: border-box;">
         <button id="btn-pet-start" style="margin-top: 20px;">🚀 開始旅程</button>
     </div>
 </div>
