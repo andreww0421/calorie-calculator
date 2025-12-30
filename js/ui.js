@@ -10,7 +10,7 @@ function initCharts() {
         data: {
             labels: [t.pro, t.fat, t.carb],
             datasets: [{
-                data: [1, 1, 1], // 預設灰圈
+                data: [1, 1, 1], 
                 backgroundColor: ['#e0e0e0', '#e0e0e0', '#e0e0e0'],
                 borderWidth: 2,
                 borderColor: 'var(--card-bg)'
@@ -103,13 +103,25 @@ function renderListAndStats() {
     let mealTotals = { breakfast:0, lunch:0, dinner:0, snack:0 };
 
     foodItems.forEach((item, index) => {
+        // 計算總和
         total.cal += (Number(item.nutri.calories) || 0); total.pro += (Number(item.nutri.protein) || 0);
         total.fat += (Number(item.nutri.fat) || 0); total.carb += (Number(item.nutri.carbohydrate) || 0);
         total.sugar += (Number(item.nutri.sugar) || 0); total.sod += (Number(item.nutri.sodium) || 0);
         total.sat += (Number(item.nutri.saturatedFat) || 0); total.trans += (Number(item.nutri.transFat) || 0);
         if(mealTotals[item.type] !== undefined) mealTotals[item.type] += (Number(item.nutri.calories) || 0);
+        
+        // 建立列表項目
         const li = document.createElement('li');
-        li.innerHTML = `<div class="food-info"><div class="name">${item.name}</div><div class="detail">🔥${Math.round(item.nutri.calories)} | P:${item.nutri.protein} F:${item.nutri.fat} C:${item.nutri.carbohydrate}</div></div><button class="btn-delete" onclick="deleteItem(${index})">X</button>`;
+        li.innerHTML = `
+            <div class="food-info">
+                <div class="name">${item.name}</div>
+                <div class="detail">🔥${Math.round(item.nutri.calories)} | P:${item.nutri.protein} F:${item.nutri.fat} C:${item.nutri.carbohydrate}</div>
+            </div>
+            <div style="display: flex; gap: 5px;">
+                <button class="btn-delete" style="background-color: #ff7675;" onclick="addRecordToFav(${index})">❤️</button>
+                <button class="btn-delete" onclick="deleteItem(${index})">X</button>
+            </div>
+        `;
         const listEl = document.getElementById(`list-${item.type}`); if(listEl) listEl.appendChild(li);
     });
 
@@ -134,9 +146,9 @@ function renderListAndStats() {
 
 function updateMealUI() {
     const t = (typeof i18n !== 'undefined' && i18n[curLang]) ? i18n[curLang] : i18n['zh-TW'];
-    // ✨ 關鍵修正：多讀取一層 meals 屬性，避免 undefined
     const m = t.meals || {}; 
 
+    // 定義比例
     const configs = {
         "4": { sections: ['breakfast', 'lunch', 'dinner', 'snack'], titles: { breakfast: m.breakfast, lunch: m.lunch, dinner: m.dinner, snack: m.snack }, ratios: { breakfast: 0.25, lunch: 0.35, dinner: 0.30, snack: 0.10 } },
         "3": { sections: ['breakfast', 'lunch', 'dinner'], titles: { breakfast: m.breakfast, lunch: m.lunch, dinner: m.dinner }, ratios: { breakfast: 0.30, lunch: 0.40, dinner: 0.30 } },
@@ -151,9 +163,21 @@ function updateMealUI() {
     container.innerHTML = ''; manualSelect.innerHTML = ''; modalBtns.innerHTML = '';
 
     config.sections.forEach(type => {
+        // ✨ 修正建議熱量顯示：直接在這裡計算並填入，解決顯示為 0 的問題
+        // 我們使用全域變數 targetCalories (來自 data.js)
+        const suggested = targetCalories > 0 ? Math.round(targetCalories * config.ratios[type]) : 0;
+
         const section = document.createElement('div');
         section.className = 'meal-section';
-        section.innerHTML = `<div class="meal-header"><div><span class="meal-title">${config.titles[type]}</span> <span class="meal-goal">(<span class="txt-suggest">${t.suggest}</span>: <span id="goal-${type}">0</span>)</span></div><div class="meal-progress" id="prog-${type}">0 kcal</div></div><ul class="meal-list" id="list-${type}"></ul>`;
+        section.innerHTML = `
+            <div class="meal-header">
+                <div>
+                    <span class="meal-title">${config.titles[type]}</span> 
+                    <span class="meal-goal">(<span class="txt-suggest">${t.suggest}</span>: <span id="goal-${type}">${suggested}</span>)</span>
+                </div>
+                <div class="meal-progress" id="prog-${type}">0 kcal</div>
+            </div>
+            <ul class="meal-list" id="list-${type}"></ul>`;
         container.appendChild(section);
 
         const option = document.createElement('option');
@@ -210,9 +234,71 @@ function setLang(lang) {
     if(document.getElementById('ai-desc')) document.getElementById('ai-desc').placeholder = t.aiDescPlaceholder;
     
     updateMealUI();
+    
     if(macroChart) { 
         macroChart.data.labels = [t.pro, t.fat, t.carb]; 
         macroChart.update(); 
+    }
+}
+
+// ✨ 優化：常吃食物清單顯示更多細節
+function openFavModal() {
+    const list = document.getElementById('fav-list-container');
+    list.innerHTML = '';
+    if(favoriteFoods.length === 0) { list.innerHTML = '<p style="color:#888; text-align:center;">(Empty)</p>'; } 
+    else {
+        favoriteFoods.forEach((item, index) => {
+            // 向下相容：如果舊資料沒有 nutri 物件，就用預設值
+            const cal = item.nutri ? item.nutri.calories : item.cal;
+            const pro = item.nutri ? item.nutri.protein : 0;
+            const fat = item.nutri ? item.nutri.fat : 0;
+            const carb = item.nutri ? item.nutri.carbohydrate : 0;
+
+            const div = document.createElement('div');
+            div.className = 'fav-item-row';
+            div.innerHTML = `
+                <div class="fav-item-name" onclick="pickFav(${index})">
+                    ${item.name} 
+                    <span style="font-size:0.85em; opacity:0.8; display:block; font-weight:normal;">
+                        🔥${cal} | P:${pro} F:${fat} C:${carb}
+                    </span>
+                </div>
+                <button class="btn-delete" onclick="deleteFav(${index})">X</button>
+            `;
+            list.appendChild(div);
+        });
+    }
+    document.getElementById('fav-modal').style.display = 'flex';
+}
+
+// ✨ 優化：選擇常吃食物時，填入所有欄位
+function pickFav(index) {
+    const item = favoriteFoods[index];
+    document.getElementById('manual-name').value = item.name;
+    
+    if (item.nutri) {
+        document.getElementById('manual-cal').value = item.nutri.calories;
+        document.getElementById('manual-pro').value = item.nutri.protein || 0;
+        document.getElementById('manual-fat').value = item.nutri.fat || 0;
+        document.getElementById('manual-carb').value = item.nutri.carbohydrate || 0;
+        document.getElementById('manual-sugar').value = item.nutri.sugar || 0;
+        document.getElementById('manual-sod').value = item.nutri.sodium || 0;
+        document.getElementById('manual-sat').value = item.nutri.saturatedFat || 0;
+        document.getElementById('manual-trans').value = item.nutri.transFat || 0;
+    } else {
+        // 舊資料相容
+        document.getElementById('manual-cal').value = item.cal;
+    }
+    
+    closeModal('fav-modal');
+}
+
+function deleteFav(index) {
+    const t = i18n[curLang] || i18n['zh-TW'];
+    if(confirm(t.alertDel || "確定要刪除？")) {
+        favoriteFoods.splice(index, 1);
+        localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
+        openFavModal();
     }
 }
 
