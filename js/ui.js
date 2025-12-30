@@ -134,11 +134,14 @@ function renderListAndStats() {
 
 function updateMealUI() {
     const t = (typeof i18n !== 'undefined' && i18n[curLang]) ? i18n[curLang] : i18n['zh-TW'];
+    // ✨ 關鍵修正：多讀取一層 meals 屬性，避免 undefined
+    const m = t.meals || {}; 
+
     const configs = {
-        "4": { sections: ['breakfast', 'lunch', 'dinner', 'snack'], titles: { breakfast: t.breakfast, lunch: t.lunch, dinner: t.dinner, snack: t.snack }, ratios: { breakfast: 0.25, lunch: 0.35, dinner: 0.30, snack: 0.10 } },
-        "3": { sections: ['breakfast', 'lunch', 'dinner'], titles: { breakfast: t.breakfast, lunch: t.lunch, dinner: t.dinner }, ratios: { breakfast: 0.30, lunch: 0.40, dinner: 0.30 } },
-        "2": { sections: ['lunch', 'dinner'], titles: { lunch: t.meal1, dinner: t.meal2 }, ratios: { lunch: 0.50, dinner: 0.50 } },
-        "1": { sections: ['dinner'], titles: { dinner: t.mealBig }, ratios: { dinner: 1.0 } }
+        "4": { sections: ['breakfast', 'lunch', 'dinner', 'snack'], titles: { breakfast: m.breakfast, lunch: m.lunch, dinner: m.dinner, snack: m.snack }, ratios: { breakfast: 0.25, lunch: 0.35, dinner: 0.30, snack: 0.10 } },
+        "3": { sections: ['breakfast', 'lunch', 'dinner'], titles: { breakfast: m.breakfast, lunch: m.lunch, dinner: m.dinner }, ratios: { breakfast: 0.30, lunch: 0.40, dinner: 0.30 } },
+        "2": { sections: ['lunch', 'dinner'], titles: { lunch: m.meal1, dinner: m.meal2 }, ratios: { lunch: 0.50, dinner: 0.50 } },
+        "1": { sections: ['dinner'], titles: { dinner: m.mealBig }, ratios: { dinner: 1.0 } }
     };
     const config = configs[currentMealMode];
     const container = document.getElementById('meal-sections-container');
@@ -181,7 +184,6 @@ function setLang(lang) {
     localStorage.setItem('appLang', lang);
     const t = i18n[lang] || i18n['zh-TW'];
     
-    // 更新介面 ID 對應文字
     const mapping = {
         'txt-date-label': t.dateLabel, 'txt-total-intake': t.totalIntake, 'txt-goal-label': t.goal,
         'lbl-pro': t.pro, 'lbl-fat': t.fat, 'lbl-carb': t.carb, 'lbl-sugar': t.sugar, 'lbl-sod': t.sod, 'lbl-sat': t.sat, 'lbl-trans': t.trans, 'lbl-water': t.water,
@@ -203,15 +205,11 @@ function setLang(lang) {
         if(el) el.innerText = mapping[id];
     }
 
-    // 更新 placeholder
     if(document.getElementById('manual-name')) document.getElementById('manual-name').placeholder = t.placeholderName;
     if(document.getElementById('manual-cal')) document.getElementById('manual-cal').placeholder = t.placeholderCal;
     if(document.getElementById('ai-desc')) document.getElementById('ai-desc').placeholder = t.aiDescPlaceholder;
     
-    // 更新動態餐點列表
     updateMealUI();
-    
-    // 更新圖表標題
     if(macroChart) { 
         macroChart.data.labels = [t.pro, t.fat, t.carb]; 
         macroChart.update(); 
