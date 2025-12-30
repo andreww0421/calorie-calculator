@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>快樂小狗營養管家</title>
+    <title>快樂營養管家</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2ecc71">
@@ -26,7 +26,11 @@
     <div class="dashboard-header">
         <div class="label" id="txt-total-intake">今日攝取</div>
         <div class="big-cal" id="total-cal-display">0</div>
-        <div class="label"><span id="txt-kcal-unit">kcal</span> / <span id="txt-goal-label">目標</span> <span id="target-cal-display">--</span></div>
+        <div class="label">
+            <span id="txt-kcal-unit">kcal</span> / 
+            <span id="txt-goal-label">目標</span> 
+            <span id="target-cal-display">--</span>
+        </div>
 
         <div class="nutrition-grid">
             <div class="nutri-box"><span class="n-val" id="sum-protein">0</span><span class="n-label" id="lbl-pro">蛋白質</span></div>
@@ -62,6 +66,7 @@
         <h2 style="color: var(--accent-color);" id="txt-ai-title">📸 AI 飲食分析</h2>
         <div style="text-align: center;">
             <input type="file" id="image-upload" accept="image/*" style="display: none;">
+            
             <button class="btn-ai" id="btn-take-photo">📸 1. 拍照 / 選擇圖片</button>
             
             <div id="ai-desc-group" style="display:none; margin-top: 15px;">
@@ -70,20 +75,26 @@
 
             <button id="analyze-btn" class="btn-analyze">✨ 2. <span id="txt-analyze-btn">送出圖片分析</span></button>
         </div>
+
         <div class="loading-spinner" id="ai-loading">🤖 <span id="txt-ai-loading">AI 正在分析食物營養，請稍候...</span></div>
         <img id="image-preview">
     </div>
 
     <div class="card">
         <h3>🍽️ <span id="display-date-text">今日</span> <span id="txt-record-title">飲食紀錄</span></h3>
-        <div id="meal-sections-container"></div> <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ddd;">
+        
+        <div id="meal-sections-container"></div>
+
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ddd;">
             <label id="txt-manual-label">手動補充 (僅熱量)</label>
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                 <input type="text" id="manual-name" placeholder="食物名稱">
                 <input type="number" id="manual-cal" placeholder="卡路里">
             </div>
             <select id="manual-type" style="margin-bottom: 10px;"></select>
+            
             <button id="btn-add-record" style="background-color: #95a5a6;">➕ 加入紀錄</button>
+            
             <div class="fav-controls">
                 <button class="btn-fav-save" id="btn-fav-save-main">❤️ <span id="btn-fav-save">加入最愛</span></button>
                 <button class="btn-fav-load" id="btn-fav-load-main">📂 <span id="btn-fav-load">選擇常吃食物</span></button>
@@ -95,7 +106,13 @@
         <h3 id="txt-settings-title">⚙️ 個人數據設定</h3>
         <div class="form-group">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div><label id="lbl-gender">性別</label><select id="gender"><option value="male" id="opt-male">男</option><option value="female" id="opt-female">女</option></select></div>
+                <div>
+                    <label id="lbl-gender">性別</label>
+                    <select id="gender">
+                        <option id="opt-male" value="male">男</option>
+                        <option id="opt-female" value="female">女</option>
+                    </select>
+                </div>
                 <div><label id="lbl-age">年齡</label><input type="number" id="age" placeholder="25"></div>
                 <div><label id="lbl-height">身高</label><input type="number" id="height" placeholder="170"></div>
                 <div><label id="lbl-weight">體重</label><input type="number" id="weight" placeholder="60"></div>
@@ -103,24 +120,26 @@
             
             <label style="margin-top: 10px;" id="lbl-activity">活動量</label>
             <select id="activity">
-                <option value="1.2" id="opt-act-1">久坐 (辦公室)</option>
-                <option value="1.375" id="opt-act-2">輕度 (每週運動1-3天)</option>
-                <option value="1.55" id="opt-act-3">中度 (每週運動3-5天)</option>
-                <option value="1.725" id="opt-act-4">高度 (每週運動6-7天)</option>
+                <option id="opt-act-1" value="1.2">久坐 (辦公室)</option>
+                <option id="opt-act-2" value="1.375">輕度 (每週運動1-3天)</option>
+                <option id="opt-act-3" value="1.55">中度 (每週運動3-5天)</option>
+                <option id="opt-act-4" value="1.725">高度 (每週運動6-7天)</option>
             </select>
             
             <label style="margin-top: 10px; color: var(--accent-color);" id="lbl-meal-mode">🍽️ 每日餐數模式</label>
             <select id="meal-mode">
-                <option value="4" selected id="opt-mode-4">標準 (3餐+點心)</option>
-                <option value="3" id="opt-mode-3">3餐 (無點心)</option>
-                <option value="2" id="opt-mode-2">2餐 (168斷食)</option>
-                <option value="1" id="opt-mode-1">1餐 (OMAD)</option>
+                <option id="opt-mode-4" value="4" selected>標準 (3餐+點心)</option>
+                <option id="opt-mode-3" value="3">3餐 (無點心)</option>
+                <option id="opt-mode-2" value="2">2餐 (168斷食)</option>
+                <option id="opt-mode-1" value="1">1餐 (OMAD)</option>
             </select>
 
             <button id="btn-calc" style="margin-top: 15px;">🔄 儲存並更新介面</button>
         </div>
+        
         <div id="goal-result" class="goal-section">
-            <span id="txt-res-tdee">TDEE</span>：<span id="tdee-val">0</span> kcal | <span id="txt-res-target">減重目標</span>：<span id="target-cal-val">0</span> kcal
+            <span id="txt-res-tdee">TDEE</span>：<span id="tdee-val">0</span> kcal | 
+            <span id="txt-res-target">減重目標</span>：<span id="target-cal-val">0</span> kcal
         </div>
     </div>
 </div>
@@ -168,15 +187,18 @@
         <div class="fab-item" id="btn-export">📤 <span id="menu-export">匯出備份</span></div>
     </div>
     <div class="fab-main" id="btn-fab-main">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+        </svg>
     </div>
 </div>
 
 <script src="js/config.js"></script>
 <script src="js/utils.js"></script>
-<script src="js/data.js"></script> <script src="js/api.js"></script>
-<script src="js/ui.js"></script>   <script src="js/app.js"></script>
+<script src="js/data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
 
 </body>
 </html>
-
