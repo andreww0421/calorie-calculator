@@ -70,6 +70,38 @@ function updateChartTheme(theme) {
     }
 }
 
+// ✨ 新增：寵物狀態更新邏輯
+function updatePetStatus(currentCal) {
+    const petImg = document.getElementById('pet-img');
+    const petMsg = document.getElementById('pet-msg');
+    if(!petImg || !petMsg) return;
+
+    // 取得目標熱量 (全域變數 targetCalories，若無則預設 2000)
+    const target = (typeof targetCalories !== 'undefined' && targetCalories > 0) ? targetCalories : 2000;
+    const ratio = currentCal / target;
+
+    let src = 'dog_animation/dog_idle.gif';
+    let msg = '汪！今天想吃什麼呢？';
+
+    if (currentCal === 0) {
+         src = 'dog_animation/dog_idle.gif';
+         msg = '汪！我肚子餓了...';
+    } else if (ratio < 0.5) {
+         src = 'dog_animation/dog_walk.gif';
+         msg = '還沒吃飽呢，加油！';
+    } else if (ratio >= 0.5 && ratio <= 1.1) {
+         src = 'dog_animation/dog_happy.gif';
+         msg = '營養剛剛好，太棒了！';
+    } else {
+         src = 'dog_animation/dog_fat.gif';
+         msg = '嗝... 吃太多了啦！';
+    }
+    
+    // 只有在圖片路徑改變時才更新，避免閃爍
+    if(!petImg.src.includes(src)) petImg.src = src;
+    petMsg.innerText = msg;
+}
+
 function updateCharts(totalNutri) {
     const hasData = totalNutri.pro > 0 || totalNutri.fat > 0 || totalNutri.carb > 0;
     if (macroChart) {
@@ -103,14 +135,11 @@ function renderListAndStats() {
     let mealTotals = { breakfast:0, lunch:0, dinner:0, snack:0 };
 
     foodItems.forEach((item, index) => {
-        // 計算總和
         total.cal += (Number(item.nutri.calories) || 0); total.pro += (Number(item.nutri.protein) || 0);
         total.fat += (Number(item.nutri.fat) || 0); total.carb += (Number(item.nutri.carbohydrate) || 0);
         total.sugar += (Number(item.nutri.sugar) || 0); total.sod += (Number(item.nutri.sodium) || 0);
         total.sat += (Number(item.nutri.saturatedFat) || 0); total.trans += (Number(item.nutri.transFat) || 0);
         if(mealTotals[item.type] !== undefined) mealTotals[item.type] += (Number(item.nutri.calories) || 0);
-        
-        // 建立列表項目
         const li = document.createElement('li');
         li.innerHTML = `
             <div class="food-info">
@@ -142,13 +171,14 @@ function renderListAndStats() {
     document.getElementById('water-val').innerText = Math.round(weight * 35);
 
     updateCharts(total);
+    // ✨ 每次數據更新後，順便更新狗狗狀態
+    updatePetStatus(total.cal);
 }
 
 function updateMealUI() {
     const t = (typeof i18n !== 'undefined' && i18n[curLang]) ? i18n[curLang] : i18n['zh-TW'];
     const m = t.meals || {}; 
 
-    // 定義比例
     const configs = {
         "4": { sections: ['breakfast', 'lunch', 'dinner', 'snack'], titles: { breakfast: m.breakfast, lunch: m.lunch, dinner: m.dinner, snack: m.snack }, ratios: { breakfast: 0.25, lunch: 0.35, dinner: 0.30, snack: 0.10 } },
         "3": { sections: ['breakfast', 'lunch', 'dinner'], titles: { breakfast: m.breakfast, lunch: m.lunch, dinner: m.dinner }, ratios: { breakfast: 0.30, lunch: 0.40, dinner: 0.30 } },
@@ -163,10 +193,7 @@ function updateMealUI() {
     container.innerHTML = ''; manualSelect.innerHTML = ''; modalBtns.innerHTML = '';
 
     config.sections.forEach(type => {
-        // ✨ 修正建議熱量顯示：直接在這裡計算並填入，解決顯示為 0 的問題
-        // 我們使用全域變數 targetCalories (來自 data.js)
         const suggested = targetCalories > 0 ? Math.round(targetCalories * config.ratios[type]) : 0;
-
         const section = document.createElement('div');
         section.className = 'meal-section';
         section.innerHTML = `
@@ -234,21 +261,20 @@ function setLang(lang) {
     if(document.getElementById('ai-desc')) document.getElementById('ai-desc').placeholder = t.aiDescPlaceholder;
     
     updateMealUI();
-    
     if(macroChart) { 
         macroChart.data.labels = [t.pro, t.fat, t.carb]; 
         macroChart.update(); 
     }
+    // 更新狗狗訊息
+    updatePetStatus(parseFloat(document.getElementById('total-cal-display').innerText) || 0);
 }
 
-// ✨ 優化：常吃食物清單顯示更多細節
 function openFavModal() {
     const list = document.getElementById('fav-list-container');
     list.innerHTML = '';
     if(favoriteFoods.length === 0) { list.innerHTML = '<p style="color:#888; text-align:center;">(Empty)</p>'; } 
     else {
         favoriteFoods.forEach((item, index) => {
-            // 向下相容：如果舊資料沒有 nutri 物件，就用預設值
             const cal = item.nutri ? item.nutri.calories : item.cal;
             const pro = item.nutri ? item.nutri.protein : 0;
             const fat = item.nutri ? item.nutri.fat : 0;
@@ -271,7 +297,6 @@ function openFavModal() {
     document.getElementById('fav-modal').style.display = 'flex';
 }
 
-// ✨ 優化：選擇常吃食物時，填入所有欄位
 function pickFav(index) {
     const item = favoriteFoods[index];
     document.getElementById('manual-name').value = item.name;
@@ -286,7 +311,6 @@ function pickFav(index) {
         document.getElementById('manual-sat').value = item.nutri.saturatedFat || 0;
         document.getElementById('manual-trans').value = item.nutri.transFat || 0;
     } else {
-        // 舊資料相容
         document.getElementById('manual-cal').value = item.cal;
     }
     
