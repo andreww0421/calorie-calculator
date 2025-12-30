@@ -54,9 +54,11 @@
         <div style="text-align: center;">
             <input type="file" id="image-upload" accept="image/*" style="display: none;">
             <button class="btn-ai" id="btn-take-photo">📸 1. 拍照 / 選擇圖片</button>
+            
             <div id="ai-desc-group" style="display:none; margin-top: 15px;">
-                <textarea id="ai-desc" rows="2" style="width:100%; padding:10px; border-radius:10px;" placeholder="📝 補充說明 (例如：這是一份番茄肉醬義大利麵，上面有灑乳酪)..."></textarea>
+                <textarea id="ai-desc" rows="2" style="width:100%; padding:10px; border-radius:10px;" placeholder="📝 補充說明 (例如：這是一碗牛肉麵，沒加蔥)..."></textarea>
             </div>
+
             <button id="analyze-btn" class="btn-analyze">✨ 2. <span id="txt-analyze-btn">送出圖片分析</span></button>
         </div>
         <div class="loading-spinner" id="ai-loading">🤖 <span id="txt-ai-loading">AI 正在分析...</span></div>
@@ -106,7 +108,7 @@
                 <option id="opt-mode-2" value="2">2餐 (168斷食)</option>
                 <option id="opt-mode-1" value="1">1餐 (OMAD)</option>
             </select>
-            
+
             <button id="btn-calc" style="margin-top: 15px;">🔄 儲存並更新介面</button>
         </div>
         <div id="goal-result" class="goal-section">
