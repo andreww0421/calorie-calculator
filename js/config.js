@@ -1,13 +1,16 @@
 const i18n = {
     "zh-TW": {
         dateLabel: "📅 紀錄日期：", totalIntake: "今日攝取", goal: "目標",
-        pro: "蛋白質", fat: "脂肪", carb: "碳水", sugar: "糖", sod: "鈉(mg)", sat: "飽和脂", 
-        trans: "反式脂肪", // ✨ 已修正
+        pro: "蛋白質", fat: "脂肪", carb: "碳水", sugar: "糖", sod: "鈉(mg)", 
+        sat: "飽和脂肪", // ✨ 已修正
+        trans: "反式脂肪", 
         water: "目標水",
         chartTitle: "📊 營養與熱量分析", chartMacro: "今日三大營養素 (PFC)", chartWeekly: "本週熱量趨勢",
         aiTitle: "📸 AI 飲食分析", btnPhoto: "📸 1. 拍照 / 選擇圖片", btnAnalyze: "送出圖片分析", aiLoading: "AI 正在分析食物營養，請稍候...",
         aiDescPlaceholder: "📝 補充說明 (例如：這是一碗牛肉麵，沒加蔥)...",
-        recordTitle: "飲食紀錄", manualLabel: "手動補充 (僅熱量)", placeholderName: "食物名稱", placeholderCal: "卡路里",
+        recordTitle: "飲食紀錄", 
+        manualLabel: "手動補充", // ✨ 已修正：移除了 (僅熱量)
+        placeholderName: "食物名稱", placeholderCal: "卡路里",
         btnAdd: "➕ 加入紀錄", btnFavSave: "加入最愛", btnFavLoad: "選擇常吃食物", btnFavAi: "加入最愛",
         settingsTitle: "⚙️ 個人數據設定", gender: "性別", male: "男", female: "女", age: "年齡", height: "身高", weight: "體重",
         activity: "活動量", act1: "久坐 (辦公室)", act2: "輕度 (每週運動1-3天)", act3: "中度 (每週運動3-5天)", act4: "高度 (每週運動6-7天)",
@@ -22,13 +25,16 @@ const i18n = {
     },
     "zh-CN": {
         dateLabel: "📅 记录日期：", totalIntake: "今日摄取", goal: "目标",
-        pro: "蛋白质", fat: "脂肪", carb: "碳水", sugar: "糖", sod: "钠(mg)", sat: "饱和脂", 
-        trans: "反式脂肪", // ✨ 已修正
+        pro: "蛋白质", fat: "脂肪", carb: "碳水", sugar: "糖", sod: "钠(mg)", 
+        sat: "饱和脂肪", // ✨ 已修正
+        trans: "反式脂肪", 
         water: "目标水",
         chartTitle: "📊 营养与热量分析", chartMacro: "今日三大营养素 (PFC)", chartWeekly: "本周热量趋势",
         aiTitle: "📸 AI 饮食分析", btnPhoto: "📸 1. 拍照 / 选择图片", btnAnalyze: "发送图片分析", aiLoading: "AI 正在分析食物营养，请稍候...",
         aiDescPlaceholder: "📝 补充说明 (例如：这是一碗牛肉面，没加葱)...",
-        recordTitle: "饮食记录", manualLabel: "手动补充 (仅热量)", placeholderName: "食物名称", placeholderCal: "卡路里",
+        recordTitle: "饮食记录", 
+        manualLabel: "手动补充", // ✨ 已修正
+        placeholderName: "食物名称", placeholderCal: "卡路里",
         btnAdd: "➕ 加入记录", btnFavSave: "加入收藏", btnFavLoad: "选择常吃食物", btnFavAi: "加入收藏",
         settingsTitle: "⚙️ 个人数据设定", gender: "性别", male: "男", female: "女", age: "年龄", height: "身高", weight: "体重",
         activity: "活动量", act1: "久坐 (办公室)", act2: "轻度 (每周运动1-3天)", act3: "中度 (每周运动3-5天)", act4: "高度 (每周运动6-7天)",
@@ -43,11 +49,15 @@ const i18n = {
     },
     "en": {
         dateLabel: "📅 Date:", totalIntake: "Total Intake", goal: "Goal",
-        pro: "Protein", fat: "Fat", carb: "Carb", sugar: "Sugar", sod: "Sodium", sat: "Sat. Fat", trans: "Trans Fat", water: "Water",
+        pro: "Protein", fat: "Fat", carb: "Carb", sugar: "Sugar", sod: "Sodium", 
+        sat: "Sat. Fat", 
+        trans: "Trans Fat", water: "Water",
         chartTitle: "📊 Nutrition Analysis", chartMacro: "Macros (PFC)", chartWeekly: "Weekly Calories",
         aiTitle: "📸 AI Analysis", btnPhoto: "📸 1. Select Photo", btnAnalyze: "Analyze", aiLoading: "AI is analyzing...",
         aiDescPlaceholder: "📝 Optional description (e.g. Beef noodles, no onions)...",
-        recordTitle: "Food Log", manualLabel: "Manual Entry (Calorie only)", placeholderName: "Food Name", placeholderCal: "Calories",
+        recordTitle: "Food Log", 
+        manualLabel: "Manual Entry", // ✨ Updated
+        placeholderName: "Food Name", placeholderCal: "Calories",
         btnAdd: "➕ Add Log", btnFavSave: "Save Favorite", btnFavLoad: "Load Favorite", btnFavAi: "Save to Favorites",
         settingsTitle: "⚙️ Profile Settings", gender: "Gender", male: "Male", female: "Female", age: "Age", height: "Height", weight: "Weight",
         activity: "Activity Level", act1: "Sedentary", act2: "Lightly Active", act3: "Moderately Active", act4: "Very Active",
@@ -62,11 +72,15 @@ const i18n = {
     },
     "ja": {
         dateLabel: "📅 日付：", totalIntake: "摂取カロリー", goal: "目標",
-        pro: "タンパク質", fat: "脂質", carb: "炭水化物", sugar: "糖質", sod: "塩分", sat: "飽和脂肪", trans: "トランス脂肪", water: "水分目標",
+        pro: "タンパク質", fat: "脂質", carb: "炭水化物", sugar: "糖質", sod: "塩分", 
+        sat: "飽和脂肪酸", // ✨ 更新
+        trans: "トランス脂肪", water: "水分目標",
         chartTitle: "📊 栄養分析", chartMacro: "三大栄養素 (PFC)", chartWeekly: "週間カロリー",
         aiTitle: "📸 AI食事分析", btnPhoto: "📸 1. 写真を選択", btnAnalyze: "分析開始", aiLoading: "AI分析中...",
         aiDescPlaceholder: "📝 補足説明 (例: 牛肉麺、ネギ抜き)...",
-        recordTitle: "食事記録", manualLabel: "手動入力 (カロリーのみ)", placeholderName: "食品名", placeholderCal: "kcal",
+        recordTitle: "食事記録", 
+        manualLabel: "手動入力", // ✨ 更新
+        placeholderName: "食品名", placeholderCal: "kcal",
         btnAdd: "➕ 記録追加", btnFavSave: "お気に入り保存", btnFavLoad: "お気に入りから選択", btnFavAi: "お気に入りに保存",
         settingsTitle: "⚙️ プロフィール設定", gender: "性別", male: "男性", female: "女性", age: "年齢", height: "身長", weight: "体重",
         activity: "活動レベル", act1: "座り仕事", act2: "軽い運動 (週1-3)", act3: "中程度の運動 (週3-5)", act4: "激しい運動 (週6-7)",
