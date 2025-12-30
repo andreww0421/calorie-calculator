@@ -1,5 +1,6 @@
 let macroChart = null;
 let weeklyChart = null;
+let petTimeout = null; // 用來控制動畫計時
 
 function initCharts() {
     const t = (typeof i18n !== 'undefined' && i18n[curLang]) ? i18n[curLang] : i18n['zh-TW'];
@@ -70,13 +71,15 @@ function updateChartTheme(theme) {
     }
 }
 
-// ✨ 新增：寵物狀態更新邏輯
+// ✨ 升級版：寵物狀態邏輯
 function updatePetStatus(currentCal) {
     const petImg = document.getElementById('pet-img');
     const petMsg = document.getElementById('pet-msg');
     if(!petImg || !petMsg) return;
 
-    // 取得目標熱量 (全域變數 targetCalories，若無則預設 2000)
+    // 如果正在播放吃東西動畫，暫時不要更新狀態
+    if (petImg.dataset.animating === "true") return;
+
     const target = (typeof targetCalories !== 'undefined' && targetCalories > 0) ? targetCalories : 2000;
     const ratio = currentCal / target;
 
@@ -84,8 +87,8 @@ function updatePetStatus(currentCal) {
     let msg = '汪！今天想吃什麼呢？';
 
     if (currentCal === 0) {
-         src = 'dog_animation/dog_idle.gif';
-         msg = '汪！我肚子餓了...';
+         src = 'dog_animation/dog_sad.gif'; // 改用 sad
+         msg = '汪... 肚子好餓喔...';
     } else if (ratio < 0.5) {
          src = 'dog_animation/dog_walk.gif';
          msg = '還沒吃飽呢，加油！';
@@ -97,9 +100,48 @@ function updatePetStatus(currentCal) {
          msg = '嗝... 吃太多了啦！';
     }
     
-    // 只有在圖片路徑改變時才更新，避免閃爍
     if(!petImg.src.includes(src)) petImg.src = src;
     petMsg.innerText = msg;
+}
+
+// ✨ 新功能：餵食動畫
+function showEatingAnimation() {
+    const petImg = document.getElementById('pet-img');
+    const petMsg = document.getElementById('pet-msg');
+    if(!petImg) return;
+
+    // 標記正在動畫中，避免被 updatePetStatus 覆蓋
+    petImg.dataset.animating = "true";
+    
+    // 切換成吃東西圖
+    petImg.src = 'dog_animation/dog_eat.gif';
+    petMsg.innerText = '阿姆阿姆... 好吃！';
+
+    // 清除舊的計時器（如果有的話）
+    if (petTimeout) clearTimeout(petTimeout);
+
+    // 3秒後恢復正常狀態
+    petTimeout = setTimeout(() => {
+        petImg.dataset.animating = "false";
+        // 強制更新回正確狀態
+        const currentCal = parseFloat(document.getElementById('total-cal-display').innerText) || 0;
+        updatePetStatus(currentCal);
+    }, 3000);
+}
+
+// ✨ 新功能：點擊互動
+function petInteraction() {
+    const petMsg = document.getElementById('pet-msg');
+    const messages = [
+        "汪！你今天喝水了嗎？",
+        "保持健康，我們一起加油！",
+        "我最喜歡吃健康的食物了！",
+        "摸我也不會變瘦喔，去運動吧！ XD",
+        "記得要細嚼慢嚥喔！"
+    ];
+    // 隨機選一句
+    const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+    petMsg.innerText = randomMsg;
 }
 
 function updateCharts(totalNutri) {
@@ -140,6 +182,7 @@ function renderListAndStats() {
         total.sugar += (Number(item.nutri.sugar) || 0); total.sod += (Number(item.nutri.sodium) || 0);
         total.sat += (Number(item.nutri.saturatedFat) || 0); total.trans += (Number(item.nutri.transFat) || 0);
         if(mealTotals[item.type] !== undefined) mealTotals[item.type] += (Number(item.nutri.calories) || 0);
+        
         const li = document.createElement('li');
         li.innerHTML = `
             <div class="food-info">
@@ -171,7 +214,6 @@ function renderListAndStats() {
     document.getElementById('water-val').innerText = Math.round(weight * 35);
 
     updateCharts(total);
-    // ✨ 每次數據更新後，順便更新狗狗狀態
     updatePetStatus(total.cal);
 }
 
@@ -265,7 +307,6 @@ function setLang(lang) {
         macroChart.data.labels = [t.pro, t.fat, t.carb]; 
         macroChart.update(); 
     }
-    // 更新狗狗訊息
     updatePetStatus(parseFloat(document.getElementById('total-cal-display').innerText) || 0);
 }
 
