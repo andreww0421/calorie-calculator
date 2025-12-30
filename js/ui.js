@@ -2,43 +2,36 @@ let macroChart = null;
 let weeklyChart = null;
 
 function initCharts() {
-    // 確保 i18n 已載入，否則用預設值
-    const t = (typeof i18n !== 'undefined' && i18n[curLang]) ? i18n[curLang] : { pro: 'P', fat: 'F', carb: 'C' };
+    // 確保圖表初始化時有預設文字，避免報錯
+    const t = (typeof i18n !== 'undefined' && i18n[curLang]) ? i18n[curLang] : i18n['zh-TW'];
     
-    // --- 1. 圓餅圖 (PFC) ---
     const ctxMacro = document.getElementById('macroChart').getContext('2d');
     macroChart = new Chart(ctxMacro, {
         type: 'doughnut',
         data: {
             labels: [t.pro, t.fat, t.carb],
             datasets: [{
-                // ✨ 關鍵修正：預設給 1,1,1 讓它顯示灰色圈圈，而不是空白
-                data: [1, 1, 1], 
-                backgroundColor: ['#e0e0e0', '#e0e0e0', '#e0e0e0'], 
+                data: [1, 1, 1], // 預設灰色空圈
+                backgroundColor: ['#e0e0e0', '#e0e0e0', '#e0e0e0'],
                 borderWidth: 2,
-                borderColor: 'var(--card-bg)' // 配合背景色
+                borderColor: 'var(--card-bg)'
             }]
         },
         options: { 
             responsive: true, 
             maintainAspectRatio: false,
-            cutout: '70%', // 讓甜甜圈更細一點，比較好看
-            plugins: {
-                legend: { position: 'bottom' }
-            }
+            cutout: '70%',
+            plugins: { legend: { position: 'bottom' } }
         }
     });
 
-    // --- 2. 長條圖 (週熱量) ---
     const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
-    
-    // 預先產生最近 7 天的標籤
     const labels = [];
     const today = new Date();
     for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(today.getDate() - i);
-        labels.push(d.toISOString().split('T')[0].slice(5)); // MM-DD
+        labels.push(d.toISOString().split('T')[0].slice(5));
     }
 
     weeklyChart = new Chart(ctxWeekly, {
@@ -47,7 +40,7 @@ function initCharts() {
             labels: labels,
             datasets: [{
                 label: 'kcal',
-                data: [0,0,0,0,0,0,0], 
+                data: [0,0,0,0,0,0,0],
                 backgroundColor: '#2ecc71',
                 borderRadius: 4
             }]
@@ -55,12 +48,7 @@ function initCharts() {
         options: {
             responsive: true, 
             maintainAspectRatio: false,
-            scales: { 
-                y: { 
-                    beginAtZero: true,
-                    suggestedMax: 1000 // ✨ 關鍵修正：給一個預設高度，讓 Y 軸不會縮成一團
-                } 
-            }
+            scales: { y: { beginAtZero: true, suggestedMax: 1000 } }
         }
     });
     
@@ -70,7 +58,6 @@ function initCharts() {
 function updateChartTheme(theme) {
     const textColor = theme === 'dark' ? '#e0e0e0' : '#2c3e50';
     const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-    
     Chart.defaults.color = textColor;
     if(weeklyChart) {
         weeklyChart.options.scales.x.ticks.color = textColor;
@@ -85,53 +72,32 @@ function updateChartTheme(theme) {
 }
 
 function updateCharts(totalNutri) {
-    // 檢查是否有有效數據
     const hasData = totalNutri.pro > 0 || totalNutri.fat > 0 || totalNutri.carb > 0;
-
     if (macroChart) {
         if (hasData) {
-            // 有數據：顯示彩色
-            macroChart.data.datasets[0].data = [
-                Math.round(totalNutri.pro),
-                Math.round(totalNutri.fat),
-                Math.round(totalNutri.carb)
-            ];
+            macroChart.data.datasets[0].data = [Math.round(totalNutri.pro), Math.round(totalNutri.fat), Math.round(totalNutri.carb)];
             macroChart.data.datasets[0].backgroundColor = ['#ff7675', '#fdcb6e', '#74b9ff'];
         } else {
-            // 無數據：顯示灰色空狀態
             macroChart.data.datasets[0].data = [1, 1, 1];
             macroChart.data.datasets[0].backgroundColor = ['#e0e0e0', '#e0e0e0', '#e0e0e0'];
         }
         macroChart.update();
     }
-
     if (weeklyChart) {
-        const labels = [];
-        const data = [];
-        const today = new Date();
-        
+        const labels = []; const data = []; const today = new Date();
         for (let i = 6; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(today.getDate() - i);
+            const d = new Date(); d.setDate(today.getDate() - i);
             const dateStr = d.toISOString().split('T')[0];
             labels.push(dateStr.slice(5)); 
-            
             const stored = localStorage.getItem(`record_${dateStr}`);
             let dayCal = 0;
-            if(stored) {
-                const items = JSON.parse(stored);
-                items.forEach(item => dayCal += (item.nutri.calories || 0));
-            }
+            if(stored) { JSON.parse(stored).forEach(item => dayCal += (item.nutri.calories || 0)); }
             data.push(Math.round(dayCal));
         }
-        
-        weeklyChart.data.labels = labels;
-        weeklyChart.data.datasets[0].data = data;
-        weeklyChart.update();
+        weeklyChart.data.labels = labels; weeklyChart.data.datasets[0].data = data; weeklyChart.update();
     }
 }
 
-// --- 以下保持原本功能，不用變動 ---
 function renderListAndStats() {
     ['breakfast', 'lunch', 'dinner', 'snack'].forEach(type => { const el = document.getElementById(`list-${type}`); if(el) el.innerHTML = ''; });
     let total = { cal:0, pro:0, fat:0, carb:0, sugar:0, sod:0, sat:0, trans:0 };
@@ -210,11 +176,48 @@ function setTheme(theme) {
     updateChartTheme(theme);
 }
 function openLangModal() { document.getElementById('lang-modal').style.display = 'flex'; toggleFabMenu(); }
+
+// ✨ 核心修正：setLang 只更新文字，不重整頁面
 function setLang(lang) {
     curLang = lang;
     localStorage.setItem('appLang', lang);
-    // 重整頁面最保險
-    location.reload(); 
+    const t = i18n[lang] || i18n['zh-TW'];
+    
+    // 更新所有 ID 文字
+    const mapping = {
+        'txt-date-label': t.dateLabel, 'txt-total-intake': t.totalIntake, 'txt-goal-label': t.goal,
+        'lbl-pro': t.pro, 'lbl-fat': t.fat, 'lbl-carb': t.carb, 'lbl-sugar': t.sugar, 'lbl-sod': t.sod, 'lbl-sat': t.sat, 'lbl-trans': t.trans, 'lbl-water': t.water,
+        'txt-chart-title': t.chartTitle, 'txt-chart-macro': t.chartMacro, 'txt-chart-weekly': t.chartWeekly,
+        'txt-ai-title': t.aiTitle, 'btn-take-photo': t.btnPhoto, 'txt-analyze-btn': t.btnAnalyze, 'txt-ai-loading': t.aiLoading,
+        'txt-record-title': t.recordTitle, 'txt-manual-label': t.manualLabel, 'btn-add-record': t.btnAdd, 'btn-fav-save-main': t.btnFavSave, 'btn-fav-load-main': t.btnFavLoad, 'btn-ai-fav-save': t.btnFavAi,
+        'txt-settings-title': t.settingsTitle, 'lbl-gender': t.gender, 'opt-male': t.male, 'opt-female': t.female,
+        'lbl-age': t.age, 'lbl-height': t.height, 'lbl-weight': t.weight, 'lbl-activity': t.activity,
+        'opt-act-1': t.act1, 'opt-act-2': t.act2, 'opt-act-3': t.act3, 'opt-act-4': t.act4,
+        'lbl-meal-mode': t.mealMode, 'opt-mode-4': t.mode4, 'opt-mode-3': t.mode3, 'opt-mode-2': t.mode2, 'opt-mode-1': t.mode1,
+        'btn-calc': t.btnCalc, 'txt-res-tdee': t.resTdee, 'txt-res-target': t.resTarget,
+        'txt-modal-title': t.modalTitle, 'txt-modal-ask': t.modalAsk, 'btn-cancel': t.btnCancel,
+        'txt-fav-title': t.favTitle, 'btn-fav-close': t.btnClose, 'menu-import': t.menuImport, 'menu-export': t.menuExport, 'menu-theme': t.menuTheme, 'menu-lang': t.menuLang, 'suggest': t.suggest,
+        'txt-lang-title': t.langTitle, 'btn-lang-cancel': t.langCancel
+    };
+
+    for(let id in mapping) {
+        const el = document.getElementById(id);
+        if(el) el.innerText = mapping[id];
+    }
+
+    // 更新 Placeholder
+    if(document.getElementById('manual-name')) document.getElementById('manual-name').placeholder = t.placeholderName;
+    if(document.getElementById('manual-cal')) document.getElementById('manual-cal').placeholder = t.placeholderCal;
+    if(document.getElementById('ai-desc')) document.getElementById('ai-desc').placeholder = t.aiDescPlaceholder;
+    
+    // 更新動態產生的餐點標題
+    updateMealUI();
+    
+    // 更新圖表標籤
+    if(macroChart) { 
+        macroChart.data.labels = [t.pro, t.fat, t.carb]; 
+        macroChart.update(); 
+    }
 }
 
 function showModal() {
