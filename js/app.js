@@ -6,10 +6,17 @@ function setupEventListeners() {
     
     document.getElementById('btn-add-record').addEventListener('click', addManualFood);
     document.getElementById('btn-fav-save-main').addEventListener('click', saveToFavorites);
-    // 呼叫 ui.js 定義的全域函式
     document.getElementById('btn-fav-load-main').addEventListener('click', () => {
         if(typeof openFavModal === 'function') openFavModal();
     });
+    
+    // ✨ 新增：點擊狗狗互動
+    const petImg = document.getElementById('pet-img');
+    if(petImg) {
+        petImg.addEventListener('click', () => {
+            if(typeof petInteraction === 'function') petInteraction();
+        });
+    }
     
     document.getElementById('meal-mode').addEventListener('change', () => calculateProfile());
     document.getElementById('btn-calc').addEventListener('click', () => calculateProfile());
@@ -76,7 +83,6 @@ function calculateProfile(auto=false) {
     
     const macroBox = document.getElementById('macro-goals');
     if (macroBox) {
-        // ✨ 已修正：飽和脂 -> 飽和脂肪
         macroBox.innerHTML = `
             <strong>📊 營養攝取建議 (估算值)：</strong><br>
             🥩 蛋白質：約 ${p_g}g | 🥑 脂肪：約 ${f_g}g | 🍞 碳水：約 ${c_g}g<br>
@@ -166,6 +172,9 @@ function confirmAddFood(type) {
     saveFoodData();
     renderListAndStats();
     closeModal('analysis-modal');
+    
+    // ✨ 新增：觸發餵食動畫
+    if(typeof showEatingAnimation === 'function') showEatingAnimation();
 }
 
 function addManualFood() {
@@ -202,6 +211,9 @@ function addManualFood() {
         document.getElementById('manual-sod').value = '';
         document.getElementById('manual-sat').value = '';
         document.getElementById('manual-trans').value = '';
+
+        // ✨ 新增：觸發餵食動畫
+        if(typeof showEatingAnimation === 'function') showEatingAnimation();
 
     } else { alert(t.alertNameCal || "請輸入名稱與熱量"); }
 }
