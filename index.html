@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>快樂營養管家</title>
+    <title>快樂小狗營養管家</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2ecc71">
@@ -13,36 +13,11 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* 新增樣式：讓手動輸入的欄位整齊排列 */
-        .manual-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .manual-grid input {
-            width: 100%;
-            font-size: 14px;
-        }
-        .small-input-group {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        .small-input-group input {
-            padding: 8px;
-            font-size: 12px;
-        }
-        .macro-goal-box {
-            background: rgba(46, 204, 113, 0.1);
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: 0.9em;
-            line-height: 1.6;
-            color: var(--text-color);
-        }
+        .manual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .manual-grid input { width: 100%; font-size: 14px; }
+        .small-input-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
+        .small-input-group input { padding: 8px; font-size: 12px; }
+        .macro-goal-box { background: rgba(46, 204, 113, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9em; line-height: 1.6; color: var(--text-color); }
     </style>
 </head>
 <body>
@@ -67,8 +42,8 @@
             <div class="nutri-box"><span class="n-val" id="sum-carb">0</span><span class="n-label" id="lbl-carb">碳水</span></div>
             <div class="nutri-box"><span class="n-val" id="sum-sugar">0</span><span class="n-label" id="lbl-sugar">糖</span></div>
             <div class="nutri-box"><span class="n-val" id="sum-sodium">0</span><span class="n-label" id="lbl-sod">鈉(mg)</span></div>
-            <div class="nutri-box"><span class="n-val" id="sum-sat-fat">0</span><span class="n-label" id="lbl-sat">飽和脂</span></div>
-            <div class="nutri-box"><span class="n-val" id="sum-trans-fat">0</span><span class="n-label" id="lbl-trans">反式脂</span></div>
+            <div class="nutri-box"><span class="n-val" id="sum-sat-fat">0</span><span class="n-label" id="lbl-sat">飽和脂肪</span></div>
+            <div class="nutri-box"><span class="n-val" id="sum-trans-fat">0</span><span class="n-label" id="lbl-trans">反式脂肪</span></div>
             <div class="nutri-box"><span class="n-val" id="water-val">--</span><span class="n-label" id="lbl-water">目標水</span></div>
         </div>
     </div>
@@ -100,7 +75,7 @@
         <div id="meal-sections-container"></div>
         
         <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ddd;">
-            <label id="txt-manual-label">手動補充 (八大營養指標)</label>
+            <label id="txt-manual-label">手動補充</label>
             
             <div class="manual-grid">
                 <input type="text" id="manual-name" placeholder="食物名稱 (必填)">
@@ -160,7 +135,6 @@
         <div id="goal-result" class="goal-section">
             <span id="txt-res-tdee">TDEE</span> <span style="font-size:0.8em; opacity:0.8;">(每日總消耗熱量)</span>：<span id="tdee-val">0</span> kcal<br>
             <span id="txt-res-target">減重目標</span>：<span id="target-cal-val">0</span> kcal
-            
             <div id="macro-goals" class="macro-goal-box"></div>
         </div>
     </div>
