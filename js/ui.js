@@ -2,7 +2,8 @@ let macroChart = null;
 let weeklyChart = null;
 
 function initCharts() {
-    const t = i18n[curLang] || i18n['zh-TW'];
+    // 確保 i18n 已載入，否則用預設值
+    const t = (typeof i18n !== 'undefined' && i18n[curLang]) ? i18n[curLang] : { pro: 'P', fat: 'F', carb: 'C' };
     
     // --- 1. 圓餅圖 (PFC) ---
     const ctxMacro = document.getElementById('macroChart').getContext('2d');
@@ -11,15 +12,17 @@ function initCharts() {
         data: {
             labels: [t.pro, t.fat, t.carb],
             datasets: [{
-                // 預設給一點點數值，讓圓餅圖出現一個灰色的圈圈，而不是全白
+                // ✨ 關鍵修正：預設給 1,1,1 讓它顯示灰色圈圈，而不是空白
                 data: [1, 1, 1], 
-                backgroundColor: ['#e0e0e0', '#e0e0e0', '#e0e0e0'], // 初始灰色
-                borderWidth: 1
+                backgroundColor: ['#e0e0e0', '#e0e0e0', '#e0e0e0'], 
+                borderWidth: 2,
+                borderColor: 'var(--card-bg)' // 配合背景色
             }]
         },
         options: { 
             responsive: true, 
             maintainAspectRatio: false,
+            cutout: '70%', // 讓甜甜圈更細一點，比較好看
             plugins: {
                 legend: { position: 'bottom' }
             }
@@ -29,7 +32,7 @@ function initCharts() {
     // --- 2. 長條圖 (週熱量) ---
     const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
     
-    // 預先產生最近 7 天的標籤，讓圖表有座標軸
+    // 預先產生最近 7 天的標籤
     const labels = [];
     const today = new Date();
     for (let i = 6; i >= 0; i--) {
@@ -44,10 +47,9 @@ function initCharts() {
             labels: labels,
             datasets: [{
                 label: 'kcal',
-                data: [0,0,0,0,0,0,0], // 預設 0
+                data: [0,0,0,0,0,0,0], 
                 backgroundColor: '#2ecc71',
-                borderRadius: 5,
-                barPercentage: 0.6
+                borderRadius: 4
             }]
         },
         options: {
@@ -56,7 +58,7 @@ function initCharts() {
             scales: { 
                 y: { 
                     beginAtZero: true,
-                    suggestedMax: 2000 // 讓 Y 軸一開始就有刻度，不會擠在下面
+                    suggestedMax: 1000 // ✨ 關鍵修正：給一個預設高度，讓 Y 軸不會縮成一團
                 } 
             }
         }
@@ -83,20 +85,20 @@ function updateChartTheme(theme) {
 }
 
 function updateCharts(totalNutri) {
-    // 檢查是否有數據
+    // 檢查是否有有效數據
     const hasData = totalNutri.pro > 0 || totalNutri.fat > 0 || totalNutri.carb > 0;
 
     if (macroChart) {
         if (hasData) {
+            // 有數據：顯示彩色
             macroChart.data.datasets[0].data = [
                 Math.round(totalNutri.pro),
                 Math.round(totalNutri.fat),
                 Math.round(totalNutri.carb)
             ];
-            // 有數據時，恢復彩色
             macroChart.data.datasets[0].backgroundColor = ['#ff7675', '#fdcb6e', '#74b9ff'];
         } else {
-            // 沒數據時，顯示灰色空圈
+            // 無數據：顯示灰色空狀態
             macroChart.data.datasets[0].data = [1, 1, 1];
             macroChart.data.datasets[0].backgroundColor = ['#e0e0e0', '#e0e0e0', '#e0e0e0'];
         }
@@ -129,10 +131,7 @@ function updateCharts(totalNutri) {
     }
 }
 
-// ... (以下 renderListAndStats, updateMealUI 等函式保持不變，不用動) ...
-// 為了避免複製貼上錯誤，請保留原本 ui.js 下半部的 renderListAndStats, updateMealUI, toggleTheme 等函式
-// 只要替換掉上面的 initCharts, updateChartTheme, updateCharts 即可
-// 若您需要完整的 ui.js 請告訴我
+// --- 以下保持原本功能，不用變動 ---
 function renderListAndStats() {
     ['breakfast', 'lunch', 'dinner', 'snack'].forEach(type => { const el = document.getElementById(`list-${type}`); if(el) el.innerHTML = ''; });
     let total = { cal:0, pro:0, fat:0, carb:0, sugar:0, sod:0, sat:0, trans:0 };
@@ -169,7 +168,7 @@ function renderListAndStats() {
 }
 
 function updateMealUI() {
-    const t = i18n[curLang].meals;
+    const t = (typeof i18n !== 'undefined' && i18n[curLang]) ? i18n[curLang] : i18n['zh-TW'];
     const configs = {
         "4": { sections: ['breakfast', 'lunch', 'dinner', 'snack'], titles: { breakfast: t.breakfast, lunch: t.lunch, dinner: t.dinner, snack: t.snack }, ratios: { breakfast: 0.25, lunch: 0.35, dinner: 0.30, snack: 0.10 } },
         "3": { sections: ['breakfast', 'lunch', 'dinner'], titles: { breakfast: t.breakfast, lunch: t.lunch, dinner: t.dinner }, ratios: { breakfast: 0.30, lunch: 0.40, dinner: 0.30 } },
@@ -186,7 +185,7 @@ function updateMealUI() {
     config.sections.forEach(type => {
         const section = document.createElement('div');
         section.className = 'meal-section';
-        section.innerHTML = `<div class="meal-header"><div><span class="meal-title">${config.titles[type]}</span> <span class="meal-goal">(<span class="txt-suggest">${i18n[curLang].suggest}</span>: <span id="goal-${type}">0</span>)</span></div><div class="meal-progress" id="prog-${type}">0 kcal</div></div><ul class="meal-list" id="list-${type}"></ul>`;
+        section.innerHTML = `<div class="meal-header"><div><span class="meal-title">${config.titles[type]}</span> <span class="meal-goal">(<span class="txt-suggest">${t.suggest}</span>: <span id="goal-${type}">0</span>)</span></div><div class="meal-progress" id="prog-${type}">0 kcal</div></div><ul class="meal-list" id="list-${type}"></ul>`;
         container.appendChild(section);
 
         const option = document.createElement('option');
@@ -214,16 +213,7 @@ function openLangModal() { document.getElementById('lang-modal').style.display =
 function setLang(lang) {
     curLang = lang;
     localStorage.setItem('appLang', lang);
-    const t = i18n[lang];
-    
-    document.getElementById('manual-name').placeholder = t.placeholderName;
-    document.getElementById('manual-cal').placeholder = t.placeholderCal;
-    document.getElementById('ai-desc').placeholder = t.aiDescPlaceholder;
-    document.querySelectorAll('.txt-suggest').forEach(el => el.innerText = t.suggest);
-    
-    updateMealUI();
-    if(macroChart) { macroChart.data.labels = [t.pro, t.fat, t.carb]; macroChart.update(); }
-    
+    // 重整頁面最保險
     location.reload(); 
 }
 
