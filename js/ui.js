@@ -2,7 +2,6 @@ let macroChart = null;
 let weeklyChart = null;
 
 function initCharts() {
-    // 確保圖表初始化時有預設文字，避免報錯
     const t = (typeof i18n !== 'undefined' && i18n[curLang]) ? i18n[curLang] : i18n['zh-TW'];
     
     const ctxMacro = document.getElementById('macroChart').getContext('2d');
@@ -11,7 +10,7 @@ function initCharts() {
         data: {
             labels: [t.pro, t.fat, t.carb],
             datasets: [{
-                data: [1, 1, 1], // 預設灰色空圈
+                data: [1, 1, 1], // 預設灰圈
                 backgroundColor: ['#e0e0e0', '#e0e0e0', '#e0e0e0'],
                 borderWidth: 2,
                 borderColor: 'var(--card-bg)'
@@ -177,13 +176,12 @@ function setTheme(theme) {
 }
 function openLangModal() { document.getElementById('lang-modal').style.display = 'flex'; toggleFabMenu(); }
 
-// ✨ 核心修正：setLang 只更新文字，不重整頁面
 function setLang(lang) {
     curLang = lang;
     localStorage.setItem('appLang', lang);
     const t = i18n[lang] || i18n['zh-TW'];
     
-    // 更新所有 ID 文字
+    // 更新介面 ID 對應文字
     const mapping = {
         'txt-date-label': t.dateLabel, 'txt-total-intake': t.totalIntake, 'txt-goal-label': t.goal,
         'lbl-pro': t.pro, 'lbl-fat': t.fat, 'lbl-carb': t.carb, 'lbl-sugar': t.sugar, 'lbl-sod': t.sod, 'lbl-sat': t.sat, 'lbl-trans': t.trans, 'lbl-water': t.water,
@@ -205,15 +203,15 @@ function setLang(lang) {
         if(el) el.innerText = mapping[id];
     }
 
-    // 更新 Placeholder
+    // 更新 placeholder
     if(document.getElementById('manual-name')) document.getElementById('manual-name').placeholder = t.placeholderName;
     if(document.getElementById('manual-cal')) document.getElementById('manual-cal').placeholder = t.placeholderCal;
     if(document.getElementById('ai-desc')) document.getElementById('ai-desc').placeholder = t.aiDescPlaceholder;
     
-    // 更新動態產生的餐點標題
+    // 更新動態餐點列表
     updateMealUI();
     
-    // 更新圖表標籤
+    // 更新圖表標題
     if(macroChart) { 
         macroChart.data.labels = [t.pro, t.fat, t.carb]; 
         macroChart.update(); 
