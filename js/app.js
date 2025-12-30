@@ -6,8 +6,10 @@ function setupEventListeners() {
     
     document.getElementById('btn-add-record').addEventListener('click', addManualFood);
     document.getElementById('btn-fav-save-main').addEventListener('click', saveToFavorites);
-    // 這裡呼叫的是全域函式，會用到 ui.js 裡的定義
-    document.getElementById('btn-fav-load-main').addEventListener('click', openFavModal);
+    // 呼叫 ui.js 定義的全域函式
+    document.getElementById('btn-fav-load-main').addEventListener('click', () => {
+        if(typeof openFavModal === 'function') openFavModal();
+    });
     
     document.getElementById('meal-mode').addEventListener('change', () => calculateProfile());
     document.getElementById('btn-calc').addEventListener('click', () => calculateProfile());
@@ -42,7 +44,11 @@ function calculateProfile(auto=false) {
 
     const t = (typeof i18n !== 'undefined' && i18n[localStorage.getItem('appLang')]) ? i18n[localStorage.getItem('appLang')] : i18n['zh-TW'];
 
-    if (!h || !w || !a) { if(!auto) alert(t.alertFill || "請填寫完整資料"); return; }
+    // 如果是自動載入且資料不全，就不跳警告，但也就不計算
+    if (!h || !w || !a) { 
+        if(!auto) alert(t.alertFill || "請填寫完整資料"); 
+        return; 
+    }
 
     let bmr = (g === 'male') ? (10*w + 6.25*h - 5*a + 5) : (10*w + 6.25*h - 5*a - 161);
     let tdee = Math.round(bmr * act);
@@ -50,13 +56,22 @@ function calculateProfile(auto=false) {
     if(targetCalories < bmr) targetCalories = Math.round(bmr);
     
     currentMealMode = mode;
+    
+    // 更新 TDEE 顯示區塊
     document.getElementById('tdee-val').innerText = tdee;
     document.getElementById('target-cal-val').innerText = targetCalories;
     document.getElementById('target-cal-display').innerText = targetCalories;
     
+    // ✨ 關鍵修復：強制顯示結果區塊
+    const goalResult = document.getElementById('goal-result');
+    if (goalResult) {
+        goalResult.style.display = 'block';
+    }
+    
     saveProfile();
     updateMealUI();      
 
+    // 計算並顯示八大營養建議
     const p_g = Math.round((targetCalories * 0.2) / 4);
     const f_g = Math.round((targetCalories * 0.3) / 9);
     const c_g = Math.round((targetCalories * 0.5) / 4);
@@ -125,7 +140,6 @@ function deleteItem(index) {
     }
 }
 
-// ✨ 新功能：從清單直接加入最愛 (點擊愛心時觸發)
 function addRecordToFav(index) {
     const item = foodItems[index];
     const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
@@ -236,11 +250,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setTheme(curTheme);
     setLang(curLang);
     document.getElementById('current-date').value = selectedDate;
+    
+    // 如果有舊資料，自動計算並顯示
     if(loadProfile()) {
-        calculateProfile(true); 
+        calculateProfile(true); // 這會觸發上面的 goalResult.style.display = 'block'
     } else {
         updateMealUI(); 
     }
+    
     loadFoodData(selectedDate);
     initCharts();
 });
