@@ -6,6 +6,7 @@ function setupEventListeners() {
     
     document.getElementById('btn-add-record').addEventListener('click', addManualFood);
     document.getElementById('btn-fav-save-main').addEventListener('click', saveToFavorites);
+    // 這裡呼叫的是全域函式，會用到 ui.js 裡的定義
     document.getElementById('btn-fav-load-main').addEventListener('click', openFavModal);
     
     document.getElementById('meal-mode').addEventListener('change', () => calculateProfile());
@@ -48,9 +49,7 @@ function calculateProfile(auto=false) {
     targetCalories = Math.round(tdee - 500);
     if(targetCalories < bmr) targetCalories = Math.round(bmr);
     
-    // 更新全域變數，這很重要，因為 ui.js 會讀取它
     currentMealMode = mode;
-    
     document.getElementById('tdee-val').innerText = tdee;
     document.getElementById('target-cal-val').innerText = targetCalories;
     document.getElementById('target-cal-display').innerText = targetCalories;
@@ -58,7 +57,6 @@ function calculateProfile(auto=false) {
     saveProfile();
     updateMealUI();      
 
-    // 計算並顯示八大營養建議
     const p_g = Math.round((targetCalories * 0.2) / 4);
     const f_g = Math.round((targetCalories * 0.3) / 9);
     const c_g = Math.round((targetCalories * 0.5) / 4);
@@ -137,7 +135,6 @@ function addRecordToFav(index) {
         return; 
     }
     
-    // 儲存完整結構
     favoriteFoods.push({ 
         name: item.name, 
         nutri: item.nutri 
@@ -185,7 +182,6 @@ function addManualFood() {
         saveFoodData();
         renderListAndStats();
         
-        // 清空欄位
         document.getElementById('manual-name').value = '';
         document.getElementById('manual-cal').value = '';
         document.getElementById('manual-pro').value = '';
@@ -199,7 +195,6 @@ function addManualFood() {
     } else { alert(t.alertNameCal || "請輸入名稱與熱量"); }
 }
 
-// ✨ 優化：手動輸入加入最愛時，保存所有欄位
 function saveToFavorites() {
     const name = document.getElementById('manual-name').value;
     const cal = parseFloat(document.getElementById('manual-cal').value);
@@ -224,7 +219,6 @@ function saveToFavorites() {
     alert(t.alertFavAdded || "已加入最愛！");
 }
 
-// ✨ 優化：AI 分析加入最愛時，保存完整營養
 function saveAIResultToFavorites() {
     if(!tempAIResult) return;
     const name = tempAIResult.name;
@@ -235,42 +229,6 @@ function saveAIResultToFavorites() {
     favoriteFoods.push({ name: name, nutri: tempAIResult.nutri });
     localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
     alert(t.alertFavAdded || "已加入最愛！");
-}
-
-function openFavModal() {
-    const list = document.getElementById('fav-list-container');
-    list.innerHTML = '';
-    if(favoriteFoods.length === 0) { list.innerHTML = '<p style="color:#888; text-align:center;">(Empty)</p>'; } 
-    else {
-        favoriteFoods.forEach((item, index) => {
-            // UI 渲染邏輯在 ui.js 中定義
-            const div = document.createElement('div');
-            // ...這裡只要呼叫 ui.js 的邏輯即可，或者為了避免衝突，我們統一在 ui.js 中處理 openFavModal
-            // 由於我們已經在 ui.js 裡完整重寫了 openFavModal，這裡可以留空或直接引用 ui.js 的函式
-            // 但為了保險起見，app.js 這裡的 openFavModal 其實是被覆蓋或同時存在的
-            // 最佳解：把 app.js 裡的 openFavModal 刪除，讓它使用 ui.js 裡的
-            // 但因為我們現在是"覆蓋檔案"，所以請用我上面提供的完整 app.js
-        });
-    }
-    // 注意：在我們提供的完整 app.js 中，已經包含了 openFavModal 的調用邏輯
-    // 但實際的 DOM 操作建議統一在 ui.js。
-    // 在我給您的 app.js 中，openFavModal 函式其實是多餘的，因為 setupEventListeners 綁定的是 window 範疇下的函式嗎？
-    // 不，這裡是模組化。ui.js 和 app.js 都載入了。
-    // 為了避免衝突，請使用我在 ui.js 裡提供的 openFavModal，並在 app.js 裡刪除它，或者保持 app.js 簡潔。
-    // **修正**：為了讓您複製貼上最簡單，我上面提供的 app.js 包含了所有邏輯。
-    // 但請注意：ui.js 也有一份 openFavModal。
-    // 瀏覽器載入時，後載入的會覆蓋先載入的 (如果它們是全域變數)。
-    // 我們的 HTML順序是 ui.js -> app.js。所以 app.js 會覆蓋 ui.js。
-    // **因此，我必須在 app.js 裡也更新 openFavModal，或者把 app.js 裡的 openFavModal 拿掉。**
-    // 為了安全，我在下面的 app.js 程式碼區塊中，會把 openFavModal、pickFav 等純 UI 函式拿掉，讓它去用 ui.js 的。
-}
-
-function pickFav(index) {
-    // 讓 ui.js 處理
-}
-
-function deleteFav(index) {
-    // 讓 ui.js 處理
 }
 
 document.addEventListener('DOMContentLoaded', () => {
