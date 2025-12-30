@@ -14,7 +14,7 @@
 }
 body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; padding-bottom: 90px; display: flex; justify-content: center; transition: 0.3s; }
 .container { max-width: 800px; width: 100%; display: grid; gap: 20px; }
-.card { background: var(--card-bg); border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px var(--shadow-color); transition: 0.3s; }
+.card, .pet-card { background: var(--card-bg); border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px var(--shadow-color); transition: 0.3s; }
 .date-control { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--text-color); }
 .date-control input { padding: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-color); border-radius: 8px; }
 .dashboard-header { background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white; padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 10px; }
@@ -56,3 +56,16 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
 .fab-main { width: 56px; height: 56px; background-color: var(--text-color); border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; color: var(--card-bg); font-size: 24px; transition: 0.3s; }
 .fab-menu { display: none; flex-direction: column; gap: 10px; align-items: flex-end; } .fab-menu.show { display: flex; }
 .fab-item { background-color: var(--card-bg); color: var(--text-color); padding: 8px 15px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 14px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; border: 1px solid var(--input-border); }
+
+/* Pet Card Styling */
+.pet-card {
+    border: 2px solid var(--primary-color);
+    background: var(--card-bg);
+}
+.pet-message {
+    font-size: 1.1em;
+    padding: 8px 15px;
+    border-radius: 20px;
+    background: rgba(46, 204, 113, 0.15);
+    color: var(--primary-dark);
+}
