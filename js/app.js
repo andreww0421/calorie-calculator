@@ -22,12 +22,12 @@ function setupEventListeners() {
     document.getElementById('btn-fab-main').addEventListener('click', toggleFabMenu);
     document.getElementById('btn-lang-cancel').addEventListener('click', () => closeModal('lang-modal'));
 
+    // ✨ 語言切換邏輯：點擊時存檔 -> 重整頁面 -> 觸發 init setLang
     document.querySelectorAll('.lang-option').forEach(opt => {
         opt.addEventListener('click', function() {
-            // 直接更新 localStorage 並重整，確保語言切換萬無一失
             const lang = this.getAttribute('data-lang');
             localStorage.setItem('appLang', lang);
-            location.reload();
+            location.reload(); 
         });
     });
 }
@@ -40,7 +40,7 @@ function calculateProfile(auto=false) {
     const g = document.getElementById('gender').value;
     const mode = document.getElementById('meal-mode').value;
 
-    if (!h || !w || !a) { if(!auto) alert("請填寫完整資料"); return; }
+    if (!h || !w || !a) { if(!auto) { const t = i18n[curLang] || i18n['zh-TW']; alert(t.alertFill || "請填寫完整資料"); } return; }
 
     let bmr = (g === 'male') ? (10*w + 6.25*h - 5*a + 5) : (10*w + 6.25*h - 5*a - 161);
     let tdee = Math.round(bmr * act);
@@ -83,7 +83,9 @@ function handleFileSelect(input) {
 
 function startAnalysis() {
     const input = document.getElementById('image-upload');
-    const file = input.files[0]; if (!file) { alert("請先選擇圖片！"); return; }
+    const file = input.files[0]; 
+    const t = i18n[curLang] || i18n['zh-TW'];
+    if (!file) { alert(t.alertSelImg || "請先選擇圖片！"); return; }
     const desc = document.getElementById('ai-desc').value.trim();
 
     document.getElementById('analyze-btn').style.display = 'none';
@@ -104,7 +106,7 @@ function startAnalysis() {
             showModal();
         }
     }).catch(e => {
-        console.error(e); alert("AI 分析失敗: " + e.message);
+        console.error(e); alert((t.alertAiFail || "AI 分析失敗: ") + e.message);
         document.getElementById('analyze-btn').style.display = 'inline-block';
     }).finally(() => {
         document.getElementById('ai-loading').style.display = 'none';
@@ -112,7 +114,8 @@ function startAnalysis() {
 }
 
 function deleteItem(index) {
-    if(confirm("確定要刪除？")) {
+    const t = i18n[curLang] || i18n['zh-TW'];
+    if(confirm(t.alertDel || "確定要刪除？")) {
         foodItems.splice(index, 1);
         saveFoodData();
         renderListAndStats();
@@ -137,6 +140,7 @@ function addManualFood() {
     const name = document.getElementById('manual-name').value;
     const cal = parseFloat(document.getElementById('manual-cal').value);
     const type = document.getElementById('manual-type').value;
+    const t = i18n[curLang] || i18n['zh-TW'];
     if (name && cal) {
         foodItems.push({ 
             type: type, name: name, 
@@ -146,27 +150,29 @@ function addManualFood() {
         renderListAndStats();
         document.getElementById('manual-name').value = '';
         document.getElementById('manual-cal').value = '';
-    } else { alert("請輸入名稱與熱量"); }
+    } else { alert(t.alertNameCal || "請輸入名稱與熱量"); }
 }
 
 function saveToFavorites() {
     const name = document.getElementById('manual-name').value;
     const cal = document.getElementById('manual-cal').value;
-    if(!name || !cal) { alert("請輸入名稱與熱量"); return; }
-    if(favoriteFoods.some(f => f.name === name)) { alert("已在最愛清單中！"); return; }
+    const t = i18n[curLang] || i18n['zh-TW'];
+    if(!name || !cal) { alert(t.alertNameCal || "請輸入名稱與熱量"); return; }
+    if(favoriteFoods.some(f => f.name === name)) { alert(t.alertFavExist || "已在最愛清單中！"); return; }
     favoriteFoods.push({ name: name, cal: parseFloat(cal) });
     localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
-    alert("已加入最愛！");
+    alert(t.alertFavAdded || "已加入最愛！");
 }
 
 function saveAIResultToFavorites() {
     if(!tempAIResult) return;
     const name = tempAIResult.name;
     const cal = tempAIResult.nutri.calories;
-    if(favoriteFoods.some(f => f.name === name)) { alert("已在最愛清單中！"); return; }
+    const t = i18n[curLang] || i18n['zh-TW'];
+    if(favoriteFoods.some(f => f.name === name)) { alert(t.alertFavExist || "已在最愛清單中！"); return; }
     favoriteFoods.push({ name: name, cal: cal });
     localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
-    alert("已加入最愛！");
+    alert(t.alertFavAdded || "已加入最愛！");
 }
 
 function openFavModal() {
@@ -192,7 +198,8 @@ function pickFav(index) {
 }
 
 function deleteFav(index) {
-    if(confirm("確定要刪除？")) {
+    const t = i18n[curLang] || i18n['zh-TW'];
+    if(confirm(t.alertDel || "確定要刪除？")) {
         favoriteFoods.splice(index, 1);
         localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
         openFavModal();
@@ -206,11 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 2. 載入主題與語言
     setTheme(curTheme);
-    
-    // 語言初始化 (不重載)
-    const t = i18n[curLang] || i18n['zh-TW'];
-    document.getElementById('txt-date-label').innerText = t.dateLabel;
-    // ... 其他介面文字如果需要，可以手動補上
+    // 關鍵：這裡呼叫 setLang，它會更新 DOM 文字，且不會觸發 reload
+    setLang(curLang);
     
     // 3. 載入日期
     document.getElementById('current-date').value = selectedDate;
