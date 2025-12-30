@@ -44,7 +44,6 @@ function calculateProfile(auto=false) {
 
     const t = (typeof i18n !== 'undefined' && i18n[localStorage.getItem('appLang')]) ? i18n[localStorage.getItem('appLang')] : i18n['zh-TW'];
 
-    // 如果是自動載入且資料不全，就不跳警告，但也就不計算
     if (!h || !w || !a) { 
         if(!auto) alert(t.alertFill || "請填寫完整資料"); 
         return; 
@@ -57,12 +56,10 @@ function calculateProfile(auto=false) {
     
     currentMealMode = mode;
     
-    // 更新 TDEE 顯示區塊
     document.getElementById('tdee-val').innerText = tdee;
     document.getElementById('target-cal-val').innerText = targetCalories;
     document.getElementById('target-cal-display').innerText = targetCalories;
     
-    // ✨ 關鍵修復：強制顯示結果區塊
     const goalResult = document.getElementById('goal-result');
     if (goalResult) {
         goalResult.style.display = 'block';
@@ -71,7 +68,6 @@ function calculateProfile(auto=false) {
     saveProfile();
     updateMealUI();      
 
-    // 計算並顯示八大營養建議
     const p_g = Math.round((targetCalories * 0.2) / 4);
     const f_g = Math.round((targetCalories * 0.3) / 9);
     const c_g = Math.round((targetCalories * 0.5) / 4);
@@ -80,10 +76,11 @@ function calculateProfile(auto=false) {
     
     const macroBox = document.getElementById('macro-goals');
     if (macroBox) {
+        // ✨ 已修正：飽和脂 -> 飽和脂肪
         macroBox.innerHTML = `
             <strong>📊 營養攝取建議 (估算值)：</strong><br>
             🥩 蛋白質：約 ${p_g}g | 🥑 脂肪：約 ${f_g}g | 🍞 碳水：約 ${c_g}g<br>
-            🍬 糖：< ${sugar_g}g | 🧂 鈉：< 2300mg | 🧈 飽和脂：< ${sat_g}g
+            🍬 糖：< ${sugar_g}g | 🧂 鈉：< 2300mg | 🧈 飽和脂肪：< ${sat_g}g
         `;
     }
 
@@ -251,9 +248,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setLang(curLang);
     document.getElementById('current-date').value = selectedDate;
     
-    // 如果有舊資料，自動計算並顯示
     if(loadProfile()) {
-        calculateProfile(true); // 這會觸發上面的 goalResult.style.display = 'block'
+        calculateProfile(true); 
     } else {
         updateMealUI(); 
     }
