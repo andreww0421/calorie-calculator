@@ -12,6 +12,38 @@
     
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 新增樣式：讓手動輸入的欄位整齊排列 */
+        .manual-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .manual-grid input {
+            width: 100%;
+            font-size: 14px;
+        }
+        .small-input-group {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .small-input-group input {
+            padding: 8px;
+            font-size: 12px;
+        }
+        .macro-goal-box {
+            background: rgba(46, 204, 113, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+    </style>
 </head>
 <body>
 
@@ -66,13 +98,28 @@
     <div class="card">
         <h3>🍽️ <span id="display-date-text">今日</span> <span id="txt-record-title">飲食紀錄</span></h3>
         <div id="meal-sections-container"></div>
+        
         <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ddd;">
-            <label id="txt-manual-label">手動補充 (僅熱量)</label>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <input type="text" id="manual-name" placeholder="食物名稱">
-                <input type="number" id="manual-cal" placeholder="卡路里">
+            <label id="txt-manual-label">手動補充 (八大營養指標)</label>
+            
+            <div class="manual-grid">
+                <input type="text" id="manual-name" placeholder="食物名稱 (必填)">
+                <input type="number" id="manual-cal" placeholder="熱量 kcal (必填)">
             </div>
-            <select id="manual-type" style="margin-bottom: 10px;"></select>
+            
+            <div class="small-input-group">
+                <input type="number" id="manual-pro" placeholder="蛋白質">
+                <input type="number" id="manual-fat" placeholder="脂肪">
+                <input type="number" id="manual-carb" placeholder="碳水">
+                <input type="number" id="manual-sugar" placeholder="糖">
+            </div>
+            <div class="small-input-group">
+                <input type="number" id="manual-sod" placeholder="鈉(mg)">
+                <input type="number" id="manual-sat" placeholder="飽和脂">
+                <input type="number" id="manual-trans" placeholder="反式脂">
+                <select id="manual-type"></select>
+            </div>
+
             <button id="btn-add-record" style="background-color: #95a5a6;">➕ 加入紀錄</button>
             <div class="fav-controls">
                 <button class="btn-fav-save" id="btn-fav-save-main">❤️ <span id="btn-fav-save">加入最愛</span></button>
@@ -85,13 +132,7 @@
         <h3 id="txt-settings-title">⚙️ 個人數據設定</h3>
         <div class="form-group">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div>
-                    <label id="lbl-gender">性別</label>
-                    <select id="gender">
-                        <option id="opt-male" value="male">男</option>
-                        <option id="opt-female" value="female">女</option>
-                    </select>
-                </div>
+                <div><label id="lbl-gender">性別</label><select id="gender"><option id="opt-male" value="male">男</option><option id="opt-female" value="female">女</option></select></div>
                 <div><label id="lbl-age">年齡</label><input type="number" id="age" placeholder="25"></div>
                 <div><label id="lbl-height">身高</label><input type="number" id="height" placeholder="170"></div>
                 <div><label id="lbl-weight">體重</label><input type="number" id="weight" placeholder="60"></div>
@@ -115,8 +156,12 @@
             
             <button id="btn-calc" style="margin-top: 15px;">🔄 儲存並更新介面</button>
         </div>
+        
         <div id="goal-result" class="goal-section">
-            <span id="txt-res-tdee">TDEE</span>：<span id="tdee-val">0</span> kcal | <span id="txt-res-target">減重目標</span>：<span id="target-cal-val">0</span> kcal
+            <span id="txt-res-tdee">TDEE</span> <span style="font-size:0.8em; opacity:0.8;">(每日總消耗熱量)</span>：<span id="tdee-val">0</span> kcal<br>
+            <span id="txt-res-target">減重目標</span>：<span id="target-cal-val">0</span> kcal
+            
+            <div id="macro-goals" class="macro-goal-box"></div>
         </div>
     </div>
 </div>
