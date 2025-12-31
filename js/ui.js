@@ -138,6 +138,11 @@ function petInteraction() {
         "我最喜歡吃健康的食物了！",
         "摸我也不會變瘦喔，去運動吧！ XD",
         "記得要細嚼慢嚥喔！"
+        "要注意補充水分喔！",
+        "今天有沒有運動呀~",
+        "主人你今天開心嗎！",
+        "汪！我們等下一起去散步吧！",
+        "我很好摸吧，但記得還是要去運動喔！",
     ];
     // 隨機選一句
     const randomMsg = messages[Math.floor(Math.random() * messages.length)];
@@ -374,3 +379,4 @@ function showModal() {
 }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 function toggleFabMenu() { document.getElementById('fab-menu').classList.toggle('show'); }
+
