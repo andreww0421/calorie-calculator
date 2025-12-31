@@ -15,8 +15,13 @@
 body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; padding-bottom: 90px; display: flex; justify-content: center; transition: 0.3s; }
 .container { max-width: 800px; width: 100%; display: grid; gap: 20px; }
 .card, .pet-card { background: var(--card-bg); border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px var(--shadow-color); transition: 0.3s; }
+
+/* 日期控制區 */
 .date-control { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--text-color); }
+/* ✨ 新增：強制日期標籤不換行，並修正對齊 */
+.date-control label { white-space: nowrap; margin-bottom: 0; }
 .date-control input { padding: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-color); border-radius: 8px; }
+
 .dashboard-header { background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white; padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 10px; }
 .dashboard-header .big-cal { font-size: 3em; font-weight: bold; line-height: 1.2; }
 .nutrition-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px; }
@@ -69,3 +74,8 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
     background: rgba(46, 204, 113, 0.15);
     color: var(--primary-dark);
 }
+.manual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.manual-grid input { width: 100%; font-size: 14px; }
+.small-input-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
+.small-input-group input { padding: 8px; font-size: 12px; }
+.macro-goal-box { background: rgba(46, 204, 113, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9em; line-height: 1.6; color: var(--text-color); }
