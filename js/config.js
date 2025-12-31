@@ -1,15 +1,16 @@
 const i18n = {
     "zh-TW": {
-        dateLabel: "📅 紀錄日期：", totalIntake: "今日攝取", goal: "目標",
+        dateLabel: "📅 日期：", // ✨ 已修正：縮短文字以優化排版
+        totalIntake: "今日攝取", goal: "目標",
         pro: "蛋白質", fat: "脂肪", carb: "碳水", sugar: "糖", sod: "鈉(mg)", 
-        sat: "飽和脂肪", // ✨ 已修正
+        sat: "飽和脂肪", 
         trans: "反式脂肪", 
         water: "目標水",
         chartTitle: "📊 營養與熱量分析", chartMacro: "今日三大營養素 (PFC)", chartWeekly: "本週熱量趨勢",
         aiTitle: "📸 AI 飲食分析", btnPhoto: "📸 1. 拍照 / 選擇圖片", btnAnalyze: "送出圖片分析", aiLoading: "AI 正在分析食物營養，請稍候...",
         aiDescPlaceholder: "📝 補充說明 (例如：這是一碗牛肉麵，沒加蔥)...",
         recordTitle: "飲食紀錄", 
-        manualLabel: "手動補充", // ✨ 已修正：移除了 (僅熱量)
+        manualLabel: "手動補充", 
         placeholderName: "食物名稱", placeholderCal: "卡路里",
         btnAdd: "➕ 加入紀錄", btnFavSave: "加入最愛", btnFavLoad: "選擇常吃食物", btnFavAi: "加入最愛",
         settingsTitle: "⚙️ 個人數據設定", gender: "性別", male: "男", female: "女", age: "年齡", height: "身高", weight: "體重",
@@ -24,16 +25,17 @@ const i18n = {
         alertDel: "確定要刪除？", alertFavAdded: "已加入最愛！", alertFavExist: "這個食物已經在最愛清單囉！", alertSelImg: "請先選擇圖片！", alertAiFail: "AI 分析失敗：", alertFill: "請填寫資料", alertNameCal: "請輸入名稱與熱量", alertImportOk: "🎉 資料還原成功！", alertImportFail: "❌ 檔案格式錯誤"
     },
     "zh-CN": {
-        dateLabel: "📅 记录日期：", totalIntake: "今日摄取", goal: "目标",
+        dateLabel: "📅 日期：", // ✨ 已修正
+        totalIntake: "今日摄取", goal: "目标",
         pro: "蛋白质", fat: "脂肪", carb: "碳水", sugar: "糖", sod: "钠(mg)", 
-        sat: "饱和脂肪", // ✨ 已修正
+        sat: "饱和脂肪", 
         trans: "反式脂肪", 
         water: "目标水",
         chartTitle: "📊 营养与热量分析", chartMacro: "今日三大营养素 (PFC)", chartWeekly: "本周热量趋势",
         aiTitle: "📸 AI 饮食分析", btnPhoto: "📸 1. 拍照 / 选择图片", btnAnalyze: "发送图片分析", aiLoading: "AI 正在分析食物营养，请稍候...",
         aiDescPlaceholder: "📝 补充说明 (例如：这是一碗牛肉面，没加葱)...",
         recordTitle: "饮食记录", 
-        manualLabel: "手动补充", // ✨ 已修正
+        manualLabel: "手动补充", 
         placeholderName: "食物名称", placeholderCal: "卡路里",
         btnAdd: "➕ 加入记录", btnFavSave: "加入收藏", btnFavLoad: "选择常吃食物", btnFavAi: "加入收藏",
         settingsTitle: "⚙️ 个人数据设定", gender: "性别", male: "男", female: "女", age: "年龄", height: "身高", weight: "体重",
@@ -56,7 +58,7 @@ const i18n = {
         aiTitle: "📸 AI Analysis", btnPhoto: "📸 1. Select Photo", btnAnalyze: "Analyze", aiLoading: "AI is analyzing...",
         aiDescPlaceholder: "📝 Optional description (e.g. Beef noodles, no onions)...",
         recordTitle: "Food Log", 
-        manualLabel: "Manual Entry", // ✨ Updated
+        manualLabel: "Manual Entry", 
         placeholderName: "Food Name", placeholderCal: "Calories",
         btnAdd: "➕ Add Log", btnFavSave: "Save Favorite", btnFavLoad: "Load Favorite", btnFavAi: "Save to Favorites",
         settingsTitle: "⚙️ Profile Settings", gender: "Gender", male: "Male", female: "Female", age: "Age", height: "Height", weight: "Weight",
@@ -73,13 +75,13 @@ const i18n = {
     "ja": {
         dateLabel: "📅 日付：", totalIntake: "摂取カロリー", goal: "目標",
         pro: "タンパク質", fat: "脂質", carb: "炭水化物", sugar: "糖質", sod: "塩分", 
-        sat: "飽和脂肪酸", // ✨ 更新
+        sat: "飽和脂肪酸", 
         trans: "トランス脂肪", water: "水分目標",
         chartTitle: "📊 栄養分析", chartMacro: "三大栄養素 (PFC)", chartWeekly: "週間カロリー",
         aiTitle: "📸 AI食事分析", btnPhoto: "📸 1. 写真を選択", btnAnalyze: "分析開始", aiLoading: "AI分析中...",
         aiDescPlaceholder: "📝 補足説明 (例: 牛肉麺、ネギ抜き)...",
         recordTitle: "食事記録", 
-        manualLabel: "手動入力", // ✨ 更新
+        manualLabel: "手動入力", 
         placeholderName: "食品名", placeholderCal: "kcal",
         btnAdd: "➕ 記録追加", btnFavSave: "お気に入り保存", btnFavLoad: "お気に入りから選択", btnFavAi: "お気に入りに保存",
         settingsTitle: "⚙️ プロフィール設定", gender: "性別", male: "男性", female: "女性", age: "年齢", height: "身長", weight: "体重",
