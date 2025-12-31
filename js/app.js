@@ -10,7 +10,6 @@ function setupEventListeners() {
         if(typeof openFavModal === 'function') openFavModal();
     });
     
-    // ✨ 新增：點擊狗狗互動
     const petImg = document.getElementById('pet-img');
     if(petImg) {
         petImg.addEventListener('click', () => {
@@ -173,7 +172,6 @@ function confirmAddFood(type) {
     renderListAndStats();
     closeModal('analysis-modal');
     
-    // ✨ 新增：觸發餵食動畫
     if(typeof showEatingAnimation === 'function') showEatingAnimation();
 }
 
@@ -212,7 +210,6 @@ function addManualFood() {
         document.getElementById('manual-sat').value = '';
         document.getElementById('manual-trans').value = '';
 
-        // ✨ 新增：觸發餵食動畫
         if(typeof showEatingAnimation === 'function') showEatingAnimation();
 
     } else { alert(t.alertNameCal || "請輸入名稱與熱量"); }
@@ -255,17 +252,28 @@ function saveAIResultToFavorites() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. 設定事件監聽
     setupEventListeners();
+    
+    // 2. 初始化介面設定
     setTheme(curTheme);
     setLang(curLang);
     document.getElementById('current-date').value = selectedDate;
     
+    // 3. 讀取並計算使用者資料
     if(loadProfile()) {
         calculateProfile(true); 
     } else {
         updateMealUI(); 
     }
     
+    // 4. 讀取今日紀錄
     loadFoodData(selectedDate);
+    
+    // 5. 初始化圖表
     initCharts();
+    
+    // ✨ 關鍵修正：確保資料載入後，立即渲染畫面
+    // 這樣就算 calculateProfile 沒有完全執行，舊資料也會顯示出來
+    renderListAndStats();
 });
