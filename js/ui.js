@@ -71,7 +71,7 @@ function updateChartTheme(theme) {
     }
 }
 
-// ✨ 升級版：寵物狀態邏輯
+// ✨ 優化版：加入 Idle 狀態的寵物邏輯
 function updatePetStatus(currentCal) {
     const petImg = document.getElementById('pet-img');
     const petMsg = document.getElementById('pet-msg');
@@ -87,19 +87,29 @@ function updatePetStatus(currentCal) {
     let msg = '汪！今天想吃什麼呢？';
 
     if (currentCal === 0) {
-         src = 'dog_animation/dog_sad.gif'; // 改用 sad
-         msg = '汪... 肚子好餓喔...';
+         // 狀態 1: 完全沒吃 -> 難過
+         src = 'dog_animation/dog_sad.gif';
+         msg = '汪... 肚子好餓喔... (0%)';
+    } else if (ratio < 0.3) {
+         // ✨ 狀態 2: 吃很少 (1%-30%) -> 閒置/發呆 (新增的 Idle 應用)
+         // 代表有點東西墊胃了，不難過但還沒力氣動
+         src = 'dog_animation/dog_idle.gif';
+         msg = '有點力氣了，但還想再吃一點...';
     } else if (ratio < 0.5) {
+         // 狀態 3: 吃一半 (30%-50%) -> 走路覓食
          src = 'dog_animation/dog_walk.gif';
-         msg = '還沒吃飽呢，加油！';
+         msg = '聞到香味了，正在尋找食物！';
     } else if (ratio >= 0.5 && ratio <= 1.1) {
+         // 狀態 4: 達標 (50%-110%) -> 開心
          src = 'dog_animation/dog_happy.gif';
          msg = '營養剛剛好，太棒了！';
     } else {
+         // 狀態 5: 超標 -> 變胖
          src = 'dog_animation/dog_fat.gif';
          msg = '嗝... 吃太多了啦！';
     }
     
+    // 只有在圖片路徑改變時才更新，避免閃爍
     if(!petImg.src.includes(src)) petImg.src = src;
     petMsg.innerText = msg;
 }
@@ -374,3 +384,4 @@ function showModal() {
 }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 function toggleFabMenu() { document.getElementById('fab-menu').classList.toggle('show'); }
+
