@@ -1,7 +1,7 @@
 {
   "name": "快樂小狗營養管家",
   "short_name": "營養管家",
-  "start_url": "./calorie_tracker.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f0f2f5",
   "theme_color": "#2ecc71",
