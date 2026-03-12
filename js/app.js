@@ -24,11 +24,44 @@ function setupEventListeners() {
     document.getElementById('btn-cancel').addEventListener('click', () => closeModal('analysis-modal'));
     document.getElementById('btn-fav-close').addEventListener('click', () => closeModal('fav-modal'));
     
-    document.getElementById('btn-toggle-theme').addEventListener('click', toggleTheme);
-    document.getElementById('btn-open-lang').addEventListener('click', openLangModal);
+    // ✨ 新增：Bottom Navigation 點擊事件
+    document.querySelectorAll('.nav-item').forEach(nav => {
+        nav.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-target');
+            if (targetId) {
+                switchView(targetId);
+            }
+        });
+    });
+
+    // ✨ 新增：儲存體重按鈕
+    const btnSaveWeight = document.getElementById('btn-save-weight');
+    if(btnSaveWeight) {
+        btnSaveWeight.addEventListener('click', () => {
+            const w = document.getElementById('daily-weight-input').value;
+            const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
+            if(saveWeightData(selectedDate, w)) {
+                alert(t.alertWeightSaved || "體重紀錄已儲存！");
+                // 同步更新設定頁面的體重
+                document.getElementById('weight').value = w;
+                saveProfile();
+                // 重新計算 TDEE 和攝取目標，因為體重已經改變
+                if (typeof updateProfileStats === 'function') {
+                    updateProfileStats();
+                }
+            } else {
+                alert(t.alertInvalidWeight || "請輸入有效的體重數值！");
+            }
+        });
+    }
+
+    // Settings view events (moved from FAB)
+    document.getElementById('btn-toggle-theme-setting').addEventListener('click', toggleTheme);
+    document.getElementById('btn-open-lang-setting').addEventListener('click', openLangModal);
+    document.getElementById('btn-export-setting').addEventListener('click', exportData);
     document.getElementById('import-file').addEventListener('change', function() { importData(this); });
-    document.getElementById('btn-export').addEventListener('click', exportData);
-    document.getElementById('btn-fab-main').addEventListener('click', toggleFabMenu);
+    
     document.getElementById('btn-lang-cancel').addEventListener('click', () => closeModal('lang-modal'));
 
     document.querySelectorAll('.lang-option').forEach(opt => {
@@ -82,10 +115,11 @@ function calculateProfile(auto=false) {
     
     const macroBox = document.getElementById('macro-goals');
     if (macroBox) {
+        const t = (typeof i18n !== 'undefined' && i18n[localStorage.getItem('appLang')]) ? i18n[localStorage.getItem('appLang')] : i18n['zh-TW'];
         macroBox.innerHTML = `
-            <strong>📊 營養攝取建議 (估算值)：</strong><br>
-            🥩 蛋白質：約 ${p_g}g | 🥑 脂肪：約 ${f_g}g | 🍞 碳水：約 ${c_g}g<br>
-            🍬 糖：< ${sugar_g}g | 🧂 鈉：< 2300mg | 🧈 飽和脂肪：< ${sat_g}g
+            <strong>${t.macroGoalTitle || "📊 營養攝取建議 (估算值)："}</strong><br>
+            🥩 ${t.pro}：~${p_g}g | 🥑 ${t.fat}：~${f_g}g | 🍞 ${t.carb}：~${c_g}g<br>
+            🍬 ${t.sugar}：< ${sugar_g}g | 🧂 ${t.sod.replace('(mg)','')}：< 2300mg | 🧈 ${t.sat}：< ${sat_g}g
         `;
     }
 
@@ -98,6 +132,7 @@ function handleFileSelect(input) {
     preview.src = URL.createObjectURL(file); preview.style.display = 'block';
     document.getElementById('analyze-btn').style.display = 'inline-block';
     document.getElementById('ai-desc-group').style.display = 'block';
+    if(document.getElementById('ai-text-only-group')) document.getElementById('ai-text-only-group').style.display = 'none';
     document.getElementById('ai-loading').style.display = 'none';
 }
 
@@ -105,15 +140,23 @@ function startAnalysis() {
     const input = document.getElementById('image-upload');
     const file = input.files[0]; 
     const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
-    if (!file) { alert(t.alertSelImg || "請先選擇圖片！"); return; }
-    const desc = document.getElementById('ai-desc').value.trim();
+    
+    // ✨ 支援純文字分析 (不需要圖片)
+    const textOnlyInput = document.getElementById('ai-text-desc');
+    const textDescVal = textOnlyInput ? textOnlyInput.value.trim() : "";
+    
+    const imageDescInput = document.getElementById('ai-desc');
+    const imageDescVal = imageDescInput ? imageDescInput.value.trim() : "";
+
+    if (!file && !textDescVal) { 
+        alert(t.alertSelImgOrText || "請選擇圖片，或輸入文字描述！"); 
+        return; 
+    }
 
     document.getElementById('analyze-btn').style.display = 'none';
     document.getElementById('ai-loading').style.display = 'block';
 
-    toBase64(file).then(base64 => {
-        return callCloudflareAI(base64, desc);
-    }).then(result => {
+    const handleResult = (result) => {
         if (result) {
             tempAIResult = {
                 name: result.foodName,
@@ -125,12 +168,38 @@ function startAnalysis() {
             }; 
             showModal();
         }
-    }).catch(e => {
+    };
+
+    const handleError = (e) => {
         console.error(e); alert((t.alertAiFail || "AI 分析失敗: ") + e.message);
         document.getElementById('analyze-btn').style.display = 'inline-block';
-    }).finally(() => {
+    };
+
+    const handleFinally = () => {
         document.getElementById('ai-loading').style.display = 'none';
-    });
+        document.getElementById('analyze-btn').style.display = 'inline-block';
+        
+        // 恢復 UI 狀態
+        document.getElementById('image-upload').value = '';
+        if(document.getElementById('ai-desc')) document.getElementById('ai-desc').value = '';
+        document.getElementById('image-preview').style.display = 'none';
+        document.getElementById('ai-desc-group').style.display = 'none';
+        
+        const txtGroup = document.getElementById('ai-text-only-group');
+        if(txtGroup) txtGroup.style.display = 'block';
+        if(document.getElementById('ai-text-desc')) document.getElementById('ai-text-desc').value = '';
+    };
+
+    if (file) {
+        // 圖片分析
+        const finalDesc = imageDescVal + (textDescVal ? " " + textDescVal : "");
+        toBase64(file).then(base64 => {
+            return callCloudflareAI(base64, finalDesc);
+        }).then(handleResult).catch(handleError).finally(handleFinally);
+    } else {
+        // 純文字分析
+        callCloudflareAIText(textDescVal).then(handleResult).catch(handleError).finally(handleFinally);
+    }
 }
 
 function deleteItem(index) {
@@ -163,6 +232,15 @@ function changeDate() {
     selectedDate = document.getElementById('current-date').value;
     document.getElementById('display-date-text').innerText = selectedDate;
     loadFoodData(selectedDate);
+    
+    // ✨ 載入該日期的體重紀錄
+    const w = loadWeightData(selectedDate);
+    if(w !== null) {
+        document.getElementById('daily-weight-input').value = w;
+    } else {
+        document.getElementById('daily-weight-input').value = '';
+    }
+    
     renderListAndStats();
 }
 
@@ -269,6 +347,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 4. 讀取今日紀錄
     loadFoodData(selectedDate);
+    
+    // ✨ 載入今日體重紀錄
+    const w = loadWeightData(selectedDate);
+    if(w !== null) {
+        document.getElementById('daily-weight-input').value = w;
+    }
     
     // 5. 初始化圖表
     initCharts();

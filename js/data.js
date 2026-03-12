@@ -16,6 +16,39 @@ function loadFoodData(date) {
     foodItems = stored ? JSON.parse(stored) : [];
 }
 
+// ✨ 新增：儲存每日體重
+function saveWeightData(date, weightValue) {
+    const w = parseFloat(weightValue);
+    if (!isNaN(w) && w > 0) {
+        localStorage.setItem(`weight_${date}`, w);
+        return true;
+    }
+    return false;
+}
+
+// ✨ 新增：讀取特定日期體重
+function loadWeightData(date) {
+    const stored = localStorage.getItem(`weight_${date}`);
+    return stored ? parseFloat(stored) : null;
+}
+
+// ✨ 新增：讀取近期體重資料(給圖表用)
+function getWeightHistory(days = 30) {
+    const history = [];
+    const today = new Date();
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const w = loadWeightData(dateStr);
+        history.push({
+            date: dateStr.slice(5), // MM-DD
+            weight: w
+        });
+    }
+    return history;
+}
+
 function saveProfile() {
     const profile = {
         gender: document.getElementById('gender').value,
