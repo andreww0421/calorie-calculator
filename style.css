@@ -86,8 +86,9 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
 /* === Settings View === */
 .settings-list { display: flex; flex-direction: column; gap: 8px; }
 .settings-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--input-bg); border-radius: 12px; border: 1px solid var(--input-border); }
-.settings-item label { margin: 0; font-weight: 600; color: var(--text-color); }
-.settings-item select, .settings-item .settings-input { width: 50%; background: transparent; border: none; text-align: right; padding: 0; font-size: 16px; font-weight: normal; margin: 0; }
+.settings-item label { margin: 0; font-weight: 600; color: var(--text-color); flex-shrink: 0; white-space: nowrap; }
+.settings-item select, .settings-item .settings-input { flex-grow: 1; min-width: 0; background: transparent; border: none; text-align: right; text-align-last: right; padding: 0; font-size: 16px; font-weight: normal; margin: 0; color: var(--text-color); direction: rtl; }
+.settings-item select option { direction: ltr; } /* 將選單內項目改回左或正常對齊 */
 .settings-item select:focus, .settings-item .settings-input:focus { outline: none; }
 .settings-item.clickable { cursor: pointer; transition: background 0.2s; }
 .settings-item.clickable:hover { background: rgba(0,0,0,0.02); }
