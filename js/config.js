@@ -1,5 +1,6 @@
 const i18n = {
     "zh-TW": {
+        appTitle: "Woof Cal 汪卡管家",
         dateLabel: "📅 日期：", // ✨ 已修正：縮短文字以優化排版
         totalIntake: "今日攝取", goal: "目標", cal: "熱量",
         pro: "蛋白質", fat: "脂肪", carb: "碳水", sugar: "糖", sod: "鈉(mg)", 
@@ -32,6 +33,7 @@ const i18n = {
         btnFavSave: "加入最愛", btnFavLoad: "選擇常吃食物", phFoodName: "食物名稱 (必填)", phFoodCal: "熱量 (kcal) (必填)"
     },
     "zh-CN": {
+        appTitle: "Woof Cal 汪卡管家",
         dateLabel: "📅 日期：", // ✨ 已修正
         totalIntake: "今日摄取", goal: "目标", cal: "热量",
         pro: "蛋白质", fat: "脂肪", carb: "碳水", sugar: "糖", sod: "钠(mg)", 
@@ -64,6 +66,7 @@ const i18n = {
         btnFavSave: "加入收藏", btnFavLoad: "选择常吃食物", phFoodName: "食物名称 (必填)", phFoodCal: "热量 (kcal) (必填)"
     },
     "en": {
+        appTitle: "Woof Cal - AI Diet Tracker",
         dateLabel: "📅 Date:", totalIntake: "Total Intake", goal: "Goal", cal: "Calories",
         pro: "Protein", fat: "Fat", carb: "Carb", sugar: "Sugar", sod: "Sodium", 
         sat: "Sat. Fat", 
@@ -94,6 +97,7 @@ const i18n = {
         btnFavSave: "Save Favorite", btnFavLoad: "Load Favorite", phFoodName: "Food Name (Required)", phFoodCal: "Calories (kcal) (Req)"
     },
     "ja": {
+        appTitle: "Woof Cal - AI Diet Tracker",
         dateLabel: "📅 日付：", totalIntake: "摂取カロリー", goal: "目標", cal: "熱量",
         pro: "タンパク質", fat: "脂質", carb: "炭水化物", sugar: "糖質", sod: "塩分", 
         sat: "飽和脂肪酸", 
@@ -124,6 +128,7 @@ const i18n = {
         btnFavSave: "お気に入りに追加", btnFavLoad: "お気に入りを読み込む", phFoodName: "食べ物の名前 (必須)", phFoodCal: "カロリー (kcal) (必須)"
     },
     "ko": {
+        appTitle: "Woof Cal - AI Diet Tracker",
         dateLabel: "📅 날짜:", totalIntake: "총 섭취량", goal: "목표", cal: "열량",
         pro: "단백질", fat: "지방", carb: "탄수화물", sugar: "당류", sod: "나트륨", 
         sat: "포화지방", 
@@ -154,6 +159,7 @@ const i18n = {
         btnFavSave: "즐겨찾기 저장", btnFavLoad: "즐겨찾기 선택", phFoodName: "음식 이름 (필수)", phFoodCal: "칼로리 (kcal) (필수)"
     },
     "ar": {
+        appTitle: "Woof Cal - AI Diet Tracker",
         dateLabel: "📅 التاريخ:", totalIntake: "إجمالي السعرات", goal: "الهدف", cal: "السعرات",
         pro: "بروتين", fat: "دهون", carb: "كربوهيدرات", sugar: "سكر", sod: "صوديوم", 
         sat: "الدهون المشبعة", 

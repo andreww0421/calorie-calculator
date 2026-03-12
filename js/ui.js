@@ -401,6 +401,8 @@ function setLang(lang) {
     localStorage.setItem('appLang', lang);
     const t = i18n[lang] || i18n['zh-TW'];
     
+    document.title = t.appTitle || "Woof Cal 汪卡管家";
+    
     const mapping = {
         'txt-date-label': t.dateLabel, 'txt-total-intake': t.totalIntake, 'txt-goal-label': t.goal,
         'lbl-pro': t.pro, 'lbl-fat': t.fat, 'lbl-carb': t.carb, 'lbl-sugar': t.sugar, 'lbl-sod': t.sod, 'lbl-sat': t.sat, 'lbl-trans': t.trans, 'lbl-water': t.water,
