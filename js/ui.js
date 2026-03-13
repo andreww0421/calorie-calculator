@@ -393,6 +393,12 @@ function setTheme(theme) {
     localStorage.setItem('appTheme', theme);
     document.documentElement.setAttribute('data-theme', theme);
     updateChartTheme(theme);
+    
+    // 更新手機狀態列顏色以符合當前主題的背景色
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', theme === 'dark' ? '#121212' : '#f0f2f5');
+    }
 }
 function openLangModal() { document.getElementById('lang-modal').style.display = 'flex'; toggleFabMenu(); }
 

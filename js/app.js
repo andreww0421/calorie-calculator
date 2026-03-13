@@ -330,6 +330,11 @@ function saveAIResultToFavorites() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 嘗試鎖定螢幕為直向 (主要針對手機 PWA 或支援的瀏覽器)
+    if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('portrait').catch(err => console.log('螢幕鎖定不支援:', err));
+    }
+
     // 1. 設定事件監聽
     setupEventListeners();
     
