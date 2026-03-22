@@ -156,6 +156,22 @@
             <h3 id="txt-weight-chart-title">📈 體重趨勢 (近30天)</h3>
             <div class="chart-container" style="height:200px;"><canvas id="weightChart"></canvas></div>
         </div>
+
+        <!-- Phase 4: 熱量 & 蛋白質趨勢圖 -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 id="txt-cal-trend-title" style="margin:0;">📈 熱量攝取趨勢</h3>
+                <div class="chart-range-toggle">
+                    <button id="btn-chart-7d" class="range-btn active-range">7天</button>
+                    <button id="btn-chart-30d" class="range-btn">30天</button>
+                </div>
+            </div>
+            <div class="chart-container" style="height:200px;"><canvas id="calTrendChart"></canvas></div>
+        </div>
+        <div class="card">
+            <h3 id="txt-protein-trend-title">💪 蛋白質攝取趨勢</h3>
+            <div class="chart-container" style="height:200px;"><canvas id="proteinTrendChart"></canvas></div>
+        </div>
     </div>
 
     <!-- ==================== AI VIEW ==================== -->
@@ -283,6 +299,9 @@
 <div class="modal-overlay" id="analysis-modal"><div class="modal"><h3>✨ <span id="txt-modal-title">AI 分析報告</span></h3><div class="analysis-result" id="analysis-content"></div><button id="btn-ai-fav-save" class="btn-fav-save" style="margin-bottom: 15px; width: 100%;">❤️ <span id="btn-fav-ai">加入最愛</span></button><p id="txt-modal-ask">請問這是哪一餐？</p><div class="meal-selector" id="modal-meal-buttons"></div><button id="btn-cancel" style="margin-top: 15px; background: #95a5a6;">取消</button></div></div>
 <div class="modal-overlay" id="fav-modal"><div class="modal"><h3>❤️ <span id="txt-fav-title">常吃食物清單</span></h3><div style="max-height: 300px; overflow-y: auto; text-align: left;" id="fav-list-container"></div><button id="btn-fav-close" style="margin-top: 15px; background: #95a5a6;">關閉</button></div></div>
 <div class="modal-overlay" id="lang-modal" style="display:none;"><div class="lang-modal-box"><div class="lang-modal-title" id="txt-lang-title">語言</div><div class="lang-list"><div class="lang-option" data-lang="zh-TW">繁體中文</div><div class="lang-option" data-lang="zh-CN">简体中文</div><div class="lang-option" data-lang="en">English</div><div class="lang-option" data-lang="ja">日本語</div><div class="lang-option" data-lang="ko">한국어</div><div class="lang-option" data-lang="ar">العربية</div></div><button class="lang-cancel-btn" id="btn-lang-cancel">取消</button></div></div>
+
+<!-- Phase 4: 詳細營養彈窗 -->
+<div class="modal-overlay" id="detail-modal" style="display:none;"><div class="modal"><h3>📋 <span id="txt-detail-title">詳細營養資訊</span></h3><div class="analysis-result" id="detail-content"></div><button id="btn-detail-close" style="margin-top: 15px; background: #95a5a6;">關閉</button></div></div>
 
 <!-- Original FAB menu removed -> Moved to settings -->
 
