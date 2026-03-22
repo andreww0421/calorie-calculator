@@ -210,7 +210,7 @@ function startAnalysis() {
 
     const handleFinally = () => {
         document.getElementById('ai-loading').style.display = 'none';
-        document.getElementById('analyze-btn').style.display = 'inline-block';
+        // analyze-btn 的恢復交由 startCooldown 管理
         
         document.getElementById('image-upload').value = '';
         if(document.getElementById('ai-desc')) document.getElementById('ai-desc').value = '';
@@ -220,6 +220,8 @@ function startAnalysis() {
         const txtGroup = document.getElementById('ai-text-only-group');
         if(txtGroup) txtGroup.style.display = 'block';
         if(document.getElementById('ai-text-desc')) document.getElementById('ai-text-desc').value = '';
+
+        startCooldown();
     };
 
     if (file) {
@@ -230,6 +232,37 @@ function startAnalysis() {
     } else {
         callCloudflareAIText(textDescVal).then(handleResult).catch(handleError).finally(handleFinally);
     }
+}
+
+// AI 分析按鈕冷卻計時（15 秒）
+function startCooldown() {
+    const btn = document.getElementById('analyze-btn');
+    if (!btn) return;
+
+    const COOLDOWN = 15;
+    let remaining = COOLDOWN;
+
+    // 顯示按鈕並鎖定
+    btn.style.display = 'inline-block';
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.style.cursor = 'not-allowed';
+    btn.innerHTML = `⏳ 請稍候 (${remaining}s)`;
+
+    const timer = setInterval(() => {
+        remaining -= 1;
+        if (remaining > 0) {
+            btn.innerHTML = `⏳ 請稍候 (${remaining}s)`;
+        } else {
+            clearInterval(timer);
+            // 恢復原始狀態
+            btn.disabled = false;
+            btn.style.opacity = '';
+            btn.style.cursor = '';
+            const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
+            btn.innerHTML = `✨ 2. <span id="txt-analyze-btn">${t.btnAnalyze || '送出分析 (圖片或文字)'}</span>`;
+        }
+    }, 1000);
 }
 
 function deleteItem(index) {
