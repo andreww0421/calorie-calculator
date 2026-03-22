@@ -152,6 +152,15 @@ function handleFileSelect(input) {
     // 避免出現兩個描述框讓使用者混淆
     const textOnlyGroup = document.getElementById('ai-text-only-group');
     const descGroup = document.getElementById('ai-desc-group');
+    // 修復：若使用者已在純文字框輸入描述，先將其內容帶入圖片補充說明框，避免文字消失
+    const textDescEl = document.getElementById('ai-text-desc');
+    const imgDescEl = document.getElementById('ai-desc');
+    if (textDescEl && imgDescEl && textDescEl.value.trim()) {
+        if (!imgDescEl.value.trim()) {
+            imgDescEl.value = textDescEl.value;
+        }
+        textDescEl.value = '';
+    }
     if (textOnlyGroup) textOnlyGroup.style.display = 'none';
     if (descGroup) descGroup.style.display = 'block';
     document.getElementById('ai-loading').style.display = 'none';

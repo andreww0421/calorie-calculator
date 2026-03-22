@@ -17,6 +17,13 @@ async function callCloudflareAI(base64, userDesc) {
         prompt += `\n\n[User's supplementary description]: ${userDesc}\n(Please adjust the estimation based on this description.)`;
     }
 
+    // Turnstile 安全驗證
+    const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
+    if (!turnstileToken) {
+        alert("系統安全驗證中，請稍候再試或重新整理網頁！");
+        throw new Error("Turnstile validation pending");
+    }
+
     try {
         console.log("Sending AI request with lang:", lang);
 
@@ -24,11 +31,13 @@ async function callCloudflareAI(base64, userDesc) {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
+                turnstileToken: turnstileToken,
                 contents: [{ parts: [ { text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64 } } ] }]
             })
         });
 
         const data = await resp.json();
+        if (typeof turnstile !== 'undefined') turnstile.reset();
         
         if (data.error) throw new Error("API Error: " + JSON.stringify(data.error));
         if (!data.candidates || data.candidates.length === 0) throw new Error("AI returned no candidates");
@@ -39,6 +48,7 @@ async function callCloudflareAI(base64, userDesc) {
         return JSON.parse(text);
         
     } catch (error) {
+        if (typeof turnstile !== 'undefined') turnstile.reset();
         console.error("AI API Fatal Error:", error);
         alert("AI 連線失敗，請稍後再試。\n錯誤訊息: " + error.message);
         throw error;
@@ -60,6 +70,13 @@ async function callCloudflareAIText(userText) {
     const lang = localStorage.getItem('appLang') || 'zh-TW';
     const prompt = promptMap[lang] || promptMap['en'];
 
+    // Turnstile 安全驗證
+    const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
+    if (!turnstileToken) {
+        alert("系統安全驗證中，請稍候再試或重新整理網頁！");
+        throw new Error("Turnstile validation pending");
+    }
+
     try {
         console.log("Sending Text-only AI request with lang:", lang);
 
@@ -67,11 +84,13 @@ async function callCloudflareAIText(userText) {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
+                turnstileToken: turnstileToken,
                 contents: [{ parts: [ { text: prompt } ] }]
             })
         });
 
         const data = await resp.json();
+        if (typeof turnstile !== 'undefined') turnstile.reset();
         
         if (data.error) throw new Error("API Error: " + JSON.stringify(data.error));
         if (!data.candidates || data.candidates.length === 0) throw new Error("AI returned no candidates");
@@ -82,6 +101,7 @@ async function callCloudflareAIText(userText) {
         return JSON.parse(text);
         
     } catch (error) {
+        if (typeof turnstile !== 'undefined') turnstile.reset();
         console.error("AI Text API Fatal Error:", error);
         alert("文字 AI 分析連線失敗，請稍後再試。\n錯誤訊息: " + error.message);
         throw error;
