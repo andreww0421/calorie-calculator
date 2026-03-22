@@ -1,6 +1,7 @@
 let foodItems = []; 
 let targetCalories = 2000;
 let tempAIResult = null;
+let tempAIResultSaved = false; // Phase 4: 防呆旗標
 let selectedDate = new Date().toISOString().split('T')[0];
 let currentMealMode = "4";
 let favoriteFoods = JSON.parse(localStorage.getItem('myFavorites') || "[]");
@@ -106,4 +107,34 @@ function importData(input) {
         }
     };
     reader.readAsText(file);
+}
+
+// Phase 4: 取得近 N 天每日熱量
+function getCalorieHistory(days = 7) {
+    const history = [];
+    const today = new Date();
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(); d.setDate(today.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const stored = localStorage.getItem(`record_${dateStr}`);
+        let dayCal = 0;
+        if (stored) { JSON.parse(stored).forEach(item => dayCal += (Number(item.nutri && item.nutri.calories) || 0)); }
+        history.push({ date: dateStr.slice(5), calories: Math.round(dayCal) });
+    }
+    return history;
+}
+
+// Phase 4: 取得近 N 天每日蛋白質
+function getProteinHistory(days = 7) {
+    const history = [];
+    const today = new Date();
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(); d.setDate(today.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const stored = localStorage.getItem(`record_${dateStr}`);
+        let dayPro = 0;
+        if (stored) { JSON.parse(stored).forEach(item => dayPro += (Number(item.nutri && item.nutri.protein) || 0)); }
+        history.push({ date: dateStr.slice(5), protein: Math.round(dayPro * 10) / 10 });
+    }
+    return history;
 }

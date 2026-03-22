@@ -1,24 +1,24 @@
 let macroChart = null;
 let weeklyChart = null;
-let weightChart = null; // ✨ 新增：體重圖表
-let petTimeout = null; // 用來控制動畫計時
+let weightChart = null;
+let calTrendChart = null;   // Phase 4
+let proteinTrendChart = null; // Phase 4
+let petTimeout = null;
+let dashboardChartRange = 7; // Phase 4: 預設 7 天
 
-// ✨ 新增：視圖切換邏輯
+// ✨ 視圖切換邏輯
 function switchView(targetId) {
-    // 隱藏所有視圖
     document.querySelectorAll('.view-section').forEach(view => {
         view.classList.remove('active-view');
         view.classList.add('hidden');
     });
     
-    // 顯示目標視圖
     const targetView = document.getElementById(targetId);
     if (targetView) {
         targetView.classList.remove('hidden');
         targetView.classList.add('active-view');
     }
 
-    // 更新導覽列狀態
     document.querySelectorAll('.nav-item').forEach(nav => {
         if(nav.getAttribute('data-target') === targetId) {
             nav.classList.add('active');
@@ -27,7 +27,6 @@ function switchView(targetId) {
         }
     });
 
-    // 如果切換到 Dashboard，更新圖表
     if (targetId === 'view-dashboard') {
         const total = {
             pro: parseFloat(document.getElementById('sum-protein').innerText) || 0,
@@ -36,9 +35,23 @@ function switchView(targetId) {
         };
         updateCharts(total);
         updateWeightChart();
+        updateTrendCharts(dashboardChartRange);
     }
 }
 
+// Phase 4: 切換圖表範圍
+function setChartRange(days) {
+    dashboardChartRange = days;
+    const t = i18n[curLang] || i18n['zh-TW'];
+    // 更新按鈕樣式
+    const btn7 = document.getElementById('btn-chart-7d');
+    const btn30 = document.getElementById('btn-chart-30d');
+    if(btn7 && btn30) {
+        btn7.classList.toggle('active-range', days === 7);
+        btn30.classList.toggle('active-range', days === 30);
+    }
+    updateTrendCharts(days);
+}
 
 function initCharts() {
     const t = (typeof i18n !== 'undefined' && i18n[curLang]) ? i18n[curLang] : i18n['zh-TW'];
@@ -90,12 +103,12 @@ function initCharts() {
         }
     });
     
-    // ✨ 新增：初始化體重圖表
+    // 體重圖表
     const ctxWeight = document.getElementById('weightChart').getContext('2d');
     weightChart = new Chart(ctxWeight, {
         type: 'line',
         data: {
-            labels: [], // 將由 updateWeightChart 填入
+            labels: [],
             datasets: [{
                 label: '體重 (kg)',
                 data: [],
@@ -111,50 +124,109 @@ function initCharts() {
         options: {
             responsive: true, 
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: { 
-                y: { 
-                    // 不從 0 開始，讓變化更明顯
-                    beginAtZero: false 
-                } 
-            }
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: false } }
         }
     });
 
+    // Phase 4: 熱量趨勢折線圖
+    const ctxCalTrend = document.getElementById('calTrendChart');
+    if(ctxCalTrend) {
+        calTrendChart = new Chart(ctxCalTrend.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: t.cal || 'Calories',
+                        data: [],
+                        borderColor: '#e17055',
+                        backgroundColor: 'rgba(225, 112, 85, 0.1)',
+                        borderWidth: 2, pointRadius: 3, fill: true, tension: 0.3
+                    },
+                    {
+                        label: t.chartTdeeTarget || 'TDEE',
+                        data: [],
+                        borderColor: '#636e72',
+                        borderWidth: 2, borderDash: [6, 4],
+                        pointRadius: 0, fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { usePointStyle: true } } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // Phase 4: 蛋白質長條圖
+    const ctxProtein = document.getElementById('proteinTrendChart');
+    if(ctxProtein) {
+        proteinTrendChart = new Chart(ctxProtein.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: t.pro || 'Protein',
+                    data: [],
+                    backgroundColor: 'rgba(255, 118, 117, 0.7)',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
     updateChartTheme(curTheme);
+}
+
+// Phase 4: 更新趨勢圖表
+function updateTrendCharts(days) {
+    if(calTrendChart) {
+        const calHist = getCalorieHistory(days);
+        calTrendChart.data.labels = calHist.map(h => h.date);
+        calTrendChart.data.datasets[0].data = calHist.map(h => h.calories);
+        // TDEE 目標線
+        const tdee = targetCalories > 0 ? targetCalories : 2000;
+        calTrendChart.data.datasets[1].data = calHist.map(() => tdee);
+        calTrendChart.update();
+    }
+    if(proteinTrendChart) {
+        const proHist = getProteinHistory(days);
+        proteinTrendChart.data.labels = proHist.map(h => h.date);
+        proteinTrendChart.data.datasets[0].data = proHist.map(h => h.protein);
+        proteinTrendChart.update();
+    }
 }
 
 function updateChartTheme(theme) {
     const textColor = theme === 'dark' ? '#e0e0e0' : '#2c3e50';
     const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
     Chart.defaults.color = textColor;
-    if(weeklyChart) {
-        weeklyChart.options.scales.x.ticks.color = textColor;
-        weeklyChart.options.scales.y.ticks.color = textColor;
-        weeklyChart.options.scales.y.grid.color = gridColor;
-        weeklyChart.update();
-    }
-    if(weightChart) {
-        weightChart.options.scales.x.ticks.color = textColor;
-        weightChart.options.scales.y.ticks.color = textColor;
-        weightChart.options.scales.y.grid.color = gridColor;
-        weightChart.update();
-    }
+    [weeklyChart, weightChart, calTrendChart, proteinTrendChart].forEach(chart => {
+        if(chart && chart.options.scales) {
+            if(chart.options.scales.x) { chart.options.scales.x.ticks.color = textColor; }
+            if(chart.options.scales.y) { chart.options.scales.y.ticks.color = textColor; chart.options.scales.y.grid.color = gridColor; }
+            chart.update();
+        }
+    });
     if(macroChart) {
         macroChart.options.plugins.legend.labels.color = textColor;
         macroChart.update();
     }
 }
 
-// ✨ 優化版：加入 Idle 狀態的寵物邏輯
 function updatePetStatus(currentCal) {
     const petImg = document.getElementById('pet-img');
     const petMsg = document.getElementById('pet-msg');
     if(!petImg || !petMsg) return;
 
-    // 如果正在播放吃東西動畫，暫時不要更新狀態
     if (petImg.dataset.animating === "true") return;
 
     const target = (typeof targetCalories !== 'undefined' && targetCalories > 0) ? targetCalories : 2000;
@@ -166,61 +238,47 @@ function updatePetStatus(currentCal) {
     const t = (typeof i18n !== 'undefined' && i18n[localStorage.getItem('appLang')]) ? i18n[localStorage.getItem('appLang')] : i18n['zh-TW'];
 
     if (currentCal === 0) {
-         // 狀態 1: 完全沒吃 -> 難過
          src = 'dog_animation/dog_sad.gif';
          msg = t.petMsg1 || '汪... 肚子好餓喔... (0%)';
     } else if (ratio < 0.3) {
-         // ✨ 狀態 2: 吃很少 (1%-30%) -> 閒置/發呆 (新增的 Idle 應用)
-         // 代表有點東西墊胃了，不難過但還沒力氣動
          src = 'dog_animation/dog_idle.gif';
          msg = t.petMsg2 || '有點力氣了，但還想再吃一點...';
     } else if (ratio < 0.5) {
-         // 狀態 3: 吃一半 (30%-50%) -> 走路覓食
          src = 'dog_animation/dog_walk.gif';
          msg = t.petMsg3 || '聞到香味了，正在尋找食物！';
     } else if (ratio >= 0.5 && ratio <= 1.1) {
-         // 狀態 4: 達標 (50%-110%) -> 開心
          src = 'dog_animation/dog_happy.gif';
          msg = t.petMsg4 || '營養剛剛好，太棒了！';
     } else {
-         // 狀態 5: 超標 -> 變胖
          src = 'dog_animation/dog_fat.gif';
          msg = t.petMsg5 || '嗝... 吃太多了啦！';
     }
     
-    // 只有在圖片路徑改變時才更新，避免閃爍
     if(!petImg.src.includes(src)) petImg.src = src;
     petMsg.innerText = msg;
 }
 
-// ✨ 新功能：餵食動畫
 function showEatingAnimation() {
     const petImg = document.getElementById('pet-img');
     const petMsg = document.getElementById('pet-msg');
     if(!petImg) return;
 
-    // 標記正在動畫中，避免被 updatePetStatus 覆蓋
     petImg.dataset.animating = "true";
     
     const t = (typeof i18n !== 'undefined' && i18n[localStorage.getItem('appLang')]) ? i18n[localStorage.getItem('appLang')] : i18n['zh-TW'];
     
-    // 切換成吃東西圖
     petImg.src = 'dog_animation/dog_eat.gif';
     petMsg.innerText = t.petEatMsg || '阿姆阿姆... 好吃！';
 
-    // 清除舊的計時器（如果有的話）
     if (petTimeout) clearTimeout(petTimeout);
 
-    // 3秒後恢復正常狀態
     petTimeout = setTimeout(() => {
         petImg.dataset.animating = "false";
-        // 強制更新回正確狀態
         const currentCal = parseFloat(document.getElementById('total-cal-display').innerText) || 0;
         updatePetStatus(currentCal);
     }, 3000);
 }
 
-// ✨ 新功能：點擊互動
 function petInteraction() {
     const petMsg = document.getElementById('pet-msg');
     const t = (typeof i18n !== 'undefined' && i18n[localStorage.getItem('appLang')]) ? i18n[localStorage.getItem('appLang')] : i18n['zh-TW'];
@@ -231,7 +289,6 @@ function petInteraction() {
         t.petInteractMsg4 || "摸我也不會變瘦喔，去運動吧！ XD",
         t.petInteractMsg5 || "記得要細嚼慢嚥喔！"
     ];
-    // 隨機選一句
     const randomMsg = messages[Math.floor(Math.random() * messages.length)];
     petMsg.innerText = randomMsg;
 }
@@ -256,21 +313,17 @@ function updateCharts(totalNutri) {
             labels.push(dateStr.slice(5)); 
             const stored = localStorage.getItem(`record_${dateStr}`);
             let dayCal = 0;
-            if(stored) { JSON.parse(stored).forEach(item => dayCal += (item.nutri.calories || 0)); }
+            if(stored) { JSON.parse(stored).forEach(item => dayCal += (Number(item.nutri && item.nutri.calories) || 0)); }
             data.push(Math.round(dayCal));
         }
         weeklyChart.data.labels = labels; weeklyChart.data.datasets[0].data = data; weeklyChart.update();
     }
 }
 
-// ✨ 新增：更新體重圖表
 function updateWeightChart() {
     if (!weightChart) return;
     
-    // 取得近30天的資料
     const history = getWeightHistory(30);
-    
-    // 過濾掉沒有資料的點，或者補上前一天的資料 (這裡我們選擇只顯示有輸入的日子，並用線連起來)
     const labels = [];
     const data = [];
     
@@ -284,7 +337,6 @@ function updateWeightChart() {
     weightChart.data.labels = labels;
     weightChart.data.datasets[0].data = data;
     
-    // 動態調整 Y 軸範圍
     if (data.length > 0) {
         const minW = Math.min(...data);
         const maxW = Math.max(...data);
@@ -301,17 +353,19 @@ function renderListAndStats() {
     let mealTotals = { breakfast:0, lunch:0, dinner:0, snack:0 };
 
     foodItems.forEach((item, index) => {
-        total.cal += (Number(item.nutri.calories) || 0); total.pro += (Number(item.nutri.protein) || 0);
-        total.fat += (Number(item.nutri.fat) || 0); total.carb += (Number(item.nutri.carbohydrate) || 0);
-        total.sugar += (Number(item.nutri.sugar) || 0); total.sod += (Number(item.nutri.sodium) || 0);
-        total.sat += (Number(item.nutri.saturatedFat) || 0); total.trans += (Number(item.nutri.transFat) || 0);
-        if(mealTotals[item.type] !== undefined) mealTotals[item.type] += (Number(item.nutri.calories) || 0);
+        const n = item.nutri || {};
+        total.cal += (Number(n.calories) || 0); total.pro += (Number(n.protein) || 0);
+        total.fat += (Number(n.fat) || 0); total.carb += (Number(n.carbohydrate) || 0);
+        total.sugar += (Number(n.sugar) || 0); total.sod += (Number(n.sodium) || 0);
+        total.sat += (Number(n.saturatedFat) || 0); total.trans += (Number(n.transFat) || 0);
+        if(mealTotals[item.type] !== undefined) mealTotals[item.type] += (Number(n.calories) || 0);
         
         const li = document.createElement('li');
+        // Phase 4: 點擊食物名稱開啟詳細彈窗
         li.innerHTML = `
-            <div class="food-info">
+            <div class="food-info" onclick="showDetailModal(${index})" style="cursor:pointer;">
                 <div class="name">${item.name}</div>
-                <div class="detail">🔥${Math.round(item.nutri.calories)} | P:${item.nutri.protein} F:${item.nutri.fat} C:${item.nutri.carbohydrate}</div>
+                <div class="detail">🔥${Math.round(n.calories || 0)} | P:${n.protein || 0} F:${n.fat || 0} C:${n.carbohydrate || 0}</div>
             </div>
             <div style="display: flex; gap: 5px;">
                 <button class="btn-delete" style="background-color: #ff7675;" onclick="addRecordToFav(${index})">❤️</button>
@@ -393,8 +447,6 @@ function setTheme(theme) {
     localStorage.setItem('appTheme', theme);
     document.documentElement.setAttribute('data-theme', theme);
     updateChartTheme(theme);
-    
-    // 更新手機狀態列顏色以符合當前主題的背景色
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
         metaThemeColor.setAttribute('content', theme === 'dark' ? '#121212' : '#f0f2f5');
@@ -426,7 +478,11 @@ function setLang(lang) {
         'txt-weight-title': t.weightTitle, 'btn-save-weight': t.btnSaveWeight, 'txt-weight-chart-title': t.weightChartTitle,
         'txt-text-ai-label': t.textAiLabel, 'txt-app-settings-title': t.appSettingsTitle,
         'nav-daily': t.navDaily, 'nav-dashboard': t.navDashboard, 'nav-settings': t.navSettings, 'lbl-weight': t.txtWeightSettingsTitle,
-        'txt-target-cal-display-label': t.txtTargetCalDisplayUnit, 'txt-tdee-unit': t.txtTdeeUnit
+        'txt-target-cal-display-label': t.txtTargetCalDisplayUnit, 'txt-tdee-unit': t.txtTdeeUnit,
+        // Phase 4 新增
+        'txt-cal-trend-title': t.chartCalTrend, 'txt-protein-trend-title': t.chartProteinTrend,
+        'btn-chart-7d': t.chart7d, 'btn-chart-30d': t.chart30d,
+        'btn-detail-close': t.btnDetailClose
     };
 
     for(let id in mapping) {
@@ -434,7 +490,6 @@ function setLang(lang) {
         if(el) el.innerText = mapping[id];
     }
     
-    // 特別處理 nav-ai，因為它在一個 .ai-badge 內
     const navAiBadge = document.querySelector('.nav-item.nav-ai .ai-badge');
     if(navAiBadge) navAiBadge.innerText = t.navAi || "AI";
 
@@ -444,7 +499,6 @@ function setLang(lang) {
     if(document.getElementById('daily-weight-input')) document.getElementById('daily-weight-input').placeholder = t.weightInputPlaceholder;
     if(document.getElementById('ai-text-desc')) document.getElementById('ai-text-desc').placeholder = t.textAiPlaceholder;
 
-    
     if(t.phPro) {
         if(document.getElementById('manual-pro')) document.getElementById('manual-pro').placeholder = t.phPro;
         if(document.getElementById('manual-fat')) document.getElementById('manual-fat').placeholder = t.phFat;
@@ -455,7 +509,6 @@ function setLang(lang) {
         if(document.getElementById('manual-trans')) document.getElementById('manual-trans').placeholder = t.phTrans;
     }
     
-    // Also trigger macro updates based on user settings when language changes
     if(typeof updateProfileStats === 'function') updateProfileStats();
     
     updateMealUI();
@@ -468,25 +521,31 @@ function setLang(lang) {
 
 function openFavModal() {
     const list = document.getElementById('fav-list-container');
+    const t = i18n[curLang] || i18n['zh-TW'];
     list.innerHTML = '';
     if(favoriteFoods.length === 0) { list.innerHTML = '<p style="color:#888; text-align:center;">(Empty)</p>'; } 
     else {
         favoriteFoods.forEach((item, index) => {
-            const cal = item.nutri ? item.nutri.calories : item.cal;
-            const pro = item.nutri ? item.nutri.protein : 0;
-            const fat = item.nutri ? item.nutri.fat : 0;
-            const carb = item.nutri ? item.nutri.carbohydrate : 0;
+            const n = item.nutri || {};
+            const cal = n.calories || item.cal || 0;
+            const pro = n.protein || 0;
+            const fat = n.fat || 0;
+            const carb = n.carbohydrate || 0;
 
             const div = document.createElement('div');
             div.className = 'fav-item-row';
+            // Phase 4: 點擊常吃食物開啟詳細彈窗
             div.innerHTML = `
-                <div class="fav-item-name" onclick="pickFav(${index})">
+                <div class="fav-item-name" onclick="showFavDetailModal(${index})" style="cursor:pointer;">
                     ${item.name} 
                     <span style="font-size:0.85em; opacity:0.8; display:block; font-weight:normal;">
                         🔥${cal} | P:${pro} F:${fat} C:${carb}
                     </span>
                 </div>
-                <button class="btn-delete" onclick="deleteFav(${index})">X</button>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-delete" style="background-color:#0984e3;" onclick="pickFav(${index})">📥</button>
+                    <button class="btn-delete" onclick="deleteFav(${index})">X</button>
+                </div>
             `;
             list.appendChild(div);
         });
@@ -523,12 +582,199 @@ function deleteFav(index) {
     }
 }
 
+// Phase 4: 全新 AI 分析結果彈窗 (含八大營養+成分列表+健康評分+編輯+重算)
 function showModal() {
     const d = tempAIResult;
     const t = i18n[curLang] || i18n['zh-TW'];
-    document.getElementById('analysis-content').innerHTML = `<strong>${d.name}</strong><br>🔥 ${t.cal}：${d.nutri.calories}<br>🥩 ${t.pro}：${d.nutri.protein} | 🥑 ${t.fat}：${d.nutri.fat} | 🍞 ${t.carb}：${d.nutri.carbohydrate}`;
+    const nd = t.noData || '--';
+    const n = d.nutri;
+    
+    // 健康評分顏色
+    const score = d.healthScore || 0;
+    let scoreColor = '#e17055';
+    if(score >= 7) scoreColor = '#2ecc71';
+    else if(score >= 4) scoreColor = '#fdcb6e';
+
+    // 成分列表 HTML
+    let itemsHtml = '';
+    if(d.items && d.items.length > 0) {
+        d.items.forEach((item, i) => {
+            itemsHtml += `
+            <div class="ai-item-row" data-idx="${i}">
+                <input type="text" class="ai-item-name" value="${item.name || ''}" style="flex:2;">
+                <input type="text" class="ai-item-weight" value="${item.weight || ''}" style="flex:1;">
+                <button class="btn-delete" onclick="removeAIItem(${i})" style="flex:0;">✕</button>
+            </div>`;
+        });
+    }
+
+    const content = `
+        <div style="text-align:left;">
+            <h3 style="margin:0 0 10px;">${d.name}</h3>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                <span style="font-size:2em; font-weight:bold; color:${scoreColor};">${score}/10</span>
+                <span style="opacity:0.8;">${t.healthScoreLabel || '🏅 健康評分'}</span>
+            </div>
+            
+            <div class="ai-nutri-grid">
+                <div class="ai-nutri-item"><span class="ai-n-val">🔥 ${n.calories}</span><span class="ai-n-lbl">${t.cal}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${n.protein}g</span><span class="ai-n-lbl">${t.pro}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${n.fat}g</span><span class="ai-n-lbl">${t.fat}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${n.carbohydrate}g</span><span class="ai-n-lbl">${t.carb}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${n.sugar}g</span><span class="ai-n-lbl">${t.sugar}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${n.sodium}mg</span><span class="ai-n-lbl">${t.sod}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${n.saturatedFat}g</span><span class="ai-n-lbl">${t.sat}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${(n.fiber || 0)}g</span><span class="ai-n-lbl">${t.fiber || '纖維'}</span></div>
+            </div>
+            
+            <div style="margin-top:15px;">
+                <strong>${t.aiItemsLabel || '📋 食物成分估算'}</strong>
+                <div style="margin-top:5px; font-size:0.8em; opacity:0.6; margin-bottom:8px;">
+                    ${t.itemName || '食物'} / ${t.itemWeight || '重量'}
+                </div>
+                <div id="ai-items-container">${itemsHtml}</div>
+                <button onclick="addAIItem()" style="margin-top:8px; padding:8px; font-size:13px; background:#74b9ff;">${t.addItem || '＋新增成分'}</button>
+                <button onclick="recalculateAI()" style="margin-top:8px; padding:8px; font-size:13px; background:#a29bfe;">${t.recalculate || '🔄 重新計算'}</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('analysis-content').innerHTML = content;
     document.getElementById('analysis-modal').style.display = 'flex';
 }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-function toggleFabMenu() { document.getElementById('fab-menu').classList.toggle('show'); }
 
+// Phase 4: 編輯成分 - 新增項目
+function addAIItem() {
+    const container = document.getElementById('ai-items-container');
+    if(!container || !tempAIResult) return;
+    const idx = tempAIResult.items ? tempAIResult.items.length : 0;
+    tempAIResult.items = tempAIResult.items || [];
+    tempAIResult.items.push({ name: '', weight: '' });
+    const div = document.createElement('div');
+    div.className = 'ai-item-row';
+    div.setAttribute('data-idx', idx);
+    div.innerHTML = `
+        <input type="text" class="ai-item-name" value="" style="flex:2;">
+        <input type="text" class="ai-item-weight" value="" style="flex:1;">
+        <button class="btn-delete" onclick="removeAIItem(${idx})" style="flex:0;">✕</button>
+    `;
+    container.appendChild(div);
+}
+
+// Phase 4: 編輯成分 - 刪除項目
+function removeAIItem(idx) {
+    if(!tempAIResult || !tempAIResult.items) return;
+    tempAIResult.items.splice(idx, 1);
+    showModal(); // 重新渲染
+}
+
+// Phase 4: 重新計算
+async function recalculateAI() {
+    if(!tempAIResult) return;
+    const t = i18n[curLang] || i18n['zh-TW'];
+    
+    // 從 DOM 讀取目前的成分
+    const rows = document.querySelectorAll('#ai-items-container .ai-item-row');
+    const items = [];
+    rows.forEach(row => {
+        const name = row.querySelector('.ai-item-name').value.trim();
+        const weight = row.querySelector('.ai-item-weight').value.trim();
+        if(name) items.push({ name, weight });
+    });
+    
+    if(items.length === 0) { alert('請至少保留一項成分'); return; }
+    
+    // 顯示載入中
+    document.getElementById('analysis-content').innerHTML = `<div style="text-align:center; padding:30px;">${t.aiLoading || 'AI 正在分析...'}</div>`;
+    
+    try {
+        const result = await recalculateFromItems(items);
+        if(result) {
+            tempAIResult = {
+                name: result.foodName || tempAIResult.name,
+                nutri: {
+                    calories: Number(result.calories) || 0, protein: Number(result.protein) || 0, fat: Number(result.fat) || 0,
+                    carbohydrate: Number(result.carbohydrate) || 0, sugar: Number(result.sugar) || 0, sodium: Number(result.sodium) || 0,
+                    saturatedFat: Number(result.saturatedFat) || 0, transFat: Number(result.transFat) || 0,
+                    fiber: Number(result.fiber) || 0
+                },
+                items: Array.isArray(result.items) ? result.items : items,
+                healthScore: Number(result.healthScore) || 0
+            };
+            tempAIResultSaved = false;
+            showModal();
+        }
+    } catch(e) {
+        console.error(e);
+        showModal(); // 恢復顯示
+    }
+}
+
+// Phase 4: 詳細營養彈窗 (日記食物)
+function showDetailModal(index) {
+    const item = foodItems[index];
+    if(!item) return;
+    _renderDetailModal(item);
+}
+
+// Phase 4: 詳細營養彈窗 (常吃食物)
+function showFavDetailModal(index) {
+    const item = favoriteFoods[index];
+    if(!item) return;
+    _renderDetailModal(item);
+}
+
+// Phase 4: 共用詳細彈窗渲染
+function _renderDetailModal(item) {
+    const t = i18n[curLang] || i18n['zh-TW'];
+    const nd = t.noData || '--';
+    const n = item.nutri || {};
+    
+    const v = (val) => (val !== undefined && val !== null) ? val : nd;
+    
+    const score = item.healthScore || 0;
+    let scoreColor = '#e17055';
+    if(score >= 7) scoreColor = '#2ecc71';
+    else if(score >= 4) scoreColor = '#fdcb6e';
+    
+    let itemsHtml = '';
+    if(item.items && item.items.length > 0) {
+        item.items.forEach(it => {
+            itemsHtml += `<div style="padding:4px 0; display:flex; justify-content:space-between;"><span>${it.name}</span><span style="opacity:0.7;">${it.weight}</span></div>`;
+        });
+    } else {
+        itemsHtml = `<p style="opacity:0.5; text-align:center;">${nd}</p>`;
+    }
+
+    const content = `
+        <div style="text-align:left;">
+            <h3 style="margin:0 0 10px;">${item.name}</h3>
+            ${score > 0 ? `<div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                <span style="font-size:1.5em; font-weight:bold; color:${scoreColor};">${score}/10</span>
+                <span style="opacity:0.8;">${t.healthScoreLabel || '🏅 健康評分'}</span>
+            </div>` : ''}
+            
+            <div class="ai-nutri-grid">
+                <div class="ai-nutri-item"><span class="ai-n-val">🔥 ${v(n.calories)}</span><span class="ai-n-lbl">${t.cal}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${v(n.protein)}g</span><span class="ai-n-lbl">${t.pro}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${v(n.fat)}g</span><span class="ai-n-lbl">${t.fat}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${v(n.carbohydrate)}g</span><span class="ai-n-lbl">${t.carb}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${v(n.sugar)}g</span><span class="ai-n-lbl">${t.sugar}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${v(n.sodium)}mg</span><span class="ai-n-lbl">${t.sod}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${v(n.saturatedFat)}g</span><span class="ai-n-lbl">${t.sat}</span></div>
+                <div class="ai-nutri-item"><span class="ai-n-val">${v(n.fiber)}g</span><span class="ai-n-lbl">${t.fiber || '纖維'}</span></div>
+            </div>
+            
+            <div style="margin-top:15px;">
+                <strong>${t.aiItemsLabel || '📋 食物成分估算'}</strong>
+                <div style="margin-top:8px;">${itemsHtml}</div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('detail-content').innerHTML = content;
+    document.getElementById('detail-modal').style.display = 'flex';
+}
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function toggleFabMenu() { const el = document.getElementById('fab-menu'); if(el) el.classList.toggle('show'); }

@@ -21,21 +21,26 @@ function setupEventListeners() {
     document.getElementById('btn-calc').addEventListener('click', () => calculateProfile());
     
     document.getElementById('btn-ai-fav-save').addEventListener('click', saveAIResultToFavorites);
-    document.getElementById('btn-cancel').addEventListener('click', () => closeModal('analysis-modal'));
+    
+    // Phase 4: 關閉 AI Modal 時的防呆 (取消按鈕)
+    document.getElementById('btn-cancel').addEventListener('click', () => tryCloseAnalysisModal());
+    
     document.getElementById('btn-fav-close').addEventListener('click', () => closeModal('fav-modal'));
     
-    // ✨ 新增：Bottom Navigation 點擊事件
+    // Phase 4: 關閉詳細資訊彈窗
+    const detailCloseBtn = document.getElementById('btn-detail-close');
+    if(detailCloseBtn) detailCloseBtn.addEventListener('click', () => closeModal('detail-modal'));
+    
+    // Bottom Navigation
     document.querySelectorAll('.nav-item').forEach(nav => {
         nav.addEventListener('click', function(e) {
             e.preventDefault();
             const targetId = this.getAttribute('data-target');
-            if (targetId) {
-                switchView(targetId);
-            }
+            if (targetId) { switchView(targetId); }
         });
     });
 
-    // ✨ 新增：儲存體重按鈕
+    // 儲存體重按鈕
     const btnSaveWeight = document.getElementById('btn-save-weight');
     if(btnSaveWeight) {
         btnSaveWeight.addEventListener('click', () => {
@@ -43,20 +48,16 @@ function setupEventListeners() {
             const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
             if(saveWeightData(selectedDate, w)) {
                 alert(t.alertWeightSaved || "體重紀錄已儲存！");
-                // 同步更新設定頁面的體重
                 document.getElementById('weight').value = w;
                 saveProfile();
-                // 重新計算 TDEE 和攝取目標，因為體重已經改變
-                if (typeof updateProfileStats === 'function') {
-                    updateProfileStats();
-                }
+                if (typeof updateProfileStats === 'function') { updateProfileStats(); }
             } else {
                 alert(t.alertInvalidWeight || "請輸入有效的體重數值！");
             }
         });
     }
 
-    // Settings view events (moved from FAB)
+    // Settings view events
     document.getElementById('btn-toggle-theme-setting').addEventListener('click', toggleTheme);
     document.getElementById('btn-open-lang-setting').addEventListener('click', openLangModal);
     document.getElementById('btn-export-setting').addEventListener('click', exportData);
@@ -71,6 +72,25 @@ function setupEventListeners() {
             location.reload(); 
         });
     });
+
+    // Phase 4: Dashboard 日期切換
+    const toggle7 = document.getElementById('btn-chart-7d');
+    const toggle30 = document.getElementById('btn-chart-30d');
+    if(toggle7) toggle7.addEventListener('click', () => setChartRange(7));
+    if(toggle30) toggle30.addEventListener('click', () => setChartRange(30));
+}
+
+// Phase 4: 防呆關閉 AI 彈窗
+function tryCloseAnalysisModal() {
+    const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
+    if (tempAIResult && !tempAIResultSaved) {
+        if (!confirm(t.unsavedWarning || "注意，您的營養數據尚未保存，確定要離開嗎？")) {
+            return; // 使用者按取消，不關閉
+        }
+    }
+    tempAIResult = null;
+    tempAIResultSaved = false;
+    closeModal('analysis-modal');
 }
 
 function calculateProfile(auto=false) {
@@ -100,9 +120,7 @@ function calculateProfile(auto=false) {
     document.getElementById('target-cal-display').innerText = targetCalories;
     
     const goalResult = document.getElementById('goal-result');
-    if (goalResult) {
-        goalResult.style.display = 'block';
-    }
+    if (goalResult) { goalResult.style.display = 'block'; }
     
     saveProfile();
     updateMealUI();      
@@ -115,7 +133,6 @@ function calculateProfile(auto=false) {
     
     const macroBox = document.getElementById('macro-goals');
     if (macroBox) {
-        const t = (typeof i18n !== 'undefined' && i18n[localStorage.getItem('appLang')]) ? i18n[localStorage.getItem('appLang')] : i18n['zh-TW'];
         macroBox.innerHTML = `
             <strong>${t.macroGoalTitle || "📊 營養攝取建議 (估算值)："}</strong><br>
             🥩 ${t.pro}：~${p_g}g | 🥑 ${t.fat}：~${f_g}g | 🍞 ${t.carb}：~${c_g}g<br>
@@ -131,8 +148,12 @@ function handleFileSelect(input) {
     const preview = document.getElementById('image-preview');
     preview.src = URL.createObjectURL(file); preview.style.display = 'block';
     document.getElementById('analyze-btn').style.display = 'inline-block';
-    document.getElementById('ai-desc-group').style.display = 'block';
-    if(document.getElementById('ai-text-only-group')) document.getElementById('ai-text-only-group').style.display = 'none';
+    // Phase 4 / Task 3 修復：上傳圖片時隱藏純文字輸入區，改顯示圖片補充說明區
+    // 避免出現兩個描述框讓使用者混淆
+    const textOnlyGroup = document.getElementById('ai-text-only-group');
+    const descGroup = document.getElementById('ai-desc-group');
+    if (textOnlyGroup) textOnlyGroup.style.display = 'none';
+    if (descGroup) descGroup.style.display = 'block';
     document.getElementById('ai-loading').style.display = 'none';
 }
 
@@ -141,7 +162,6 @@ function startAnalysis() {
     const file = input.files[0]; 
     const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
     
-    // ✨ 支援純文字分析 (不需要圖片)
     const textOnlyInput = document.getElementById('ai-text-desc');
     const textDescVal = textOnlyInput ? textOnlyInput.value.trim() : "";
     
@@ -163,9 +183,13 @@ function startAnalysis() {
                 nutri: {
                     calories: Number(result.calories) || 0, protein: Number(result.protein) || 0, fat: Number(result.fat) || 0,
                     carbohydrate: Number(result.carbohydrate) || 0, sugar: Number(result.sugar) || 0, sodium: Number(result.sodium) || 0,
-                    saturatedFat: Number(result.saturatedFat) || 0, transFat: Number(result.transFat) || 0
-                }
+                    saturatedFat: Number(result.saturatedFat) || 0, transFat: Number(result.transFat) || 0,
+                    fiber: Number(result.fiber) || 0
+                },
+                items: Array.isArray(result.items) ? result.items : [],
+                healthScore: Number(result.healthScore) || 0
             }; 
+            tempAIResultSaved = false; // Phase 4: 重設保存旗標
             showModal();
         }
     };
@@ -179,7 +203,6 @@ function startAnalysis() {
         document.getElementById('ai-loading').style.display = 'none';
         document.getElementById('analyze-btn').style.display = 'inline-block';
         
-        // 恢復 UI 狀態
         document.getElementById('image-upload').value = '';
         if(document.getElementById('ai-desc')) document.getElementById('ai-desc').value = '';
         document.getElementById('image-preview').style.display = 'none';
@@ -191,13 +214,11 @@ function startAnalysis() {
     };
 
     if (file) {
-        // 圖片分析
         const finalDesc = imageDescVal + (textDescVal ? " " + textDescVal : "");
         toBase64(file).then(base64 => {
             return callCloudflareAI(base64, finalDesc);
         }).then(handleResult).catch(handleError).finally(handleFinally);
     } else {
-        // 純文字分析
         callCloudflareAIText(textDescVal).then(handleResult).catch(handleError).finally(handleFinally);
     }
 }
@@ -222,7 +243,9 @@ function addRecordToFav(index) {
     
     favoriteFoods.push({ 
         name: item.name, 
-        nutri: item.nutri 
+        nutri: item.nutri,
+        items: item.items || [],
+        healthScore: item.healthScore || 0
     });
     localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
     alert(t.alertFavAdded || "已加入最愛！");
@@ -233,7 +256,6 @@ function changeDate() {
     document.getElementById('display-date-text').innerText = selectedDate;
     loadFoodData(selectedDate);
     
-    // ✨ 載入該日期的體重紀錄
     const w = loadWeightData(selectedDate);
     if(w !== null) {
         document.getElementById('daily-weight-input').value = w;
@@ -245,9 +267,16 @@ function changeDate() {
 }
 
 function confirmAddFood(type) {
-    foodItems.push({ type: type, name: tempAIResult.name, nutri: tempAIResult.nutri });
+    foodItems.push({ 
+        type: type, 
+        name: tempAIResult.name, 
+        nutri: tempAIResult.nutri,
+        items: tempAIResult.items || [],
+        healthScore: tempAIResult.healthScore || 0
+    });
     saveFoodData();
     renderListAndStats();
+    tempAIResultSaved = true; // Phase 4: 標記已保存
     closeModal('analysis-modal');
     
     if(typeof showEatingAnimation === 'function') showEatingAnimation();
@@ -272,8 +301,10 @@ function addManualFood() {
             type: type, name: name, 
             nutri: { 
                 calories: cal, protein: pro, fat: fat, carbohydrate: carb, 
-                sugar: sugar, sodium: sod, saturatedFat: sat, transFat: trans 
-            } 
+                sugar: sugar, sodium: sod, saturatedFat: sat, transFat: trans, fiber: 0
+            },
+            items: [],
+            healthScore: 0
         });
         saveFoodData();
         renderListAndStats();
@@ -309,10 +340,11 @@ function saveToFavorites() {
         sugar: parseFloat(document.getElementById('manual-sugar').value) || 0,
         sodium: parseFloat(document.getElementById('manual-sod').value) || 0,
         saturatedFat: parseFloat(document.getElementById('manual-sat').value) || 0,
-        transFat: parseFloat(document.getElementById('manual-trans').value) || 0
+        transFat: parseFloat(document.getElementById('manual-trans').value) || 0,
+        fiber: 0
     };
 
-    favoriteFoods.push({ name: name, nutri: nutri });
+    favoriteFoods.push({ name: name, nutri: nutri, items: [], healthScore: 0 });
     localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
     alert(t.alertFavAdded || "已加入最愛！");
 }
@@ -324,45 +356,41 @@ function saveAIResultToFavorites() {
     
     if(favoriteFoods.some(f => f.name === name)) { alert(t.alertFavExist || "已在最愛清單中！"); return; }
     
-    favoriteFoods.push({ name: name, nutri: tempAIResult.nutri });
+    favoriteFoods.push({ 
+        name: name, 
+        nutri: tempAIResult.nutri,
+        items: tempAIResult.items || [],
+        healthScore: tempAIResult.healthScore || 0
+    });
     localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
     alert(t.alertFavAdded || "已加入最愛！");
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 嘗試鎖定螢幕為直向 (主要針對手機 PWA 或支援的瀏覽器)
     if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock('portrait').catch(err => console.log('螢幕鎖定不支援:', err));
     }
 
-    // 1. 設定事件監聽
     setupEventListeners();
     
-    // 2. 初始化介面設定
     setTheme(curTheme);
     setLang(curLang);
     document.getElementById('current-date').value = selectedDate;
     
-    // 3. 讀取並計算使用者資料
     if(loadProfile()) {
         calculateProfile(true); 
     } else {
         updateMealUI(); 
     }
     
-    // 4. 讀取今日紀錄
     loadFoodData(selectedDate);
     
-    // ✨ 載入今日體重紀錄
     const w = loadWeightData(selectedDate);
     if(w !== null) {
         document.getElementById('daily-weight-input').value = w;
     }
     
-    // 5. 初始化圖表
     initCharts();
     
-    // ✨ 關鍵修正：確保資料載入後，立即渲染畫面
-    // 這樣就算 calculateProfile 沒有完全執行，舊資料也會顯示出來
     renderListAndStats();
 });

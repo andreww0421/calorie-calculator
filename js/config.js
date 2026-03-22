@@ -8,7 +8,7 @@ const i18n = {
         trans: "反式脂肪", 
         water: "目標水",
         chartTitle: "📊 營養與熱量分析", chartMacro: "今日三大營養素 (PFC)", chartWeekly: "本週熱量趨勢",
-        aiTitle: "📸 AI 飲食分析", btnPhoto: "📸 1. 拍照 / 選擇圖片", btnAnalyze: "送出圖片分析", aiLoading: "AI 正在分析食物營養，請稍候...",
+        aiTitle: "📸 AI 飲食分析", btnPhoto: "📸 1. 拍照 / 選擇圖片", btnAnalyze: "送出分析", aiLoading: "AI 正在分析食物營養，請稍候...",
         aiDescPlaceholder: "📝 補充說明 (例如：這是一碗牛肉麵，沒加蔥)...",
         recordTitle: "飲食紀錄", 
         manualLabel: "手動補充", 
@@ -24,13 +24,16 @@ const i18n = {
         langTitle: "語言", langCancel: "取消",
         meals: { breakfast: "🍳 早餐", lunch: "🍱 午餐", dinner: "🍲 晚餐", snack: "🍪 點心", meal1: "🍽️ 第一餐", meal2: "🍽️ 第二餐", mealBig: "🏆 唯一大餐" },
         alertDel: "確定要刪除？", alertFavAdded: "已加入最愛！", alertFavExist: "這個食物已經在最愛清單囉！", alertSelImg: "請先選擇圖片！", alertAiFail: "AI 分析失敗：", alertFill: "請填寫資料", alertNameCal: "請輸入名稱與熱量", alertImportOk: "🎉 資料還原成功！", alertImportFail: "❌ 檔案格式錯誤",
-        weightTitle: "⚖️ 體重紀錄", weightInputPlaceholder: "今日體重 (kg)", btnSaveWeight: "儲存", weightChartTitle: "📈 體重趨勢 (近30天)", textAiLabel: "📝 或者直接輸入文字描述：", textAiPlaceholder: "例如：一碗牛肉麵，沒加蔥，還有一盤燙青菜...", appSettingsTitle: "🔧 應用程式設定", navDaily: "日記", navDashboard: "儀表板", navAi: "AI", navSettings: "設定", txtWeightSettingsTitle: "體重 (kg)", alertWeightSaved: "體重紀錄已儲存！", alertInvalidWeight: "請輸入有效的體重數值！", alertSelImgOrText: "請選擇圖片，或輸入文字描述！",
+        weightTitle: "⚖️ 體重紀錄", weightInputPlaceholder: "今日體重 (kg)", btnSaveWeight: "儲存", weightChartTitle: "📈 體重趨勢 (近30天)", textAiLabel: "📝 請輸入您剛剛吃的食物或補充說明來提升AI準確度：", textAiPlaceholder: "例如：一碗牛肉麵，沒加蔥，還有一盤燙青菜...", appSettingsTitle: "🔧 應用程式設定", navDaily: "日記", navDashboard: "儀表板", navAi: "AI", navSettings: "設定", txtWeightSettingsTitle: "體重 (kg)", alertWeightSaved: "體重紀錄已儲存！", alertInvalidWeight: "請輸入有效的體重數值！", alertSelImgOrText: "請選擇圖片，或輸入文字描述！",
         petMsg1: "汪... 肚子好餓喔... (0%)", petMsg2: "有點力氣了，但還想再吃一點...", petMsg3: "聞到香味了，正在尋找食物！", petMsg4: "營養剛剛好，太棒了！", petMsg5: "嗝... 吃太多了啦！", petEatMsg: "阿姆阿姆... 好吃！", petInteractMsg1: "汪！你今天喝水了嗎？", petInteractMsg2: "保持健康，我們一起加油！", petInteractMsg3: "我最喜歡吃健康的食物了！", petInteractMsg4: "摸我也不會變瘦喔，去運動吧！ XD", petInteractMsg5: "記得要細嚼慢嚥喔！",
         macroGoalTitle: "📊 營養攝取建議 (估算值)：", txtTdeeUnit: " (總消耗熱量)", txtResTarget: "建議目標",
         txtTargetCalDisplayUnit: "目標",
         phPro: "蛋白質", phFat: "脂肪", phCarb: "碳水", phSugar: "糖", phSod: "鈉(mg)", phSat: "飽和脂", phTrans: "反式脂",
         txtManualLabel: "手動補充", btnAddRecord: "加入紀錄", txtRecordTitle: "飲食紀錄", 
-        btnFavSave: "加入最愛", btnFavLoad: "選擇常吃食物", phFoodName: "食物名稱 (必填)", phFoodCal: "熱量 (kcal) (必填)"
+        btnFavSave: "加入最愛", btnFavLoad: "選擇常吃食物", phFoodName: "食物名稱 (必填)", phFoodCal: "熱量 (kcal) (必填)",
+        chartCalTrend: "📈 熱量攝取趨勢", chartProteinTrend: "💪 蛋白質攝取趨勢", chart7d: "7天", chart30d: "30天", chartTdeeTarget: "TDEE 目標線",
+        fiber: "膳食纖維", healthScoreLabel: "🏅 健康評分", aiItemsLabel: "📋 食物成分估算", itemName: "食物", itemWeight: "重量", addItem: "＋新增成分", recalculate: "🔄 重新計算", unsavedWarning: "注意，您的營養數據尚未保存，確定要離開嗎？",
+        detailTitle: "📋 詳細營養資訊", noData: "--", btnDetailClose: "關閉"
     },
     "zh-CN": {
         appTitle: "Woof Cal 汪卡管家",
@@ -41,7 +44,7 @@ const i18n = {
         trans: "反式脂肪", 
         water: "目标水",
         chartTitle: "📊 营养与热量分析", chartMacro: "今日三大营养素 (PFC)", chartWeekly: "本周热量趋势",
-        aiTitle: "📸 AI 饮食分析", btnPhoto: "📸 1. 拍照 / 选择图片", btnAnalyze: "发送图片分析", aiLoading: "AI 正在分析食物营养，请稍候...",
+        aiTitle: "📸 AI 饮食分析", btnPhoto: "📸 1. 拍照 / 选择图片", btnAnalyze: "送出分析", aiLoading: "AI 正在分析食物营养，请稍候...",
         aiDescPlaceholder: "📝 补充说明 (例如：这是一碗牛肉面，没加葱)...",
         recordTitle: "饮食记录", 
         manualLabel: "手动补充", 
@@ -57,13 +60,16 @@ const i18n = {
         langTitle: "语言", langCancel: "取消",
         meals: { breakfast: "🍳 早餐", lunch: "🍱 午餐", dinner: "🍲 晚餐", snack: "🍪 点心", meal1: "🍽️ 第一餐", meal2: "🍽️ 第二餐", mealBig: "🏆 唯一大餐" },
         alertDel: "确定要删除？", alertFavAdded: "已加入收藏！", alertFavExist: "这个食物已经在收藏清单啰！", alertSelImg: "请先选择图片！", alertAiFail: "AI 分析失败：", alertFill: "请填写资料", alertNameCal: "请输入名称与热量", alertImportOk: "🎉 资料还原成功！", alertImportFail: "❌ 档案格式错误",
-        weightTitle: "⚖️ 体重记录", weightInputPlaceholder: "今日体重 (kg)", btnSaveWeight: "保存", weightChartTitle: "📈 体重趋势 (近30天)", textAiLabel: "📝 或者直接输入文字描述：", textAiPlaceholder: "例如：一碗牛肉面，没加葱，还有一盘烫青菜...", appSettingsTitle: "🔧 应用程序设定", navDaily: "日记", navDashboard: "面板", navAi: "AI", navSettings: "设置", txtWeightSettingsTitle: "体重 (kg)", alertWeightSaved: "体重记录已保存！", alertInvalidWeight: "请输入有效的体重数值！", alertSelImgOrText: "请选择图片，或输入文字描述！",
+        weightTitle: "⚖️ 体重记录", weightInputPlaceholder: "今日体重 (kg)", btnSaveWeight: "保存", weightChartTitle: "📈 体重趋势 (近30天)", textAiLabel: "📝 请输入您刚吃的食物或补充说明来提升AI准确度：", textAiPlaceholder: "例如：一碗牛肉面，没加葱，还有一盘烫青菜...", appSettingsTitle: "🔧 应用程序设定", navDaily: "日记", navDashboard: "面板", navAi: "AI", navSettings: "设置", txtWeightSettingsTitle: "体重 (kg)", alertWeightSaved: "体重记录已保存！", alertInvalidWeight: "请输入有效的体重数值！", alertSelImgOrText: "请选择图片，或输入文字描述！",
         petMsg1: "汪... 肚子好饿喔... (0%)", petMsg2: "有点力气了，但还想再吃一点...", petMsg3: "闻到香味了，正在寻找食物！", petMsg4: "营养刚刚好，太棒了！", petMsg5: "嗝... 吃太多了啦！", petEatMsg: "阿姆阿姆... 好吃！", petInteractMsg1: "汪！你今天喝水了吗？", petInteractMsg2: "保持健康，我们一起加油！", petInteractMsg3: "我最喜欢吃健康的食物了！", petInteractMsg4: "摸我也不会变瘦喔，去运动吧！ XD", petInteractMsg5: "记得要细嚼慢咽喔！",
         macroGoalTitle: "📊 营养摄取建议 (估算值)：", txtTdeeUnit: " (总消耗热量)", txtResTarget: "建议目标",
         txtTargetCalDisplayUnit: "目标",
         phPro: "蛋白质", phFat: "脂肪", phCarb: "碳水", phSugar: "糖", phSod: "钠(mg)", phSat: "饱和脂", phTrans: "反式脂",
         txtManualLabel: "手动补充", btnAddRecord: "加入记录", txtRecordTitle: "饮食记录", 
-        btnFavSave: "加入收藏", btnFavLoad: "选择常吃食物", phFoodName: "食物名称 (必填)", phFoodCal: "热量 (kcal) (必填)"
+        btnFavSave: "加入收藏", btnFavLoad: "选择常吃食物", phFoodName: "食物名称 (必填)", phFoodCal: "热量 (kcal) (必填)",
+        chartCalTrend: "📈 热量摄取趋势", chartProteinTrend: "💪 蛋白质摄取趋势", chart7d: "7天", chart30d: "30天", chartTdeeTarget: "TDEE 目标线",
+        fiber: "膳食纤维", healthScoreLabel: "🏅 健康评分", aiItemsLabel: "📋 食物成分估算", itemName: "食物", itemWeight: "重量", addItem: "＋新增成分", recalculate: "🔄 重新计算", unsavedWarning: "注意，您的营养数据尚未保存，确定要离开吗？",
+        detailTitle: "📋 详细营养信息", noData: "--", btnDetailClose: "关闭"
     },
     "en": {
         appTitle: "Woof Cal - AI Diet Tracker",
@@ -88,13 +94,16 @@ const i18n = {
         langTitle: "Language", langCancel: "Cancel",
         meals: { breakfast: "🍳 Breakfast", lunch: "🍱 Lunch", dinner: "🍲 Dinner", snack: "🍪 Snack", meal1: "🍽️ Meal 1", meal2: "🍽️ Meal 2", mealBig: "🏆 Big Meal" },
         alertDel: "Delete this item?", alertFavAdded: "Saved to favorites!", alertFavExist: "Already in favorites!", alertSelImg: "Select image first!", alertAiFail: "AI Failed: ", alertFill: "Fill all fields", alertNameCal: "Enter name and calories", alertImportOk: "🎉 Data Restored!", alertImportFail: "❌ Invalid File",
-        weightTitle: "⚖️ Weight Record", weightInputPlaceholder: "Today's Weight (kg)", btnSaveWeight: "Save", weightChartTitle: "📈 Weight Trend (Last 30 Days)", textAiLabel: "📝 Or enter description:", textAiPlaceholder: "e.g., Bowl of beef noodles, no onions...", appSettingsTitle: "🔧 App Settings", navDaily: "Daily", navDashboard: "Dashboard", navAi: "AI", navSettings: "Settings", txtWeightSettingsTitle: "Weight (kg)", alertWeightSaved: "Weight saved successfully!", alertInvalidWeight: "Please enter a valid weight!", alertSelImgOrText: "Please select an image or enter a description!",
+        weightTitle: "⚖️ Weight Record", weightInputPlaceholder: "Today's Weight (kg)", btnSaveWeight: "Save", weightChartTitle: "📈 Weight Trend (Last 30 Days)", textAiLabel: "📝 Enter the food you just ate, or add details to improve AI accuracy:", textAiPlaceholder: "e.g., Bowl of beef noodles, no onions...", appSettingsTitle: "🔧 App Settings", navDaily: "Daily", navDashboard: "Dashboard", navAi: "AI", navSettings: "Settings", txtWeightSettingsTitle: "Weight (kg)", alertWeightSaved: "Weight saved successfully!", alertInvalidWeight: "Please enter a valid weight!", alertSelImgOrText: "Please select an image or enter a description!",
         petMsg1: "Woof... So hungry... (0%)", petMsg2: "Got some energy, but want more food...", petMsg3: "Smelled food! Searching...", petMsg4: "Perfect nutrition! Great job!", petMsg5: "Burp... Ate too much!", petEatMsg: "Nom nom nom... Yummy!", petInteractMsg1: "Woof! Drank water today?", petInteractMsg2: "Let's stay healthy together!", petInteractMsg3: "I love healthy food!", petInteractMsg4: "Petting me won't make you thin, go exercise! XD", petInteractMsg5: "Remember to chew slowly!",
         macroGoalTitle: "📊 Recommended Macros (Estimated):", txtTdeeUnit: " (Total Energy Expended)", txtResTarget: "Target Goal",
         txtTargetCalDisplayUnit: "Goal",
         phPro: "Protein", phFat: "Fat", phCarb: "Carb", phSugar: "Sugar", phSod: "Sodium", phSat: "Sat. Fat", phTrans: "Trans Fat",
         txtManualLabel: "Manual Entry", btnAddRecord: "Add Record", txtRecordTitle: "Diet Record", 
-        btnFavSave: "Save Favorite", btnFavLoad: "Load Favorite", phFoodName: "Food Name (Required)", phFoodCal: "Calories (kcal) (Req)"
+        btnFavSave: "Save Favorite", btnFavLoad: "Load Favorite", phFoodName: "Food Name (Required)", phFoodCal: "Calories (kcal) (Req)",
+        chartCalTrend: "📈 Calorie Intake Trend", chartProteinTrend: "💪 Protein Intake Trend", chart7d: "7D", chart30d: "30D", chartTdeeTarget: "TDEE Target",
+        fiber: "Fiber", healthScoreLabel: "🏅 Health Score", aiItemsLabel: "📋 Estimated Food Items", itemName: "Item", itemWeight: "Weight", addItem: "＋ Add Item", recalculate: "🔄 Recalculate", unsavedWarning: "Warning: your nutrition data has not been saved. Are you sure you want to leave?",
+        detailTitle: "📋 Nutrition Details", noData: "--", btnDetailClose: "Close"
     },
     "ja": {
         appTitle: "Woof Cal - AI Diet Tracker",
@@ -119,13 +128,16 @@ const i18n = {
         langTitle: "言語", langCancel: "キャンセル",
         meals: { breakfast: "🍳 朝食", lunch: "🍱 昼食", dinner: "🍲 夕食", snack: "🍪 間食", meal1: "🍽️ 食事1", meal2: "🍽️ 食事2", mealBig: "🏆 大盛り" },
         alertDel: "削除しますか？", alertFavAdded: "お気に入りに保存しました！", alertFavExist: "既に保存されています", alertSelImg: "画像を選択してください", alertAiFail: "AIエラー: ", alertFill: "全ての項目を入力してください", alertNameCal: "名称とカロリーを入力", alertImportOk: "🎉 復元完了！", alertImportFail: "❌ ファイルエラー",
-        weightTitle: "⚖️ 体重記録", weightInputPlaceholder: "今日の体重 (kg)", btnSaveWeight: "保存", weightChartTitle: "📈 体重トレンド (過去30日間)", textAiLabel: "📝 またはテキストで入力：", textAiPlaceholder: "例：ネギ抜きの牛肉麺...", appSettingsTitle: "🔧 アプリ設定", navDaily: "デイリー", navDashboard: "ダッシュボード", navAi: "AI", navSettings: "設定", txtWeightSettingsTitle: "体重 (kg)", alertWeightSaved: "体重が保存されました！", alertInvalidWeight: "有効な体重を入力してください！", alertSelImgOrText: "画像を選択するか、テキストを入力してください！",
+        weightTitle: "⚖️ 体重記録", weightInputPlaceholder: "今日の体重 (kg)", btnSaveWeight: "保存", weightChartTitle: "📈 体重トレンド (過去30日間)", textAiLabel: "📝 食べたものを入力するか、AI精度向上のため補足してください：", textAiPlaceholder: "例：ネギ抜きの牛肉麺...", appSettingsTitle: "🔧 アプリ設定", navDaily: "デイリー", navDashboard: "ダッシュボード", navAi: "AI", navSettings: "設定", txtWeightSettingsTitle: "体重 (kg)", alertWeightSaved: "体重が保存されました！", alertInvalidWeight: "有効な体重を入力してください！", alertSelImgOrText: "画像を選択するか、テキストを入力してください！",
         petMsg1: "ワン... お腹すいた... (0%)", petMsg2: "元気出たけど、もっと食べたい...", petMsg3: "いい匂い！ご飯探してます！", petMsg4: "栄養バッチリ！ 최고！", petMsg5: "ゲップ... 食べ過ぎた！", petEatMsg: "モグモグ... 美味しい！", petInteractMsg1: "ワン！水飲んだ？", petInteractMsg2: "一緒に健康になろう！", petInteractMsg3: "健康なご飯が大好き！", petInteractMsg4: "撫でても痩せないよ、運動しなきゃ！ XD", petInteractMsg5: "ゆっくり噛んで食べてね！",
         macroGoalTitle: "📊 栄養摂取目安 (推定：", txtTdeeUnit: " (総消費カロリー)", txtResTarget: "推奨目標",
         txtTargetCalDisplayUnit: "目標",
         phPro: "タンパク質", phFat: "脂質", phCarb: "炭水化物", phSugar: "糖質", phSod: "塩分", phSat: "飽和脂肪", phTrans: "トランス脂肪",
         txtManualLabel: "手動入力", btnAddRecord: "記録を追加", txtRecordTitle: "食事記録", 
-        btnFavSave: "お気に入りに追加", btnFavLoad: "お気に入りを読み込む", phFoodName: "食べ物の名前 (必須)", phFoodCal: "カロリー (kcal) (必須)"
+        btnFavSave: "お気に入りに追加", btnFavLoad: "お気に入りを読み込む", phFoodName: "食べ物の名前 (必須)", phFoodCal: "カロリー (kcal) (必須)",
+        chartCalTrend: "📈 カロリー摂取トレンド", chartProteinTrend: "💪 タンパク質トレンド", chart7d: "7日", chart30d: "30日", chartTdeeTarget: "TDEE 目標ライン",
+        fiber: "食物繊維", healthScoreLabel: "🏅 ヘルススコア", aiItemsLabel: "📋 食材内訳の推定", itemName: "食材", itemWeight: "量", addItem: "＋食材追加", recalculate: "🔄 再計算", unsavedWarning: "注意：栄養データはまだ保存されていません。離れてもよろしいですか？",
+        detailTitle: "📋 詳細栄養情報", noData: "--", btnDetailClose: "閉じる"
     },
     "ko": {
         appTitle: "Woof Cal - AI Diet Tracker",
@@ -150,13 +162,16 @@ const i18n = {
         langTitle: "언어", langCancel: "취소",
         meals: { breakfast: "🍳 아침", lunch: "🍱 점심", dinner: "🍲 저녁", snack: "🍪 간식", meal1: "🍽️ 식사 1", meal2: "🍽️ 식사 2", mealBig: "🏆 큰 식사" },
         alertDel: "항목을 삭제하시겠습니까?", alertFavAdded: "즐겨찾기에 저장되었습니다!", alertFavExist: "이미 즐겨찾기에 있습니다!", alertSelImg: "먼저 이미지를 선택하세요!", alertAiFail: "AI 실패: ", alertFill: "모든 필드를 채워주세요", alertNameCal: "이름과 칼로리를 입력하세요", alertImportOk: "🎉 데이터 복원 성공!", alertImportFail: "❌ 잘못된 파일 형식",
-        weightTitle: "⚖️ 체중 기록", weightInputPlaceholder: "오늘의 체중 (kg)", btnSaveWeight: "저장", weightChartTitle: "📈 체중 변화 (최근 30일)", textAiLabel: "📝 또는 텍스트 입력:", textAiPlaceholder: "예: 우육면, 파 빼고...", appSettingsTitle: "🔧 앱 설정", navDaily: "다이어리", navDashboard: "대시보드", navAi: "AI", navSettings: "설정", txtWeightSettingsTitle: "체중 (kg)", alertWeightSaved: "체중이 저장되었습니다!", alertInvalidWeight: "올바른 체중을 입력하세요!", alertSelImgOrText: "사진을 선택하거나 텍스트를 입력하세요!",
+        weightTitle: "⚖️ 체중 기록", weightInputPlaceholder: "오늘의 체중 (kg)", btnSaveWeight: "저장", weightChartTitle: "📈 체중 변화 (최근 30일)", textAiLabel: "📝 방금 먹은 음식을 입력하거나 AI 정확도를 높이기 위해 보충 설명하세요：", textAiPlaceholder: "예: 우육면, 파 빼고...", appSettingsTitle: "🔧 앱 설정", navDaily: "다이어리", navDashboard: "대시보드", navAi: "AI", navSettings: "설정", txtWeightSettingsTitle: "체중 (kg)", alertWeightSaved: "체중이 저장되었습니다!", alertInvalidWeight: "올바른 체중을 입력하세요!", alertSelImgOrText: "사진을 선택하거나 텍스트를 입력하세요!",
         petMsg1: "멍멍... 배고파... (0%)", petMsg2: "기운이 나지만 더 먹고 싶어...", petMsg3: "맛있는 냄새! 찾는 중...", petMsg4: "영양 완벽! 잘했어!", petMsg5: "꺼억... 너무 많이 먹었어!", petEatMsg: "냠냠... 맛있어!", petInteractMsg1: "멍! 오늘 물 마셨어?", petInteractMsg2: "같이 건강해지자!", petInteractMsg3: "건강한 음식이 좋아!", petInteractMsg4: "쓰다듬는다고 날씬해지진 않아, 운동해! XD", petInteractMsg5: "천천히 씹어 먹어!",
         macroGoalTitle: "📊 권장 영양소 (추정):", txtTdeeUnit: " (총 에너지 소비량)", txtResTarget: "목표 체중",
         txtTargetCalDisplayUnit: "목표",
         phPro: "단백질", phFat: "지방", phCarb: "탄수화물", phSugar: "당", phSod: "나트륨", phSat: "포화 지방", phTrans: "트랜스 지방",
         txtManualLabel: "수동 입력", btnAddRecord: "기록 추가", txtRecordTitle: "음식 기록", 
-        btnFavSave: "즐겨찾기 저장", btnFavLoad: "즐겨찾기 선택", phFoodName: "음식 이름 (필수)", phFoodCal: "칼로리 (kcal) (필수)"
+        btnFavSave: "즐겨찾기 저장", btnFavLoad: "즐겨찾기 선택", phFoodName: "음식 이름 (필수)", phFoodCal: "칼로리 (kcal) (필수)",
+        chartCalTrend: "📈 칼로리 섭취 추이", chartProteinTrend: "💪 단백질 섭취 추이", chart7d: "7일", chart30d: "30일", chartTdeeTarget: "TDEE 목표선",
+        fiber: "식이섬유", healthScoreLabel: "🏅 건강 점수", aiItemsLabel: "📋 추정 식재료", itemName: "식재료", itemWeight: "중량", addItem: "＋ 항목 추가", recalculate: "🔄 재계산", unsavedWarning: "주의: 영양 데이터가 저장되지 않았습니다. 나가시겠습니까?",
+        detailTitle: "📋 상세 영양 정보", noData: "--", btnDetailClose: "닫기"
     },
     "ar": {
         appTitle: "Woof Cal - AI Diet Tracker",
@@ -181,12 +196,15 @@ const i18n = {
         langTitle: "اللغة", langCancel: "إلغاء",
         meals: { breakfast: "🍳 فطور", lunch: "🍱 غداء", dinner: "🍲 عشاء", snack: "🍪 سناك", meal1: "🍽️ وجبة ١", meal2: "🍽️ وجبة ٢", mealBig: "🏆 الوجبة الكبيرة" },
         alertDel: "حذف هذا العنصر؟", alertFavAdded: "تم الحفظ في المفضلة!", alertFavExist: "موجود مسبقاً في المفضلة!", alertSelImg: "الرجاء اختيار صورة!", alertAiFail: "فشل تحليل الذكاء الاصطناعي: ", alertFill: "الرجاء ملء جميع الحقول", alertNameCal: "أدخل الاسم والسعرات", alertImportOk: "🎉 تمت الاستعادة بنجاح!", alertImportFail: "❌ تنسيق الملف غير صحيح",
-        weightTitle: "⚖️ سجل الوزن", weightInputPlaceholder: "وزن اليوم (كجم)", btnSaveWeight: "حفظ", weightChartTitle: "📈 مسار الوزن (اخر ٣٠ يوم)", textAiLabel: "📝 أو أدخل الوصف:", textAiPlaceholder: "مثال: مكرونة بالصلصة بدون لحم...", appSettingsTitle: "🔧 إعدادات التطبيق", navDaily: "يوميات", navDashboard: "لوحة القيادة", navAi: "الذكاء الاصطناعي", navSettings: "إعدادات", txtWeightSettingsTitle: "الوزن (كجم)", alertWeightSaved: "تم حفظ الوزن بنجاح!", alertInvalidWeight: "الرجاء إدخال وزن صحيح!", alertSelImgOrText: "الرجاء تحديد صورة أو إدخال نص!",
+        weightTitle: "⚖️ سجل الوزن", weightInputPlaceholder: "وزن اليوم (كجم)", btnSaveWeight: "حفظ", weightChartTitle: "📈 مسار الوزن (اخر ٣٠ يوم)", textAiLabel: "📝 أدخل ما أكلته أو أضف تفاصيل لتحسين دقة الذكاء الاصطناعي：", textAiPlaceholder: "مثال: مكرونة بالصلصة بدون لحم...", appSettingsTitle: "🔧 إعدادات التطبيق", navDaily: "يوميات", navDashboard: "لوحة القيادة", navAi: "الذكاء الاصطناعي", navSettings: "إعدادات", txtWeightSettingsTitle: "الوزن (كجم)", alertWeightSaved: "تم حفظ الوزن بنجاح!", alertInvalidWeight: "الرجاء إدخال وزن صحيح!", alertSelImgOrText: "الرجاء تحديد صورة أو إدخال نص!",
         petMsg1: "ووف... أنا جائع جداً... (0%)", petMsg2: "لدي القليل من الطاقة ولكن أريد المزيد...", petMsg3: "أشم الطعام! جاري البحث...", petMsg4: "تغذية ممتازة! عمل رائع!", petMsg5: "تجشؤ... أكلت كثيراً!", petEatMsg: "يم يم... لذيذ!", petInteractMsg1: "ووف! هل شربت الماء اليوم؟", petInteractMsg2: "لنبقى بصحة جيدة معاً!", petInteractMsg3: "أنا أحب الطعام الصحي!", petInteractMsg4: "لن تنحف بمداعبتي، اذهب للرياضة! XD", petInteractMsg5: "تذكر أن تمضغ ببطء!",
         macroGoalTitle: "📊 الماكروز المقترحة (تقدير):", txtTdeeUnit: " (إجمالي حرق الطاقة)", txtResTarget: "الوزن المستهدف",
         txtTargetCalDisplayUnit: "الهدف",
         phPro: "البروتين", phFat: "الدهون", phCarb: "الكربوهيدرات", phSugar: "السكر", phSod: "الصوديوم", phSat: "الدهون المشبعة", phTrans: "الدهون المتحولة",
         txtManualLabel: "إدخال يدوي", btnAddRecord: "إضافة للسجل", txtRecordTitle: "سجل الوجبات", 
-        btnFavSave: "حفظ في المفضلة", btnFavLoad: "اختيار من المفضلة", phFoodName: "اسم الطعام (مطلوب)", phFoodCal: "السعرات (ك.ك) (مطلوب)"
+        btnFavSave: "حفظ في المفضلة", btnFavLoad: "اختيار من المفضلة", phFoodName: "اسم الطعام (مطلوب)", phFoodCal: "السعرات (ك.ك) (مطلوب)",
+        chartCalTrend: "📈 اتجاه السعرات الحرارية", chartProteinTrend: "💪 اتجاه البروتين", chart7d: "٧ أيام", chart30d: "٣٠ يوم", chartTdeeTarget: "خط هدف TDEE",
+        fiber: "ألياف", healthScoreLabel: "🏅 درجة الصحة", aiItemsLabel: "📋 تقدير مكونات الطعام", itemName: "الطعام", itemWeight: "الوزن", addItem: "＋ إضافة عنصر", recalculate: "🔄 إعادة الحساب", unsavedWarning: "تنبيه: لم يتم حفظ بيانات التغذية. هل أنت متأكد من المغادرة؟",
+        detailTitle: "📋 تفاصيل التغذية", noData: "--", btnDetailClose: "إغلاق"
     }
 };
