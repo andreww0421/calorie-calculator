@@ -38,7 +38,7 @@ export async function callCloudflareAI(base64, userDesc) {
     } catch (error) {
         if (typeof turnstile !== 'undefined') turnstile.reset();
         console.error("AI API Fatal Error:", error);
-        showToast("AI 連線失敗，請稍後再試。\n錯誤訊息: " + error.message, 'error');
+        showToast("AI 分析失敗，請稍後再試或換一張圖片。", 'error');
         throw error;
     }
 }
@@ -80,7 +80,7 @@ export async function callCloudflareAIText(userText) {
     } catch (error) {
         if (typeof turnstile !== 'undefined') turnstile.reset();
         console.error("AI Text API Fatal Error:", error);
-        showToast("文字 AI 分析連線失敗，請稍後再試。\n錯誤訊息: " + error.message, 'error');
+        showToast("AI 分析失敗，請稍後再試或換一張圖片。", 'error');
         throw error;
     }
 }

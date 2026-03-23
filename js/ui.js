@@ -1,7 +1,7 @@
 import { i18n } from './config.js';
 import { 
     targetCalories, tempAIResult, tempAIResultSaved, foodItems, favoriteFoods, 
-    curLang, curTheme, setTempAIResult, setCurTheme, setCurLang, 
+    curLang, curTheme, currentMealMode, setTempAIResult, setCurTheme, setCurLang, 
     getWeightHistory, getCalorieHistory, getProteinHistory, setTempAIResultSaved 
 } from './data.js';
 import { recalculateFromItems } from './api.js';
@@ -670,6 +670,12 @@ function showModal() {
     
     document.getElementById('analysis-content').innerHTML = content;
     document.getElementById('analysis-modal').style.display = 'flex';
+
+    // 恢復按鈕顯示
+    const btnFavSave = document.getElementById('btn-ai-fav-save');
+    const modalBtns = document.getElementById('modal-meal-buttons');
+    if(btnFavSave) btnFavSave.style.display = '';
+    if(modalBtns) modalBtns.style.display = '';
 }
 
 // Phase 4: 編輯成分 - 新增項目
@@ -712,6 +718,12 @@ async function recalculateAI() {
     });
     
     if(items.length === 0) { showToast('請至少保留一項成分', 'error'); return; }
+    
+    // 隱藏按鈕
+    const btnFavSave = document.getElementById('btn-ai-fav-save');
+    const modalBtns = document.getElementById('modal-meal-buttons');
+    if(btnFavSave) btnFavSave.style.display = 'none';
+    if(modalBtns) modalBtns.style.display = 'none';
     
     // 顯示載入中
     document.getElementById('analysis-content').innerHTML = `<div style="text-align:center; padding:30px;">${t.aiLoading || 'AI 正在分析...'}</div>`;

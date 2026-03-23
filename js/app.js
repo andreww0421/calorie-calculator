@@ -514,30 +514,47 @@ function saveAIResultToFavorites() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock('portrait').catch(err => console.log('螢幕鎖定不支援:', err));
-    }
+    try {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('portrait').catch(err => console.log('螢幕鎖定不支援:', err));
+        }
+    } catch(e) {}
 
-    setupEventListeners();
+    try {
+        setupEventListeners();
+    } catch(e) { console.error("Event Listeners Error:", e); }
     
-    setTheme(curTheme);
-    setLang(curLang);
-    document.getElementById('current-date').value = selectedDate;
+    try {
+        setTheme(curTheme);
+        setLang(curLang);
+        const curDateEl = document.getElementById('current-date');
+        if(curDateEl) curDateEl.value = selectedDate;
+    } catch(e) { console.error("Theme/Lang UI Error:", e); }
     
-    if(loadProfile()) {
-        calculateProfile(true); 
-    } else {
-        updateMealUI(); 
-    }
+    try {
+        if(loadProfile()) {
+            calculateProfile(true); 
+        } else {
+            updateMealUI(); 
+        }
+    } catch(e) { console.error("Profile/MealUI Error:", e); }
     
-    loadFoodData(selectedDate);
+    try {
+        loadFoodData(selectedDate);
+    } catch(e) { console.error("Load Food Data Error:", e); }
     
-    const w = loadWeightData(selectedDate);
-    if(w !== null) {
-        document.getElementById('daily-weight-input').value = w;
-    }
+    try {
+        const w = loadWeightData(selectedDate);
+        if(w !== null && document.getElementById('daily-weight-input')) {
+            document.getElementById('daily-weight-input').value = w;
+        }
+    } catch(e) { console.error("Load Weight Error:", e); }
     
-    initCharts();
+    try {
+        initCharts();
+    } catch(e) { console.error("Init Charts Error:", e); }
     
-    renderListAndStats();
+    try {
+        renderListAndStats();
+    } catch(e) { console.error("Render Stats Error:", e); }
 });
