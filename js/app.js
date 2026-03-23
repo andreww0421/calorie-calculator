@@ -322,16 +322,23 @@ function startAnalysis() {
     };
 
     const handleError = (e) => {
-        const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
         console.error("Analysis Error:", e);
-        if (e.message === "Turnstile_Pending") {
+        
+        // 確保 e.message 是字串，並處理極端情況
+        let errorText = e.message || String(e);
+        if (errorText === "[object Object]") {
+            try { errorText = JSON.stringify(e); } catch(err) { errorText = "無法解析的錯誤格式"; }
+        }
+
+        if (errorText === "Turnstile_Pending") {
             isSoftError = true;
             showToast("🛡️ 安全防護載入中，請稍等 2 秒後再點擊一次！", 'info');
-        } else if (e.message.includes("請求太頻繁") || e.message.includes("安全驗證失敗")) {
+        } else if (errorText.includes("請求太頻繁") || errorText.includes("安全驗證失敗")) {
             isSoftError = true;
-            showToast(e.message, 'error');
+            showToast(errorText, 'error');
         } else {
-            showToast((t.alertAiFail || "AI 分析失敗: ") + e.message, 'error');
+            const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
+            showToast((t.alertAiFail || "AI 分析失敗: ") + errorText, 'error');
         }
     };
 
