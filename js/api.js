@@ -62,10 +62,11 @@ function parseGeminiCandidate(data) {
     return JSON.parse(text);
 }
 
-export async function callCloudflareAI(base64, userDesc) {
+export async function callCloudflareAI(base64, userDesc, mimeType = 'image/jpeg') {
     const data = await postToWorker({
         base64,
-        userDesc: userDesc || ""
+        userDesc: userDesc || "",
+        mimeType
     }, "Sending AI request...");
     return parseGeminiCandidate(data);
 }

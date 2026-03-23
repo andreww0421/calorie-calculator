@@ -17,3 +17,21 @@ export function getLocalDateString(date = new Date()) {
 export function getMonthDayLabel(date = new Date()) {
     return getLocalDateString(date).slice(5);
 }
+
+export function safeParseJSON(value, fallback = null) {
+    if (typeof value !== 'string' || value === '') return fallback;
+    try {
+        return JSON.parse(value);
+    } catch (error) {
+        return fallback;
+    }
+}
+
+export function escapeHTML(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}

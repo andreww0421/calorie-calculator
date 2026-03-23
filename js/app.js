@@ -441,7 +441,7 @@ function startAnalysis() {
     if (file) {
         const finalDesc = imageDescVal + (textDescVal ? " " + textDescVal : "");
         toBase64(file).then(base64 => {
-            return callCloudflareAI(base64, finalDesc);
+            return callCloudflareAI(base64, finalDesc, file.type || 'image/jpeg');
         }).then(handleResult).catch(handleError).finally(handleFinally);
     } else {
         callCloudflareAIText(textDescVal).then(handleResult).catch(handleError).finally(handleFinally);
@@ -618,6 +618,15 @@ function saveAIResultToFavorites() {
     showToast(t.alertFavAdded || "已加入最愛！", 'success');
 }
 
+async function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+        await navigator.serviceWorker.register('./sw.js');
+    } catch (e) {
+        console.error("Service Worker Register Error:", e);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     try {
         if (screen.orientation && screen.orientation.lock) {
@@ -666,4 +675,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         applyUsageLimitState();
     } catch(e) { console.error("Usage Limit UI Error:", e); }
+
+    try {
+        registerServiceWorker();
+    } catch(e) { console.error("Service Worker Error:", e); }
 });

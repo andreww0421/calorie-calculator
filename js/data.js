@@ -1,6 +1,15 @@
 import { showToast } from './ui.js';
 import { i18n } from './config.js';
-import { getLocalDateString } from './utils.js';
+import { getLocalDateString, safeParseJSON } from './utils.js';
+
+function isPlainObject(value) {
+    return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function readStoredArray(key) {
+    const parsed = safeParseJSON(localStorage.getItem(key), []);
+    return Array.isArray(parsed) ? parsed : [];
+}
 
 export let foodItems = []; 
 export let targetCalories = 2000;
@@ -8,7 +17,7 @@ export let tempAIResult = null;
 export let tempAIResultSaved = false; // Phase 4: 防呆旗標
 export let selectedDate = getLocalDateString();
 export let currentMealMode = "4";
-export let favoriteFoods = JSON.parse(localStorage.getItem('myFavorites') || "[]");
+export let favoriteFoods = readStoredArray('myFavorites');
 export let curLang = localStorage.getItem('appLang') || "zh-TW";
 export let curTheme = localStorage.getItem('appTheme') || "light";
 
@@ -25,8 +34,7 @@ export function saveFoodData() {
 }
 
 export function loadFoodData(date) {
-    const stored = localStorage.getItem(`record_${date}`);
-    foodItems = stored ? JSON.parse(stored) : [];
+    foodItems = readStoredArray(`record_${date}`);
 }
 
 // ✨ 新增：儲存每日體重
@@ -77,7 +85,8 @@ export function saveProfile() {
 export function loadProfile() {
     const stored = localStorage.getItem('myProfile_v5');
     if (stored) {
-        const p = JSON.parse(stored);
+        const p = safeParseJSON(stored, null);
+        if (!isPlainObject(p)) return false;
         document.getElementById('gender').value = p.gender;
         document.getElementById('age').value = p.age;
         document.getElementById('height').value = p.height;
@@ -118,7 +127,21 @@ export function importData(input) {
     reader.onload = (e) => {
         try {
             const data = JSON.parse(e.target.result);
-            for(let key in data) localStorage.setItem(key, data[key]);
+            if (!isPlainObject(data)) throw new Error('Invalid backup');
+            const allowedKeys = Object.keys(data).filter((key) => (
+                key.startsWith('record_') ||
+                key.startsWith('weight_') ||
+                key.startsWith('myProfile') ||
+                key === 'myFavorites' ||
+                key === 'appLang' ||
+                key === 'appTheme'
+            ));
+            if (allowedKeys.length === 0) throw new Error('No valid keys');
+            for (const key of allowedKeys) {
+                if (typeof data[key] === 'string') {
+                    localStorage.setItem(key, data[key]);
+                }
+            }
             showToast(i18n[curLang].alertImportOk, 'success');
             setTimeout(() => location.reload(), 1500);
         } catch(err) {
@@ -135,9 +158,9 @@ export function getCalorieHistory(days = 7) {
     for (let i = days - 1; i >= 0; i--) {
         const d = new Date(); d.setDate(today.getDate() - i);
         const dateStr = getLocalDateString(d);
-        const stored = localStorage.getItem(`record_${dateStr}`);
         let dayCal = 0;
-        if (stored) { JSON.parse(stored).forEach(item => dayCal += (Number(item.nutri && item.nutri.calories) || 0)); }
+        const dayItems = readStoredArray(`record_${dateStr}`);
+        dayItems.forEach(item => dayCal += (Number(item.nutri && item.nutri.calories) || 0));
         history.push({ date: dateStr.slice(5), calories: Math.round(dayCal) });
     }
     return history;
@@ -150,9 +173,9 @@ export function getProteinHistory(days = 7) {
     for (let i = days - 1; i >= 0; i--) {
         const d = new Date(); d.setDate(today.getDate() - i);
         const dateStr = getLocalDateString(d);
-        const stored = localStorage.getItem(`record_${dateStr}`);
         let dayPro = 0;
-        if (stored) { JSON.parse(stored).forEach(item => dayPro += (Number(item.nutri && item.nutri.protein) || 0)); }
+        const dayItems = readStoredArray(`record_${dateStr}`);
+        dayItems.forEach(item => dayPro += (Number(item.nutri && item.nutri.protein) || 0));
         history.push({ date: dateStr.slice(5), protein: Math.round(dayPro * 10) / 10 });
     }
     return history;
