@@ -1,4 +1,23 @@
-function setupEventListeners() {
+import { i18n } from './config.js';
+import { toBase64 } from './utils.js';
+import { foodItems, targetCalories, tempAIResult, tempAIResultSaved, selectedDate, currentMealMode, favoriteFoods, curLang, curTheme, saveFoodData, loadFoodData, saveWeightData, loadWeightData, getWeightHistory, saveProfile, loadProfile, exportData, importData, getCalorieHistory, getProteinHistory, setTargetCalories, setTempAIResult, setTempAIResultSaved, setSelectedDate, setCurrentMealMode, setCurLang, setCurTheme } from './data.js';
+import { callCloudflareAI, callCloudflareAIText, recalculateFromItems } from './api.js';
+import { showToast, switchView, setChartRange, initCharts, updateTrendCharts, updateChartTheme, updatePetStatus, showEatingAnimation, petInteraction, updateCharts, updateWeightChart, renderListAndStats, updateMealUI, toggleTheme, setTheme, openLangModal, setLang, openFavModal, pickFav, deleteFav, showModal, addAIItem, removeAIItem, recalculateAI, showDetailModal, showFavDetailModal, _renderDetailModal, closeModal, toggleFabMenu } from './ui.js';
+
+window.onTurnstileTimeout = function() {
+    console.warn("Turnstile Token 過期，自動重置中...");
+    if (typeof turnstile !== 'undefined') turnstile.reset();
+};
+window.onTurnstileError = function() {
+    console.error("Turnstile 載入錯誤，自動重置中...");
+    if (typeof turnstile !== 'undefined') turnstile.reset();
+};
+
+window.deleteItem = deleteItem;
+window.addRecordToFav = addRecordToFav;
+window.confirmAddFood = confirmAddFood;
+
+export function setupEventListeners() {
     document.getElementById('current-date').addEventListener('change', changeDate);
     document.getElementById('image-upload').addEventListener('change', function() { handleFileSelect(this); });
     document.getElementById('btn-take-photo').addEventListener('click', () => document.getElementById('image-upload').click());
@@ -47,12 +66,12 @@ function setupEventListeners() {
             const w = document.getElementById('daily-weight-input').value;
             const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
             if(saveWeightData(selectedDate, w)) {
-                alert(t.alertWeightSaved || "體重紀錄已儲存！");
+                showToast(t.alertWeightSaved || "體重紀錄已儲存！", 'success');
                 document.getElementById('weight').value = w;
                 saveProfile();
                 if (typeof updateProfileStats === 'function') { updateProfileStats(); }
             } else {
-                alert(t.alertInvalidWeight || "請輸入有效的體重數值！");
+                showToast(t.alertInvalidWeight || "請輸入有效的體重數值！", 'error');
             }
         });
     }
@@ -104,20 +123,21 @@ function calculateProfile(auto=false) {
     const t = (typeof i18n !== 'undefined' && i18n[localStorage.getItem('appLang')]) ? i18n[localStorage.getItem('appLang')] : i18n['zh-TW'];
 
     if (!h || !w || !a) { 
-        if(!auto) alert(t.alertFill || "請填寫完整資料"); 
+        if(!auto) showToast(t.alertFill || "請填寫完整資料", 'error'); 
         return; 
     }
 
     let bmr = (g === 'male') ? (10*w + 6.25*h - 5*a + 5) : (10*w + 6.25*h - 5*a - 161);
     let tdee = Math.round(bmr * act);
-    targetCalories = Math.round(tdee - 500);
-    if(targetCalories < bmr) targetCalories = Math.round(bmr);
+    let computedTarget = Math.round(tdee - 500);
+    if(computedTarget < bmr) computedTarget = Math.round(bmr);
+    setTargetCalories(computedTarget);
     
-    currentMealMode = mode;
+    setCurrentMealMode(mode);
     
     document.getElementById('tdee-val').innerText = tdee;
-    document.getElementById('target-cal-val').innerText = targetCalories;
-    document.getElementById('target-cal-display').innerText = targetCalories;
+    document.getElementById('target-cal-val').innerText = computedTarget;
+    document.getElementById('target-cal-display').innerText = computedTarget;
     
     const goalResult = document.getElementById('goal-result');
     if (goalResult) { goalResult.style.display = 'block'; }
@@ -125,11 +145,11 @@ function calculateProfile(auto=false) {
     saveProfile();
     updateMealUI();      
 
-    const p_g = Math.round((targetCalories * 0.2) / 4);
-    const f_g = Math.round((targetCalories * 0.3) / 9);
-    const c_g = Math.round((targetCalories * 0.5) / 4);
-    const sugar_g = Math.round((targetCalories * 0.1) / 4);
-    const sat_g = Math.round((targetCalories * 0.1) / 9);
+    const p_g = Math.round((computedTarget * 0.2) / 4);
+    const f_g = Math.round((computedTarget * 0.3) / 9);
+    const c_g = Math.round((computedTarget * 0.5) / 4);
+    const sugar_g = Math.round((computedTarget * 0.1) / 4);
+    const sat_g = Math.round((computedTarget * 0.1) / 9);
     
     const macroBox = document.getElementById('macro-goals');
     if (macroBox) {
@@ -202,7 +222,7 @@ function checkAndIncrementUsage() {
             btn.style.cursor = 'not-allowed';
             btn.innerHTML = '🛑 今日 AI 額度已用完';
         }
-        alert('今日 AI 分析額度（20 次）已用完，請明天再來！');
+        showToast('今日 AI 分析額度（20 次）已用完，請明天再來！', 'error');
         return false;
     }
 
@@ -261,7 +281,7 @@ function startAnalysis() {
     const imageDescVal = imageDescInput ? imageDescInput.value.trim() : "";
 
     if (!file && !textDescVal) { 
-        alert(t.alertSelImgOrText || "請選擇圖片，或輸入文字描述！"); 
+        showToast(t.alertSelImgOrText || "請選擇圖片，或輸入文字描述！", 'error'); 
         return; 
     }
 
@@ -277,7 +297,7 @@ function startAnalysis() {
 
     const handleResult = (result) => {
         if (result) {
-            tempAIResult = {
+            setTempAIResult({
                 name: result.foodName,
                 nutri: {
                     calories: Number(result.calories) || 0, protein: Number(result.protein) || 0, fat: Number(result.fat) || 0,
@@ -287,14 +307,14 @@ function startAnalysis() {
                 },
                 items: Array.isArray(result.items) ? result.items : [],
                 healthScore: Number(result.healthScore) || 0
-            }; 
-            tempAIResultSaved = false;
+            }); 
+            setTempAIResultSaved(false);
             showModal();
         }
     };
 
     const handleError = (e) => {
-        console.error(e); alert((t.alertAiFail || "AI 分析失敗: ") + e.message);
+        console.error(e); showToast((t.alertAiFail || "AI 分析失敗: ") + e.message, 'error');
     };
 
     const handleFinally = () => {
@@ -350,7 +370,7 @@ function startCooldown() {
     }, 1000);
 }
 
-function deleteItem(index) {
+export function deleteItem(index) {
     const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
     if(confirm(t.alertDel || "確定要刪除？")) {
         foodItems.splice(index, 1);
@@ -359,12 +379,12 @@ function deleteItem(index) {
     }
 }
 
-function addRecordToFav(index) {
+export function addRecordToFav(index) {
     const item = foodItems[index];
     const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
     
     if(favoriteFoods.some(f => f.name === item.name)) { 
-        alert(t.alertFavExist || "已在最愛清單中！"); 
+        showToast(t.alertFavExist || "已在最愛清單中！", 'error'); 
         return; 
     }
     
@@ -375,11 +395,11 @@ function addRecordToFav(index) {
         healthScore: item.healthScore || 0
     });
     localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
-    alert(t.alertFavAdded || "已加入最愛！");
+    showToast(t.alertFavAdded || "已加入最愛！", 'success');
 }
 
 function changeDate() {
-    selectedDate = document.getElementById('current-date').value;
+    setSelectedDate(document.getElementById('current-date').value);
     document.getElementById('display-date-text').innerText = selectedDate;
     loadFoodData(selectedDate);
     
@@ -393,7 +413,7 @@ function changeDate() {
     renderListAndStats();
 }
 
-function confirmAddFood(type) {
+export function confirmAddFood(type) {
     foodItems.push({ 
         type: type, 
         name: tempAIResult.name, 
@@ -403,7 +423,7 @@ function confirmAddFood(type) {
     });
     saveFoodData();
     renderListAndStats();
-    tempAIResultSaved = true; // Phase 4: 標記已保存
+    setTempAIResultSaved(true); // Phase 4: 標記已保存
     closeModal('analysis-modal');
     
     if(typeof showEatingAnimation === 'function') showEatingAnimation();
@@ -448,7 +468,7 @@ function addManualFood() {
 
         if(typeof showEatingAnimation === 'function') showEatingAnimation();
 
-    } else { alert(t.alertNameCal || "請輸入名稱與熱量"); }
+    } else { showToast(t.alertNameCal || "請輸入名稱與熱量", 'error'); }
 }
 
 function saveToFavorites() {
@@ -456,8 +476,8 @@ function saveToFavorites() {
     const cal = parseFloat(document.getElementById('manual-cal').value);
     const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
     
-    if(!name || isNaN(cal)) { alert(t.alertNameCal || "請輸入名稱與熱量"); return; }
-    if(favoriteFoods.some(f => f.name === name)) { alert(t.alertFavExist || "已在最愛清單中！"); return; }
+    if(!name || isNaN(cal)) { showToast(t.alertNameCal || "請輸入名稱與熱量", 'error'); return; }
+    if(favoriteFoods.some(f => f.name === name)) { showToast(t.alertFavExist || "已在最愛清單中！", 'error'); return; }
     
     const nutri = {
         calories: cal,
@@ -473,7 +493,7 @@ function saveToFavorites() {
 
     favoriteFoods.push({ name: name, nutri: nutri, items: [], healthScore: 0 });
     localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
-    alert(t.alertFavAdded || "已加入最愛！");
+    showToast(t.alertFavAdded || "已加入最愛！", 'success');
 }
 
 function saveAIResultToFavorites() {
@@ -481,7 +501,7 @@ function saveAIResultToFavorites() {
     const name = tempAIResult.name;
     const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
     
-    if(favoriteFoods.some(f => f.name === name)) { alert(t.alertFavExist || "已在最愛清單中！"); return; }
+    if(favoriteFoods.some(f => f.name === name)) { showToast(t.alertFavExist || "已在最愛清單中！", 'error'); return; }
     
     favoriteFoods.push({ 
         name: name, 
@@ -490,7 +510,7 @@ function saveAIResultToFavorites() {
         healthScore: tempAIResult.healthScore || 0
     });
     localStorage.setItem('myFavorites', JSON.stringify(favoriteFoods));
-    alert(t.alertFavAdded || "已加入最愛！");
+    showToast(t.alertFavAdded || "已加入最愛！", 'success');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

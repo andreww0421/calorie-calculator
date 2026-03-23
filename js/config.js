@@ -1,4 +1,4 @@
-const i18n = {
+export const i18n = {
     "zh-TW": {
         appTitle: "Woof Cal 汪卡管家",
         dateLabel: "📅 日期：", // ✨ 已修正：縮短文字以優化排版

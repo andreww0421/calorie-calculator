@@ -1,3 +1,32 @@
+import { i18n } from './config.js';
+import { 
+    targetCalories, tempAIResult, tempAIResultSaved, foodItems, favoriteFoods, 
+    curLang, curTheme, setTempAIResult, setCurTheme, setCurLang, 
+    getWeightHistory, getCalorieHistory, getProteinHistory, setTempAIResultSaved 
+} from './data.js';
+import { recalculateFromItems } from './api.js';
+import { confirmAddFood } from './app.js';
+
+export function showToast(message, type = 'info') {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerText = message;
+    container.appendChild(toast);
+    
+    setTimeout(() => { toast.classList.add('show'); }, 10);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 let macroChart = null;
 let weeklyChart = null;
 let weightChart = null;
@@ -443,7 +472,7 @@ function toggleTheme() {
     setTheme(newTheme);
 }
 function setTheme(theme) {
-    curTheme = theme;
+    setCurTheme(theme);
     localStorage.setItem('appTheme', theme);
     document.documentElement.setAttribute('data-theme', theme);
     updateChartTheme(theme);
@@ -455,7 +484,7 @@ function setTheme(theme) {
 function openLangModal() { document.getElementById('lang-modal').style.display = 'flex'; toggleFabMenu(); }
 
 function setLang(lang) {
-    curLang = lang;
+    setCurLang(lang);
     localStorage.setItem('appLang', lang);
     const t = i18n[lang] || i18n['zh-TW'];
     
@@ -682,7 +711,7 @@ async function recalculateAI() {
         if(name) items.push({ name, weight });
     });
     
-    if(items.length === 0) { alert('請至少保留一項成分'); return; }
+    if(items.length === 0) { showToast('請至少保留一項成分', 'error'); return; }
     
     // 顯示載入中
     document.getElementById('analysis-content').innerHTML = `<div style="text-align:center; padding:30px;">${t.aiLoading || 'AI 正在分析...'}</div>`;
@@ -690,7 +719,7 @@ async function recalculateAI() {
     try {
         const result = await recalculateFromItems(items);
         if(result) {
-            tempAIResult = {
+            setTempAIResult({
                 name: result.foodName || tempAIResult.name,
                 nutri: {
                     calories: Number(result.calories) || 0, protein: Number(result.protein) || 0, fat: Number(result.fat) || 0,
@@ -700,8 +729,8 @@ async function recalculateAI() {
                 },
                 items: Array.isArray(result.items) ? result.items : items,
                 healthScore: Number(result.healthScore) || 0
-            };
-            tempAIResultSaved = false;
+            });
+            setTempAIResultSaved(false);
             showModal();
         }
     } catch(e) {
@@ -778,3 +807,16 @@ function _renderDetailModal(item) {
 
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 function toggleFabMenu() { const el = document.getElementById('fab-menu'); if(el) el.classList.toggle('show'); }
+
+window.showDetailModal = showDetailModal;
+window.showFavDetailModal = showFavDetailModal;
+window.pickFav = pickFav;
+window.deleteFav = deleteFav;
+window.removeAIItem = removeAIItem;
+window.addAIItem = addAIItem;
+window.recalculateAI = recalculateAI;
+
+export { 
+    macroChart, weeklyChart, weightChart, calTrendChart, proteinTrendChart, petTimeout, dashboardChartRange,
+    switchView, setChartRange, initCharts, updateTrendCharts, updateChartTheme, updatePetStatus, showEatingAnimation, petInteraction, updateCharts, updateWeightChart, renderListAndStats, updateMealUI, toggleTheme, setTheme, openLangModal, setLang, openFavModal, pickFav, deleteFav, showModal, addAIItem, removeAIItem, recalculateAI, showDetailModal, showFavDetailModal, _renderDetailModal, closeModal, toggleFabMenu
+};

@@ -1,10 +1,12 @@
-async function callCloudflareAI(base64, userDesc) {
+import { showToast } from './ui.js';
+
+export async function callCloudflareAI(base64, userDesc) {
     const url = "https://nameless-meadow-cf7b.jtwen12345us.workers.dev/";
 
     // Turnstile 安全驗證
     const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
     if (!turnstileToken) {
-        alert("系統安全驗證中，請稍候再試或重新整理網頁！");
+        showToast("系統安全驗證中，請稍候再試或重新整理網頁！", 'error');
         throw new Error("Turnstile validation pending");
     }
 
@@ -36,18 +38,18 @@ async function callCloudflareAI(base64, userDesc) {
     } catch (error) {
         if (typeof turnstile !== 'undefined') turnstile.reset();
         console.error("AI API Fatal Error:", error);
-        alert("AI 連線失敗，請稍後再試。\n錯誤訊息: " + error.message);
+        showToast("AI 連線失敗，請稍後再試。\n錯誤訊息: " + error.message, 'error');
         throw error;
     }
 }
 
-async function callCloudflareAIText(userText) {
+export async function callCloudflareAIText(userText) {
     const url = "https://nameless-meadow-cf7b.jtwen12345us.workers.dev/";
 
     // Turnstile 安全驗證
     const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
     if (!turnstileToken) {
-        alert("系統安全驗證中，請稍候再試或重新整理網頁！");
+        showToast("系統安全驗證中，請稍候再試或重新整理網頁！", 'error');
         throw new Error("Turnstile validation pending");
     }
 
@@ -78,13 +80,13 @@ async function callCloudflareAIText(userText) {
     } catch (error) {
         if (typeof turnstile !== 'undefined') turnstile.reset();
         console.error("AI Text API Fatal Error:", error);
-        alert("文字 AI 分析連線失敗，請稍後再試。\n錯誤訊息: " + error.message);
+        showToast("文字 AI 分析連線失敗，請稍後再試。\n錯誤訊息: " + error.message, 'error');
         throw error;
     }
 }
 
 // Phase 4: 重新計算 - 根據修改後的成分清單重新發送給 AI
-async function recalculateFromItems(items) {
+export async function recalculateFromItems(items) {
     const itemsText = items.map(it => `${it.name} ${it.weight}`).join(', ');
     return callCloudflareAIText(itemsText);
 }
