@@ -301,7 +301,7 @@ function startAnalysis() {
     document.getElementById('analyze-btn').style.display = 'none';
     document.getElementById('ai-loading').style.display = 'block';
 
-    let localTurnstilePending = false;
+    let isSoftError = false; // 追蹤是否為軟性錯誤（不刪照片、不冷卻）
 
     const handleResult = (result) => {
         if (result) {
@@ -322,11 +322,15 @@ function startAnalysis() {
     };
 
     const handleError = (e) => {
-        console.error("Analysis Error:", e); 
+        const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
+        console.error("Analysis Error:", e);
         if (e.message === "Turnstile_Pending") {
-            localTurnstilePending = true;
+            isSoftError = true;
+            showToast("🛡️ 安全防護載入中，請稍等 2 秒後再點擊一次！", 'info');
+        } else if (e.message.includes("請求太頻繁") || e.message.includes("安全驗證失敗")) {
+            isSoftError = true;
+            showToast(e.message, 'error');
         } else {
-            const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
             showToast((t.alertAiFail || "AI 分析失敗: ") + e.message, 'error');
         }
     };
@@ -334,13 +338,13 @@ function startAnalysis() {
     const handleFinally = () => {
         document.getElementById('ai-loading').style.display = 'none';
         
-        if (localTurnstilePending) {
-            // 驗證碼準備中：只解鎖按鈕，不倒數 15 秒，保留照片與文字！
+        if (isSoftError) {
+            // 軟性錯誤：只解鎖 UI，保留照片與文字，不觸發 15 秒冷卻
             unlockUIAfterCooldown();
             return;
         }
 
-        // 正常分析結束或嚴重錯誤：清空輸入並進入 15 秒冷卻
+        // 正常分析結束或嚴重錯誤：清空照片與文字，並觸發 15 秒冷卻
         document.getElementById('image-upload').value = '';
         if(document.getElementById('ai-desc')) document.getElementById('ai-desc').value = '';
         document.getElementById('image-preview').style.display = 'none';
