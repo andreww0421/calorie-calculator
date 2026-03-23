@@ -3,14 +3,15 @@ import { showToast } from './ui.js';
 export async function callCloudflareAI(base64, userDesc) {
     const url = "https://nameless-meadow-cf7b.jtwen12345us.workers.dev/";
 
+    const widgetId = '#turnstile-widget';
     // Turnstile 安全驗證
-    const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
+    const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse(widgetId) : null;
     if (!turnstileToken) {
         if (typeof turnstile !== 'undefined') {
-            turnstile.reset();
-            try { turnstile.execute(); } catch(e) {} // 強制索取新驗證碼
+            turnstile.reset(widgetId);
+            try { turnstile.execute(widgetId); } catch(e) {} // 強制索取新驗證碼
         }
-        showToast("🛡️ 安全防護驗證中，請稍等 2 秒後再試一次！", "info");
+        showToast("🛡️ 安全防護重連中，請稍等 2 秒後再點擊一次送出！", "info");
         throw new Error("Turnstile_Pending");
     }
 
@@ -30,8 +31,8 @@ export async function callCloudflareAI(base64, userDesc) {
 
         const data = await resp.json();
         if (typeof turnstile !== 'undefined') {
-            turnstile.reset();
-            try { turnstile.execute(); } catch(e) {} // 為下一次分析提前準備新驗證碼
+            turnstile.reset(widgetId);
+            try { turnstile.execute(widgetId); } catch(e) {} // 為下一次分析提前準備新驗證碼
         }
 
         if (data.error) throw new Error("API Error: " + JSON.stringify(data.error));
@@ -44,8 +45,8 @@ export async function callCloudflareAI(base64, userDesc) {
 
     } catch (error) {
         if (typeof turnstile !== 'undefined') {
-            turnstile.reset();
-            try { turnstile.execute(); } catch(e) {}
+            turnstile.reset('#turnstile-widget');
+            try { turnstile.execute('#turnstile-widget'); } catch(e) {}
         }
         console.error("AI API Fatal Error:", error);
         if (error.message !== "Turnstile_Pending") {
@@ -58,14 +59,15 @@ export async function callCloudflareAI(base64, userDesc) {
 export async function callCloudflareAIText(userText) {
     const url = "https://nameless-meadow-cf7b.jtwen12345us.workers.dev/";
 
+    const widgetId = '#turnstile-widget';
     // Turnstile 安全驗證
-    const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
+    const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse(widgetId) : null;
     if (!turnstileToken) {
         if (typeof turnstile !== 'undefined') {
-            turnstile.reset();
-            try { turnstile.execute(); } catch(e) {} // 強制索取新驗證碼
+            turnstile.reset(widgetId);
+            try { turnstile.execute(widgetId); } catch(e) {} // 強制索取新驗證碼
         }
-        showToast("🛡️ 安全防護驗證中，請稍等 2 秒後再試一次！", "info");
+        showToast("🛡️ 安全防護重連中，請稍等 2 秒後再點擊一次送出！", "info");
         throw new Error("Turnstile_Pending");
     }
 
@@ -84,8 +86,8 @@ export async function callCloudflareAIText(userText) {
 
         const data = await resp.json();
         if (typeof turnstile !== 'undefined') {
-            turnstile.reset();
-            try { turnstile.execute(); } catch(e) {} // 為下一次分析提前準備新驗證碼
+            turnstile.reset(widgetId);
+            try { turnstile.execute(widgetId); } catch(e) {} // 為下一次分析提前準備新驗證碼
         }
 
         if (data.error) throw new Error("API Error: " + JSON.stringify(data.error));
@@ -98,8 +100,8 @@ export async function callCloudflareAIText(userText) {
 
     } catch (error) {
         if (typeof turnstile !== 'undefined') {
-            turnstile.reset();
-            try { turnstile.execute(); } catch(e) {}
+            turnstile.reset('#turnstile-widget');
+            try { turnstile.execute('#turnstile-widget'); } catch(e) {}
         }
         console.error("AI Text API Fatal Error:", error);
         if (error.message !== "Turnstile_Pending") {

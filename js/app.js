@@ -6,11 +6,17 @@ import { showToast, switchView, setChartRange, initCharts, updateTrendCharts, up
 
 window.onTurnstileTimeout = function() {
     console.warn("Turnstile Token 過期，自動重置中...");
-    if (typeof turnstile !== 'undefined') turnstile.reset();
+    if (typeof turnstile !== 'undefined') {
+        turnstile.reset('#turnstile-widget');
+        try { turnstile.execute('#turnstile-widget'); } catch(e) {}
+    }
 };
 window.onTurnstileError = function() {
     console.error("Turnstile 載入錯誤，自動重置中...");
-    if (typeof turnstile !== 'undefined') turnstile.reset();
+    if (typeof turnstile !== 'undefined') {
+        turnstile.reset('#turnstile-widget');
+        try { turnstile.execute('#turnstile-widget'); } catch(e) {}
+    }
 };
 
 window.deleteItem = deleteItem;
