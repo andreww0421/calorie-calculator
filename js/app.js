@@ -166,7 +166,90 @@ function handleFileSelect(input) {
     document.getElementById('ai-loading').style.display = 'none';
 }
 
+// ── 全域鎖定旗標（防止 Race Condition）────────────────────────────
+let isAnalyzing = false;
+
+// ── 開發者模式判斷 ──────────────────────────────────────────────
+const IS_DEV_MODE = window.location.search.includes('dev=true');
+
+// ── 每日使用額度管理 ─────────────────────────────────────────────
+const DAILY_LIMIT = 20;
+const USAGE_KEY   = 'woofCal_usage';
+
+/**
+ * 檢查並遞增今日使用次數。
+ * @returns {boolean} true = 尚有額度可繼續；false = 已達上限
+ */
+function checkAndIncrementUsage() {
+    // 開發者模式：完全跳過每日上限
+    if (IS_DEV_MODE) return true;
+
+    const today = new Date().toISOString().split('T')[0];
+    let usage = {};
+    try { usage = JSON.parse(localStorage.getItem(USAGE_KEY)) || {}; } catch(e) { usage = {}; }
+
+    if (usage.date !== today) {
+        // 新的一天，重置計數
+        usage = { date: today, count: 0 };
+    }
+
+    if (usage.count >= DAILY_LIMIT) {
+        // 已達上限：永久鎖死按鈕
+        const btn = document.getElementById('analyze-btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+            btn.innerHTML = '🛑 今日 AI 額度已用完';
+        }
+        alert('今日 AI 分析額度（20 次）已用完，請明天再來！');
+        return false;
+    }
+
+    usage.count += 1;
+    localStorage.setItem(USAGE_KEY, JSON.stringify(usage));
+    return true;
+}
+
+// ── 鎖定所有輸入控制項（分析進行中）────────────────────────────
+function lockUIForAnalysis() {
+    const analyzeBtn  = document.getElementById('analyze-btn');
+    const photoBtn    = document.getElementById('btn-take-photo');
+    const imageUpload = document.getElementById('image-upload');
+
+    if (analyzeBtn)  { analyzeBtn.disabled = true;  analyzeBtn.style.opacity = '0.6'; analyzeBtn.style.cursor = 'not-allowed'; }
+    if (photoBtn)    { photoBtn.disabled   = true;  photoBtn.style.opacity   = '0.6'; photoBtn.style.cursor   = 'not-allowed'; }
+    if (imageUpload) { imageUpload.disabled = true; }
+}
+
+// ── 解鎖所有輸入控制項（冷卻結束後）────────────────────────────
+function unlockUIAfterCooldown() {
+    const analyzeBtn  = document.getElementById('analyze-btn');
+    const photoBtn    = document.getElementById('btn-take-photo');
+    const imageUpload = document.getElementById('image-upload');
+    const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
+
+    isAnalyzing = false;
+
+    if (analyzeBtn) {
+        analyzeBtn.disabled = false;
+        analyzeBtn.style.opacity = '';
+        analyzeBtn.style.cursor  = '';
+        analyzeBtn.style.display = 'inline-block';
+        analyzeBtn.innerHTML = `✨ 2. <span id="txt-analyze-btn">${t.btnAnalyze || '送出分析 (圖片或文字)'}</span>`;
+    }
+    if (photoBtn) {
+        photoBtn.disabled = false;
+        photoBtn.style.opacity = '';
+        photoBtn.style.cursor  = '';
+    }
+    if (imageUpload) { imageUpload.disabled = false; }
+}
+
 function startAnalysis() {
+    // ── 防止重複點擊（全域鎖定）
+    if (isAnalyzing) return;
+
     const input = document.getElementById('image-upload');
     const file = input.files[0]; 
     const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
@@ -181,6 +264,13 @@ function startAnalysis() {
         alert(t.alertSelImgOrText || "請選擇圖片，或輸入文字描述！"); 
         return; 
     }
+
+    // ── 每日使用上限檢查
+    if (!checkAndIncrementUsage()) return;
+
+    // ── 設定全域鎖定，鎖死所有相關按鈕
+    isAnalyzing = true;
+    lockUIForAnalysis();
 
     document.getElementById('analyze-btn').style.display = 'none';
     document.getElementById('ai-loading').style.display = 'block';
@@ -198,19 +288,18 @@ function startAnalysis() {
                 items: Array.isArray(result.items) ? result.items : [],
                 healthScore: Number(result.healthScore) || 0
             }; 
-            tempAIResultSaved = false; // Phase 4: 重設保存旗標
+            tempAIResultSaved = false;
             showModal();
         }
     };
 
     const handleError = (e) => {
         console.error(e); alert((t.alertAiFail || "AI 分析失敗: ") + e.message);
-        document.getElementById('analyze-btn').style.display = 'inline-block';
     };
 
     const handleFinally = () => {
         document.getElementById('ai-loading').style.display = 'none';
-        // analyze-btn 的恢復交由 startCooldown 管理
+        // analyze-btn 的恢復與解鎖交由 startCooldown 管理
         
         document.getElementById('image-upload').value = '';
         if(document.getElementById('ai-desc')) document.getElementById('ai-desc').value = '';
@@ -234,7 +323,7 @@ function startAnalysis() {
     }
 }
 
-// AI 分析按鈕冷卻計時（15 秒）
+// AI 分析後冷卻計時（15 秒），結束後同時解鎖分析鍵與拍照鍵
 function startCooldown() {
     const btn = document.getElementById('analyze-btn');
     if (!btn) return;
@@ -242,25 +331,21 @@ function startCooldown() {
     const COOLDOWN = 15;
     let remaining = COOLDOWN;
 
-    // 顯示按鈕並鎖定
+    // 顯示按鈕並進入冷卻鎖定狀態
     btn.style.display = 'inline-block';
     btn.disabled = true;
     btn.style.opacity = '0.6';
     btn.style.cursor = 'not-allowed';
-    btn.innerHTML = `⏳ 請稍候 (${remaining}s)`;
+    btn.innerHTML = `⏳ 系統冷卻中 (${remaining}s)`;
 
     const timer = setInterval(() => {
         remaining -= 1;
         if (remaining > 0) {
-            btn.innerHTML = `⏳ 請稍候 (${remaining}s)`;
+            btn.innerHTML = `⏳ 系統冷卻中 (${remaining}s)`;
         } else {
             clearInterval(timer);
-            // 恢復原始狀態
-            btn.disabled = false;
-            btn.style.opacity = '';
-            btn.style.cursor = '';
-            const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
-            btn.innerHTML = `✨ 2. <span id="txt-analyze-btn">${t.btnAnalyze || '送出分析 (圖片或文字)'}</span>`;
+            // 冷卻結束：解鎖所有控制項並重置全域旗標
+            unlockUIAfterCooldown();
         }
     }, 1000);
 }
