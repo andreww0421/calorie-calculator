@@ -1,0 +1,21 @@
+{
+  "name": "Woof Cal 汪卡管家",
+  "short_name": "Woof Cal",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f0f2f5",
+  "theme_color": "#f0f2f5",
+  "icons": [
+    {
+      "src": "calorie_icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "calorie_icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
