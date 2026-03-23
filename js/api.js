@@ -6,8 +6,9 @@ export async function callCloudflareAI(base64, userDesc) {
     // Turnstile 安全驗證
     const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
     if (!turnstileToken) {
-        showToast("系統安全驗證中，請稍候再試或重新整理網頁！", 'error');
-        throw new Error("Turnstile validation pending");
+        if (typeof turnstile !== 'undefined') turnstile.reset();
+        showToast("🛡️ 安全防護連線中，請稍等 1 秒後再試一次！", "info");
+        throw new Error("Turnstile_Pending");
     }
 
     try {
@@ -38,7 +39,9 @@ export async function callCloudflareAI(base64, userDesc) {
     } catch (error) {
         if (typeof turnstile !== 'undefined') turnstile.reset();
         console.error("AI API Fatal Error:", error);
-        showToast("AI 分析失敗，請稍後再試或換一張圖片。", 'error');
+        if (error.message !== "Turnstile_Pending") {
+            showToast("AI 分析失敗，請稍後再試或換一張圖片。", 'error');
+        }
         throw error;
     }
 }
@@ -49,8 +52,9 @@ export async function callCloudflareAIText(userText) {
     // Turnstile 安全驗證
     const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
     if (!turnstileToken) {
-        showToast("系統安全驗證中，請稍候再試或重新整理網頁！", 'error');
-        throw new Error("Turnstile validation pending");
+        if (typeof turnstile !== 'undefined') turnstile.reset();
+        showToast("🛡️ 安全防護連線中，請稍等 1 秒後再試一次！", "info");
+        throw new Error("Turnstile_Pending");
     }
 
     try {
@@ -80,7 +84,9 @@ export async function callCloudflareAIText(userText) {
     } catch (error) {
         if (typeof turnstile !== 'undefined') turnstile.reset();
         console.error("AI Text API Fatal Error:", error);
-        showToast("AI 分析失敗，請稍後再試或換一張圖片。", 'error');
+        if (error.message !== "Turnstile_Pending") {
+            showToast("AI 分析失敗，請稍後再試或換一張圖片。", 'error');
+        }
         throw error;
     }
 }
