@@ -1,11 +1,12 @@
 import { showToast } from './ui.js';
 import { i18n } from './config.js';
+import { getLocalDateString } from './utils.js';
 
 export let foodItems = []; 
 export let targetCalories = 2000;
 export let tempAIResult = null;
 export let tempAIResultSaved = false; // Phase 4: 防呆旗標
-export let selectedDate = new Date().toISOString().split('T')[0];
+export let selectedDate = getLocalDateString();
 export let currentMealMode = "4";
 export let favoriteFoods = JSON.parse(localStorage.getItem('myFavorites') || "[]");
 export let curLang = localStorage.getItem('appLang') || "zh-TW";
@@ -51,7 +52,7 @@ export function getWeightHistory(days = 30) {
     for (let i = days - 1; i >= 0; i--) {
         const d = new Date();
         d.setDate(today.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = getLocalDateString(d);
         const w = loadWeightData(dateStr);
         history.push({
             date: dateStr.slice(5), // MM-DD
@@ -92,14 +93,21 @@ export function exportData() {
     const data = {};
     for(let i=0; i<localStorage.length; i++) {
         const key = localStorage.key(i);
-        if(key.startsWith('record_') || key.startsWith('myProfile') || key === 'myFavorites') {
+        if (
+            key.startsWith('record_') ||
+            key.startsWith('weight_') ||
+            key.startsWith('myProfile') ||
+            key === 'myFavorites' ||
+            key === 'appLang' ||
+            key === 'appTheme'
+        ) {
             data[key] = localStorage.getItem(key);
         }
     }
     const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `nutrition_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.download = `nutrition_backup_${getLocalDateString()}.json`;
     a.click();
 }
 
@@ -126,7 +134,7 @@ export function getCalorieHistory(days = 7) {
     const today = new Date();
     for (let i = days - 1; i >= 0; i--) {
         const d = new Date(); d.setDate(today.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = getLocalDateString(d);
         const stored = localStorage.getItem(`record_${dateStr}`);
         let dayCal = 0;
         if (stored) { JSON.parse(stored).forEach(item => dayCal += (Number(item.nutri && item.nutri.calories) || 0)); }
@@ -141,7 +149,7 @@ export function getProteinHistory(days = 7) {
     const today = new Date();
     for (let i = days - 1; i >= 0; i--) {
         const d = new Date(); d.setDate(today.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = getLocalDateString(d);
         const stored = localStorage.getItem(`record_${dateStr}`);
         let dayPro = 0;
         if (stored) { JSON.parse(stored).forEach(item => dayPro += (Number(item.nutri && item.nutri.protein) || 0)); }

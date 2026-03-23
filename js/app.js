@@ -1,5 +1,5 @@
 import { i18n } from './config.js';
-import { toBase64 } from './utils.js';
+import { toBase64, getLocalDateString } from './utils.js';
 import { foodItems, targetCalories, tempAIResult, tempAIResultSaved, selectedDate, currentMealMode, favoriteFoods, curLang, curTheme, saveFoodData, loadFoodData, saveWeightData, loadWeightData, getWeightHistory, saveProfile, loadProfile, exportData, importData, getCalorieHistory, getProteinHistory, setTargetCalories, setTempAIResult, setTempAIResultSaved, setSelectedDate, setCurrentMealMode, setCurLang, setCurTheme } from './data.js';
 import { callCloudflareAI, callCloudflareAIText, recalculateFromItems } from './api.js';
 import { showToast, switchView, setChartRange, initCharts, updateTrendCharts, updateChartTheme, updatePetStatus, showEatingAnimation, petInteraction, updateCharts, updateWeightChart, renderListAndStats, updateMealUI, toggleTheme, setTheme, openLangModal, setLang, openFavModal, pickFav, deleteFav, showModal, addAIItem, removeAIItem, recalculateAI, showDetailModal, showFavDetailModal, _renderDetailModal, closeModal, toggleFabMenu } from './ui.js';
@@ -113,8 +113,8 @@ function tryCloseAnalysisModal() {
             return; // 使用者按取消，不關閉
         }
     }
-    tempAIResult = null;
-    tempAIResultSaved = false;
+    setTempAIResult(null);
+    setTempAIResultSaved(false);
     closeModal('analysis-modal');
 }
 
@@ -202,39 +202,125 @@ const IS_DEV_MODE = window.location.search.includes('dev=true');
 const DAILY_LIMIT = 20;
 const USAGE_KEY   = 'woofCal_usage';
 
-/**
- * 檢查並遞增今日使用次數。
- * @returns {boolean} true = 尚有額度可繼續；false = 已達上限
- */
-function checkAndIncrementUsage() {
-    // 開發者模式：完全跳過每日上限
-    if (IS_DEV_MODE) return true;
-
-    const today = new Date().toISOString().split('T')[0];
+function getUsageState() {
+    const today = getLocalDateString();
     let usage = {};
     try { usage = JSON.parse(localStorage.getItem(USAGE_KEY)) || {}; } catch(e) { usage = {}; }
-
     if (usage.date !== today) {
-        // 新的一天，重置計數
-        usage = { date: today, count: 0 };
+        return { date: today, count: 0 };
     }
+    return { date: today, count: Number(usage.count) || 0 };
+}
 
-    if (usage.count >= DAILY_LIMIT) {
-        // 已達上限：永久鎖死按鈕
-        const btn = document.getElementById('analyze-btn');
-        if (btn) {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.style.cursor = 'not-allowed';
-            btn.innerHTML = '🛑 今日 AI 額度已用完';
-        }
-        showToast('今日 AI 分析額度（20 次）已用完，請明天再來！', 'error');
-        return false;
-    }
-
+function incrementUsageCount() {
+    if (IS_DEV_MODE) return;
+    const usage = getUsageState();
     usage.count += 1;
     localStorage.setItem(USAGE_KEY, JSON.stringify(usage));
-    return true;
+}
+
+function applyUsageLimitState(showLimitToast = false) {
+    if (IS_DEV_MODE) return true;
+
+    const usage = getUsageState();
+    const isExhausted = usage.count >= DAILY_LIMIT;
+    const btn = document.getElementById('analyze-btn');
+    const photoBtn = document.getElementById('btn-take-photo');
+    const imageUpload = document.getElementById('image-upload');
+
+    if (btn && isExhausted) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+        btn.style.display = 'inline-block';
+        btn.innerHTML = '🛑 今日 AI 額度已用完';
+    }
+    if (photoBtn) {
+        photoBtn.disabled = isExhausted;
+        photoBtn.style.opacity = isExhausted ? '0.5' : '';
+        photoBtn.style.cursor = isExhausted ? 'not-allowed' : '';
+    }
+    if (imageUpload) {
+        imageUpload.disabled = isExhausted;
+    }
+
+    if (showLimitToast && isExhausted) {
+        showToast(`今日 AI 分析額度（${DAILY_LIMIT} 次）已用完，請明天再來！`, 'error');
+    }
+
+    return !isExhausted;
+}
+
+function parseStructuredAIError(errorText) {
+    if (!errorText || typeof errorText !== 'string') return null;
+    try {
+        return JSON.parse(errorText);
+    } catch (e) {
+        return null;
+    }
+}
+
+function extractRetryDelaySeconds(details) {
+    if (!Array.isArray(details)) return null;
+    for (const detail of details) {
+        if (typeof detail?.retryDelay === 'string') {
+            const match = detail.retryDelay.match(/(\d+(?:\.\d+)?)s/i);
+            if (match) return Math.ceil(Number(match[1]));
+        }
+    }
+    return null;
+}
+
+function buildAIErrorFeedback(error, t) {
+    let errorText = error?.message || String(error);
+    if (errorText === "[object Object]") {
+        try { errorText = JSON.stringify(error); } catch(err) { errorText = "無法解析的錯誤格式"; }
+    }
+
+    if (errorText === "Turnstile_Pending") {
+        return {
+            isSoftError: true,
+            type: 'info',
+            message: "🛡️ 安全防護載入中，請稍等 2 秒後再點擊一次！"
+        };
+    }
+
+    if (errorText.includes("請求太頻繁") || errorText.includes("安全驗證失敗")) {
+        return {
+            isSoftError: true,
+            type: 'error',
+            message: errorText
+        };
+    }
+
+    const structuredError = parseStructuredAIError(errorText);
+    const structuredMessage = structuredError?.message || '';
+    const combinedErrorText = `${errorText} ${structuredMessage}`.toLowerCase();
+    const retrySeconds = Number(structuredError?.retryAfterSeconds) || extractRetryDelaySeconds(structuredError?.details);
+
+    if (
+        structuredError?.code === 429 ||
+        structuredError?.status === 'RESOURCE_EXHAUSTED' ||
+        combinedErrorText.includes('quota exceeded') ||
+        combinedErrorText.includes('resource_exhausted') ||
+        combinedErrorText.includes('rate limit') ||
+        combinedErrorText.includes('ai_quota_exceeded')
+    ) {
+        const retryHint = retrySeconds
+            ? `請約 ${retrySeconds} 秒後再試。`
+            : "請稍後再試，或檢查後端 Gemini API 額度。";
+        return {
+            isSoftError: true,
+            type: 'error',
+            message: `AI 服務目前額度已滿，${retryHint}`
+        };
+    }
+
+    return {
+        isSoftError: false,
+        type: 'error',
+        message: (t.alertAiFail || "AI 分析失敗: ") + (structuredMessage || errorText)
+    };
 }
 
 // ── 鎖定所有輸入控制項（分析進行中）────────────────────────────
@@ -263,6 +349,7 @@ function unlockUIAfterCooldown() {
         analyzeBtn.style.cursor  = '';
         analyzeBtn.style.display = 'inline-block';
         analyzeBtn.innerHTML = `✨ 2. <span id="txt-analyze-btn">${t.btnAnalyze || '送出分析 (圖片或文字)'}</span>`;
+        if (!applyUsageLimitState()) return;
     }
     if (photoBtn) {
         photoBtn.disabled = false;
@@ -292,7 +379,7 @@ function startAnalysis() {
     }
 
     // ── 每日使用上限檢查
-    if (!checkAndIncrementUsage()) return;
+    if (!applyUsageLimitState(true)) return;
 
     // ── 設定全域鎖定，鎖死所有相關按鈕
     isAnalyzing = true;
@@ -305,6 +392,7 @@ function startAnalysis() {
 
     const handleResult = (result) => {
         if (result) {
+            incrementUsageCount();
             setTempAIResult({
                 name: result.foodName,
                 nutri: {
@@ -323,23 +411,9 @@ function startAnalysis() {
 
     const handleError = (e) => {
         console.error("Analysis Error:", e);
-        
-        // 確保 e.message 是字串，並處理極端情況
-        let errorText = e.message || String(e);
-        if (errorText === "[object Object]") {
-            try { errorText = JSON.stringify(e); } catch(err) { errorText = "無法解析的錯誤格式"; }
-        }
-
-        if (errorText === "Turnstile_Pending") {
-            isSoftError = true;
-            showToast("🛡️ 安全防護載入中，請稍等 2 秒後再點擊一次！", 'info');
-        } else if (errorText.includes("請求太頻繁") || errorText.includes("安全驗證失敗")) {
-            isSoftError = true;
-            showToast(errorText, 'error');
-        } else {
-            const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
-            showToast((t.alertAiFail || "AI 分析失敗: ") + errorText, 'error');
-        }
+        const feedback = buildAIErrorFeedback(e, t);
+        isSoftError = feedback.isSoftError;
+        showToast(feedback.message, feedback.type);
     };
 
     const handleFinally = () => {
@@ -588,4 +662,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         renderListAndStats();
     } catch(e) { console.error("Render Stats Error:", e); }
+
+    try {
+        applyUsageLimitState();
+    } catch(e) { console.error("Usage Limit UI Error:", e); }
 });

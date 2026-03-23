@@ -5,6 +5,7 @@ import {
     getWeightHistory, getCalorieHistory, getProteinHistory, setTempAIResultSaved 
 } from './data.js';
 import { recalculateFromItems } from './api.js';
+import { getLocalDateString, getMonthDayLabel } from './utils.js';
 import { confirmAddFood } from './app.js';
 
 export function showToast(message, type = 'info') {
@@ -111,7 +112,7 @@ function initCharts() {
     for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(today.getDate() - i);
-        labels.push(d.toISOString().split('T')[0].slice(5));
+        labels.push(getMonthDayLabel(d));
     }
 
     weeklyChart = new Chart(ctxWeekly, {
@@ -338,8 +339,8 @@ function updateCharts(totalNutri) {
         const labels = []; const data = []; const today = new Date();
         for (let i = 6; i >= 0; i--) {
             const d = new Date(); d.setDate(today.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
-            labels.push(dateStr.slice(5)); 
+            const dateStr = getLocalDateString(d);
+            labels.push(getMonthDayLabel(d)); 
             const stored = localStorage.getItem(`record_${dateStr}`);
             let dayCal = 0;
             if(stored) { JSON.parse(stored).forEach(item => dayCal += (Number(item.nutri && item.nutri.calories) || 0)); }
