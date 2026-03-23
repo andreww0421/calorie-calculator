@@ -295,7 +295,7 @@ function startAnalysis() {
     document.getElementById('analyze-btn').style.display = 'none';
     document.getElementById('ai-loading').style.display = 'block';
 
-    let isTurnstilePending = false; // 新增旗標追蹤錯誤類型
+    let localTurnstilePending = false;
 
     const handleResult = (result) => {
         if (result) {
@@ -316,10 +316,11 @@ function startAnalysis() {
     };
 
     const handleError = (e) => {
-        console.error(e); 
+        console.error("Analysis Error:", e); 
         if (e.message === "Turnstile_Pending") {
-            isTurnstilePending = true;
+            localTurnstilePending = true;
         } else {
+            const t = i18n[localStorage.getItem('appLang')] || i18n['zh-TW'];
             showToast((t.alertAiFail || "AI 分析失敗: ") + e.message, 'error');
         }
     };
@@ -327,13 +328,13 @@ function startAnalysis() {
     const handleFinally = () => {
         document.getElementById('ai-loading').style.display = 'none';
         
-        if (isTurnstilePending) {
-            // 如果只是驗證碼還沒好：直接解鎖，保留照片與輸入框內容，不倒數 15 秒！
+        if (localTurnstilePending) {
+            // 驗證碼準備中：只解鎖按鈕，不倒數 15 秒，保留照片與文字！
             unlockUIAfterCooldown();
             return;
         }
 
-        // 正常分析結束或發生其他嚴重錯誤：清空輸入框並進入 15 秒冷卻
+        // 正常分析結束或嚴重錯誤：清空輸入並進入 15 秒冷卻
         document.getElementById('image-upload').value = '';
         if(document.getElementById('ai-desc')) document.getElementById('ai-desc').value = '';
         document.getElementById('image-preview').style.display = 'none';
