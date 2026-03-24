@@ -1,13 +1,14 @@
 import {
     foodItems,
     targetCalories,
+    curLang,
     getWeightHistory,
     getCalorieHistory,
     getProteinHistory
 } from '../data.js';
 import { createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions } from './shared-ui.js';
-import { showDetailModal } from './detail-ui.js';
+import { showDailyNutritionSummary, showDetailModal } from './detail-ui.js';
 
 let macroChart = null;
 let weeklyChart = null;
@@ -16,6 +17,81 @@ let calTrendChart = null;
 let proteinTrendChart = null;
 let petTimeout = null;
 let dashboardChartRange = 7;
+
+const PET_FRAMES = {
+    hungry: 'dog_animation/dog_sad.gif',
+    low: 'dog_animation/dog_idle.gif',
+    mid: 'dog_animation/dog_walk.gif',
+    balanced: 'dog_animation/dog_happy.gif',
+    full: 'dog_animation/dog_fat.gif',
+    eating: 'dog_animation/dog_eat.gif'
+};
+
+function roundValue(value, digits = 1) {
+    const factor = 10 ** digits;
+    return Math.round((Number(value) || 0) * factor) / factor;
+}
+
+function getDailySummaryStrings(progressPercent, remainingCalories) {
+    const isEnglish = curLang === 'en';
+
+    if (progressPercent >= 110) {
+        return {
+            progress: `${Math.round(progressPercent)}%`,
+            status: isEnglish
+                ? `${Math.abs(remainingCalories)} kcal over target`
+                : `已超過目標 ${Math.abs(remainingCalories)} kcal`
+        };
+    }
+
+    if (progressPercent >= 85) {
+        return {
+            progress: `${Math.round(progressPercent)}%`,
+            status: isEnglish
+                ? `${Math.max(remainingCalories, 0)} kcal left to goal`
+                : `快達標了，還差 ${Math.max(remainingCalories, 0)} kcal`
+        };
+    }
+
+    if (progressPercent > 0) {
+        return {
+            progress: `${Math.round(progressPercent)}%`,
+            status: isEnglish
+                ? `${Math.max(remainingCalories, 0)} kcal left today`
+                : `目前還差 ${Math.max(remainingCalories, 0)} kcal`
+        };
+    }
+
+    return {
+        progress: '0%',
+        status: isEnglish ? 'Start logging today\'s meals' : '開始記錄今天的飲食吧'
+    };
+}
+
+function updateDailySummaryCard(total, waterTarget) {
+    const displayedTarget = Number(document.getElementById('target-cal-display')?.innerText);
+    const target = Number.isFinite(displayedTarget) && displayedTarget > 0
+        ? displayedTarget
+        : (Number(targetCalories) || 0);
+    const progressPercent = target > 0 ? Math.min((total.cal / target) * 100, 199) : 0;
+    const remainingCalories = target > 0 ? Math.round(target - total.cal) : 0;
+    const progressEl = document.getElementById('daily-summary-progress');
+    const statusEl = document.getElementById('daily-summary-status');
+    const cardEl = document.getElementById('daily-summary-card');
+    const copy = getDailySummaryStrings(progressPercent, remainingCalories);
+
+    if (progressEl) progressEl.innerText = copy.progress;
+    if (statusEl) statusEl.innerText = copy.status;
+
+    if (cardEl) {
+        cardEl.dataset.progressState =
+            progressPercent >= 110 ? 'over' :
+            progressPercent >= 85 ? 'good' :
+            progressPercent > 0 ? 'active' :
+            'empty';
+        cardEl.dataset.waterTarget = String(waterTarget);
+    }
+}
 
 function getWeeklyCalories() {
     const history = getCalorieHistory(7);
@@ -240,23 +316,27 @@ export function updatePetStatus(currentCal) {
 
     if (!petImg || !petMsg) return;
 
-    let frame = 'dog_animation/1.png';
+    let frame = PET_FRAMES.hungry;
     let message = t.petMsg1 || 'Hungry...';
 
     if (ratio >= 1.1) {
-        frame = 'dog_animation/5.png';
+        frame = PET_FRAMES.full;
         message = t.petMsg5 || 'Too full!';
     } else if (ratio >= 0.85) {
-        frame = 'dog_animation/4.png';
+        frame = PET_FRAMES.balanced;
         message = t.petMsg4 || 'Nice balance!';
     } else if (ratio >= 0.55) {
-        frame = 'dog_animation/3.png';
+        frame = PET_FRAMES.mid;
         message = t.petMsg3 || 'Looking for food...';
     } else if (ratio >= 0.25) {
-        frame = 'dog_animation/2.png';
+        frame = PET_FRAMES.low;
         message = t.petMsg2 || 'Getting better...';
     }
 
+    petImg.onerror = () => {
+        petImg.onerror = null;
+        petImg.src = PET_FRAMES.low;
+    };
     petImg.src = frame;
     petMsg.innerText = message;
 }
@@ -271,7 +351,11 @@ export function showEatingAnimation() {
     const previousSrc = petImg.src;
     const previousMsg = petMsg.innerText;
 
-    petImg.src = 'dog_animation/eat.gif';
+    petImg.onerror = () => {
+        petImg.onerror = null;
+        petImg.src = PET_FRAMES.low;
+    };
+    petImg.src = PET_FRAMES.eating;
     petMsg.innerText = t.petEatMsg || 'Nom nom...';
 
     petTimeout = setTimeout(() => {
@@ -294,6 +378,48 @@ export function petInteraction() {
 
     if (messages.length === 0) return;
     petMsg.innerText = messages[Math.floor(Math.random() * messages.length)];
+}
+
+export function openDailySummaryDetails() {
+    const t = getTexts();
+    const isEnglish = curLang === 'en';
+    const totalCal = Number(document.getElementById('total-cal-display')?.innerText) || 0;
+    const protein = Number(document.getElementById('sum-protein')?.innerText) || 0;
+    const fat = Number(document.getElementById('sum-fat')?.innerText) || 0;
+    const carbohydrate = Number(document.getElementById('sum-carb')?.innerText) || 0;
+    const sugar = Number(document.getElementById('sum-sugar')?.innerText) || 0;
+    const sodium = Number(document.getElementById('sum-sodium')?.innerText) || 0;
+    const saturatedFat = Number(document.getElementById('sum-sat-fat')?.innerText) || 0;
+    const transFat = Number(document.getElementById('sum-trans-fat')?.innerText) || 0;
+    const fiber = Number(document.getElementById('sum-fiber')?.innerText) || 0;
+    const waterTarget = Number(document.getElementById('water-val')?.innerText) || 0;
+    const displayedTarget = Number(document.getElementById('target-cal-display')?.innerText);
+    const target = Number.isFinite(displayedTarget) && displayedTarget > 0
+        ? displayedTarget
+        : (Number(targetCalories) || 0);
+    const remaining = target > 0 ? Math.round(target - totalCal) : 0;
+    const dateText = document.getElementById('display-date-text')?.innerText || 'Today';
+
+    showDailyNutritionSummary({
+        title: isEnglish ? `${dateText} Nutrition Summary` : `${dateText} 營養總覽`,
+        goalLabel: t.goal || 'Goal',
+        goalValue: target > 0 ? `${target} kcal` : '--',
+        remainingLabel: isEnglish ? 'Remaining' : '剩餘熱量',
+        remainingValue: target > 0 ? `${remaining} kcal` : '--',
+        waterLabel: t.water || 'Water',
+        waterValue: waterTarget > 0 ? `${waterTarget} ml` : '--',
+        nutri: {
+            calories: Math.round(totalCal),
+            protein: roundValue(protein),
+            fat: roundValue(fat),
+            carbohydrate: roundValue(carbohydrate),
+            sugar: roundValue(sugar),
+            sodium: Math.round(sodium),
+            saturatedFat: roundValue(saturatedFat),
+            transFat: roundValue(transFat),
+            fiber: roundValue(fiber)
+        }
+    });
 }
 
 export function updateCharts(totalNutri) {
@@ -395,20 +521,22 @@ export function renderListAndStats() {
     });
 
     document.getElementById('total-cal-display').innerText = Math.round(total.cal);
-    document.getElementById('sum-protein').innerText = total.pro.toFixed(1);
-    document.getElementById('sum-fat').innerText = total.fat.toFixed(1);
-    document.getElementById('sum-carb').innerText = total.carb.toFixed(1);
-    document.getElementById('sum-sugar').innerText = total.sugar.toFixed(1);
+    document.getElementById('sum-protein').innerText = roundValue(total.pro).toFixed(1);
+    document.getElementById('sum-fat').innerText = roundValue(total.fat).toFixed(1);
+    document.getElementById('sum-carb').innerText = roundValue(total.carb).toFixed(1);
+    document.getElementById('sum-sugar').innerText = roundValue(total.sugar).toFixed(1);
     document.getElementById('sum-sodium').innerText = Math.round(total.sod);
-    document.getElementById('sum-sat-fat').innerText = total.sat.toFixed(1);
-    document.getElementById('sum-trans-fat').innerText = total.trans.toFixed(1);
-    document.getElementById('sum-fiber').innerText = total.fiber.toFixed(1);
+    document.getElementById('sum-sat-fat').innerText = roundValue(total.sat).toFixed(1);
+    document.getElementById('sum-trans-fat').innerText = roundValue(total.trans).toFixed(1);
+    document.getElementById('sum-fiber').innerText = roundValue(total.fiber).toFixed(1);
 
     const weight = parseFloat(document.getElementById('weight')?.value) || 60;
-    document.getElementById('water-val').innerText = Math.round(weight * 35);
+    const waterTarget = Math.round(weight * 35);
+    document.getElementById('water-val').innerText = waterTarget;
 
     updateCharts(total);
     updatePetStatus(total.cal);
+    updateDailySummaryCard(total, waterTarget);
 }
 
 export function updateMacroChartLanguage(translations) {

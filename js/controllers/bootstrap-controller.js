@@ -13,6 +13,7 @@ import {
     closeModal,
     openFavModal,
     openLangModal,
+    openDailySummaryDetails,
     petInteraction,
     renderListAndStats,
     switchView,
@@ -82,6 +83,17 @@ export function setupEventListeners() {
 
     const petImg = document.getElementById('pet-img');
     if (petImg) petImg.addEventListener('click', petInteraction);
+
+    const dailySummaryCard = document.getElementById('daily-summary-card');
+    if (dailySummaryCard) {
+        dailySummaryCard.addEventListener('click', openDailySummaryDetails);
+        dailySummaryCard.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openDailySummaryDetails();
+            }
+        });
+    }
 
     const btnSaveWeight = document.getElementById('btn-save-weight');
     if (btnSaveWeight) btnSaveWeight.addEventListener('click', saveCurrentWeight);

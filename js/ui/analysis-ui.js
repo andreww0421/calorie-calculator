@@ -9,6 +9,16 @@ import { createButton, createElement, clearElement } from './dom-ui.js';
 import { getTexts, showToast } from './shared-ui.js';
 import { createNutritionGrid, createScoreBadge } from './modal-content-ui.js';
 
+function setAnalysisActionVisibility(isVisible) {
+    const btnFavSave = document.getElementById('btn-ai-fav-save');
+    const askText = document.getElementById('txt-modal-ask');
+    const modalBtns = document.getElementById('modal-meal-buttons');
+
+    [btnFavSave, askText, modalBtns].forEach((element) => {
+        if (element) element.style.display = isVisible ? '' : 'none';
+    });
+}
+
 function collectAIItemsFromDOM() {
     const rows = document.querySelectorAll('#ai-items-container .ai-item-row');
     const items = [];
@@ -74,7 +84,7 @@ function renderAnalysisContent() {
         text: t.aiItemsLabel || 'Estimated Food Items'
     }));
     itemsSection.appendChild(createElement('div', {
-        text: `${t.itemName || 'Item'} / ${t.itemWeight || 'Weight'}`,
+        text: `${t.itemName || 'Item'} / ${(t.itemWeight || 'Weight')} (g)`,
         style: {
             marginTop: '5px',
             fontSize: '0.8em',
@@ -98,8 +108,7 @@ function renderAnalysisContent() {
     wrapper.appendChild(itemsSection);
     content.appendChild(wrapper);
 
-    if (btnFavSave) btnFavSave.style.display = '';
-    if (modalBtns) modalBtns.style.display = '';
+    if (btnFavSave || modalBtns) setAnalysisActionVisibility(true);
 }
 
 export function showModal() {
@@ -138,11 +147,8 @@ export async function recalculateAI() {
     setTempAIResult({ ...tempAIResult, items });
     setTempAIResultSaved(false);
 
-    const btnFavSave = document.getElementById('btn-ai-fav-save');
-    const modalBtns = document.getElementById('modal-meal-buttons');
     const content = document.getElementById('analysis-content');
-    if (btnFavSave) btnFavSave.style.display = 'none';
-    if (modalBtns) modalBtns.style.display = 'none';
+    setAnalysisActionVisibility(false);
 
     if (content) {
         clearElement(content);

@@ -47,4 +47,42 @@ export function renderDetailModal(item) {
     document.getElementById('detail-modal').style.display = 'flex';
 }
 
+export function showDailyNutritionSummary(summary) {
+    if (!summary) return;
+
+    const t = getTexts();
+    const nd = t.noData || '--';
+    const content = document.getElementById('detail-content');
+    if (!content) return;
+
+    clearElement(content);
+
+    const wrapper = createElement('div', {
+        style: { textAlign: 'left' }
+    });
+
+    wrapper.appendChild(createElement('h3', {
+        text: summary.title || 'Daily Nutrition Summary',
+        style: { margin: '0 0 10px' }
+    }));
+
+    const highlights = createElement('div', { className: 'ai-nutri-grid ai-nutri-grid--summary' });
+    [
+        [summary.goalLabel || 'Goal', summary.goalValue ?? nd],
+        [summary.remainingLabel || 'Remaining', summary.remainingValue ?? nd],
+        [summary.waterLabel || 'Water', summary.waterValue ?? nd]
+    ].forEach(([label, value]) => {
+        highlights.appendChild(createElement('div', { className: 'ai-nutri-item ai-nutri-item--soft' }, [
+            createElement('span', { className: 'ai-n-val', text: String(value) }),
+            createElement('span', { className: 'ai-n-lbl', text: label })
+        ]));
+    });
+
+    wrapper.appendChild(highlights);
+    wrapper.appendChild(createNutritionGrid(summary.nutri || {}, t, { fallback: nd, caloriePrefix: 'Cal ' }));
+
+    content.appendChild(wrapper);
+    document.getElementById('detail-modal').style.display = 'flex';
+}
+
 export { renderDetailModal as _renderDetailModal };

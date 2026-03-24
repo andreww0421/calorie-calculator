@@ -127,6 +127,7 @@ export function setLang(lang) {
         'txt-date-label': t.dateLabel,
         'txt-total-intake': t.totalIntake,
         'txt-kcal-unit': 'kcal',
+        'txt-daily-summary-hint': t.dailySummaryHint || (lang === 'en' ? 'Tap to view all nutrients' : '點擊查看完整營養與水分'),
         'lbl-pro': t.pro,
         'lbl-fat': t.fat,
         'lbl-carb': t.carb,

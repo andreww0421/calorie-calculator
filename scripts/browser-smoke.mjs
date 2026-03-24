@@ -349,6 +349,31 @@ async function run() {
       assert((await client.evaluate(`document.getElementById('sum-fiber').innerText`)) === '4.2', 'Manual fiber did not update dashboard total.');
       results.push('Manual add works');
 
+      const dashboardState = await client.evaluate(`
+        (() => ({
+          metricCount: document.querySelectorAll('#daily-summary-card .nutrition-grid--summary .nutri-box').length,
+          petSrc: document.getElementById('pet-img')?.getAttribute('src') || '',
+          petLoaded: (document.getElementById('pet-img')?.naturalWidth || 0) > 0
+        }))()
+      `);
+      assert(dashboardState.metricCount === 4, `Daily summary card should show 4 visible nutrients, got ${dashboardState.metricCount}.`);
+      assert(dashboardState.petLoaded, `Pet image failed to load: ${dashboardState.petSrc}`);
+      assert(/dog_animation\/dog_[a-z]+\.gif$/i.test(dashboardState.petSrc), `Pet image should point to a bundled gif, got ${dashboardState.petSrc}.`);
+      results.push('Dashboard summary and pet image load correctly');
+
+      await client.evaluate(`document.getElementById('daily-summary-card').click()`);
+      await delay(300);
+      const dailySummaryModal = await client.evaluate(`
+        (() => ({
+          open: document.getElementById('detail-modal').style.display === 'flex',
+          statCount: document.querySelectorAll('#detail-content .ai-nutri-item').length
+        }))()
+      `);
+      assert(dailySummaryModal.open, 'Daily summary card did not open the detail modal.');
+      assert(dailySummaryModal.statCount === 12, `Daily summary detail should show 12 stat tiles, got ${dailySummaryModal.statCount}.`);
+      results.push('Daily summary card opens the full nutrition modal');
+      await client.evaluate(`document.getElementById('btn-detail-close').click()`);
+
       await client.evaluate(`
         document.getElementById('manual-name').value = 'Smoke Apple';
         document.getElementById('manual-cal').value = '123';
@@ -378,8 +403,8 @@ async function run() {
               fiber: 9.5
             },
             items: [
-              { name: 'Oats', weight: '60g' },
-              { name: 'Chia Seeds', weight: '15g' }
+              { name: 'Oats', weight: '60' },
+              { name: 'Chia Seeds', weight: '15' }
             ],
             healthScore: 8.1
           });
@@ -434,11 +459,15 @@ async function run() {
           const headerText = document.querySelector('#detail-modal h3')?.innerText || '';
           const nutriCount = document.querySelectorAll('#detail-content .ai-nutri-item').length;
           const clipboardCount = (headerText.match(/📋/g) || []).length;
-          return { headerText, nutriCount, clipboardCount };
+          const itemWeights = [...document.querySelectorAll('#detail-content strong + div > div span:last-child')]
+            .map(node => node.innerText.trim());
+          return { headerText, nutriCount, clipboardCount, itemWeights };
         })()
       `);
       assert(detailState.nutriCount === 9, `Detail modal should show 9 nutrition fields, got ${detailState.nutriCount}.`);
       assert(detailState.clipboardCount <= 1, `Detail modal title icon is duplicated: ${detailState.headerText}`);
+      assert(detailState.itemWeights.includes('60 g'), `Detail modal should show gram units for ingredients. Got: ${detailState.itemWeights.join(', ')}`);
+      assert(detailState.itemWeights.includes('15 g'), `Detail modal should show gram units for ingredients. Got: ${detailState.itemWeights.join(', ')}`);
       results.push('Detail modal shows full nutrition info without duplicate icon');
       await client.evaluate(`document.getElementById('btn-detail-close').click()`);
       await client.evaluate(`document.getElementById('btn-fav-close').click()`);
@@ -532,6 +561,103 @@ async function run() {
     `);
     assert(Boolean(latestToast), 'AI validation toast did not appear.');
     results.push('AI validation toast works');
+
+    const recalcState = await client.evaluate(`
+      (async () => {
+        const dataModule = await import('./js/data.js');
+        const analysisModule = await import('./js/ui/analysis-ui.js');
+        const originalFetch = window.fetch;
+        const originalTurnstile = window.turnstile;
+
+        window.turnstile = {
+          getResponse: () => 'smoke-token',
+          reset: () => {},
+          execute: () => {}
+        };
+
+        window.fetch = async () => new Response(JSON.stringify({
+          candidates: [{
+            content: {
+              parts: [{
+                text: JSON.stringify({
+                  foodName: 'Smoke Recalc Bowl',
+                  calories: 320,
+                  protein: 18,
+                  fat: 7,
+                  carbohydrate: 41,
+                  sugar: 6,
+                  sodium: 380,
+                  saturatedFat: 1.5,
+                  transFat: 0,
+                  fiber: 5,
+                  healthScore: 8,
+                  items: [
+                    { name: 'Rice', weight: '120' },
+                    { name: 'Chicken', weight: '80' }
+                  ]
+                })
+              }]
+            }
+          }]
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        dataModule.setTempAIResult({
+          name: 'Pending Bowl',
+          nutri: {
+            calories: 100,
+            protein: 1,
+            fat: 1,
+            carbohydrate: 1,
+            sugar: 1,
+            sodium: 1,
+            saturatedFat: 1,
+            transFat: 0,
+            fiber: 1
+          },
+          items: [{ name: 'Rice', weight: '100' }],
+          healthScore: 7
+        });
+        dataModule.setTempAIResultSaved(false);
+        analysisModule.showModal();
+
+        const recalcPromise = analysisModule.recalculateAI();
+        const pending = {
+          askVisible: getComputedStyle(document.getElementById('txt-modal-ask')).display !== 'none',
+          mealVisible: getComputedStyle(document.getElementById('modal-meal-buttons')).display !== 'none',
+          favVisible: getComputedStyle(document.getElementById('btn-ai-fav-save')).display !== 'none',
+          loadingText: document.getElementById('analysis-content').innerText.trim()
+        };
+
+        await recalcPromise;
+
+        const resolved = {
+          askVisible: getComputedStyle(document.getElementById('txt-modal-ask')).display !== 'none',
+          mealVisible: getComputedStyle(document.getElementById('modal-meal-buttons')).display !== 'none',
+          favVisible: getComputedStyle(document.getElementById('btn-ai-fav-save')).display !== 'none',
+          title: document.querySelector('#analysis-content h3')?.innerText || ''
+        };
+
+        document.getElementById('analysis-modal').style.display = 'none';
+        dataModule.setTempAIResult(null);
+        dataModule.setTempAIResultSaved(false);
+        window.fetch = originalFetch;
+        window.turnstile = originalTurnstile;
+
+        return { pending, resolved };
+      })()
+    `);
+    assert(!recalcState.pending.askVisible, 'Meal question should be hidden while recalculation is running.');
+    assert(!recalcState.pending.mealVisible, 'Meal selector should be hidden while recalculation is running.');
+    assert(!recalcState.pending.favVisible, 'Favorite button should be hidden while recalculation is running.');
+    assert(/AI/i.test(recalcState.pending.loadingText), `Recalculation should show an AI loading message. Got: ${recalcState.pending.loadingText}`);
+    assert(recalcState.resolved.askVisible, 'Meal question should return after recalculation succeeds.');
+    assert(recalcState.resolved.mealVisible, 'Meal selector should return after recalculation succeeds.');
+    assert(recalcState.resolved.favVisible, 'Favorite button should return after recalculation succeeds.');
+    assert(recalcState.resolved.title === 'Smoke Recalc Bowl', `Recalculation result did not refresh modal content. Got: ${recalcState.resolved.title}`);
+    results.push('AI recalculation hides meal actions until the new result is ready');
 
     if (RUN_REAL_AI) {
       const baselineToastCount = await client.evaluate(`document.querySelectorAll('.toast').length`);

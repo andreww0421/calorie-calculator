@@ -79,24 +79,35 @@
             <input type="date" id="current-date">
         </div>
 
-        <div class="dashboard-header">
-            <div class="label" id="txt-total-intake">今日攝取</div>
-            <div class="big-cal" id="total-cal-display">0</div>
-            <div class="label">
-                <span id="txt-kcal-unit">kcal</span> / 
-                <span id="txt-target-cal-display-label">目標</span> 
-                <span id="target-cal-display">--</span>
+        <div class="dashboard-header" id="daily-summary-card" role="button" tabindex="0" aria-haspopup="dialog">
+            <div class="dashboard-hero">
+                <div class="dashboard-hero-copy">
+                    <div class="label" id="txt-total-intake">今日攝取</div>
+                    <div class="big-cal"><span id="total-cal-display">0</span><span class="cal-unit-inline">kcal</span></div>
+                    <div class="label">
+                        <span id="txt-kcal-unit">kcal</span> /
+                        <span id="txt-target-cal-display-label">目標</span>
+                        <span id="target-cal-display">--</span>
+                    </div>
+                </div>
+                <div class="dashboard-status-panel">
+                    <div class="summary-pill" id="daily-summary-progress">0%</div>
+                    <div class="summary-status" id="daily-summary-status">開始記錄今天的飲食吧</div>
+                    <div class="summary-status-sub" id="txt-daily-summary-hint">點擊查看完整營養與水分</div>
+                </div>
             </div>
-            <div class="nutrition-grid">
-                <div class="nutri-box"><span class="n-val" id="sum-protein">0</span><span class="n-label" id="lbl-pro">蛋白質</span></div>
-                <div class="nutri-box"><span class="n-val" id="sum-fat">0</span><span class="n-label" id="lbl-fat">脂肪</span></div>
-                <div class="nutri-box"><span class="n-val" id="sum-carb">0</span><span class="n-label" id="lbl-carb">碳水</span></div>
-                <div class="nutri-box"><span class="n-val" id="sum-sugar">0</span><span class="n-label" id="lbl-sugar">糖</span></div>
-                <div class="nutri-box"><span class="n-val" id="sum-sodium">0</span><span class="n-label" id="lbl-sod">鈉(mg)</span></div>
-                <div class="nutri-box"><span class="n-val" id="sum-sat-fat">0</span><span class="n-label" id="lbl-sat">飽和脂肪</span></div>
-                <div class="nutri-box"><span class="n-val" id="sum-trans-fat">0</span><span class="n-label" id="lbl-trans">反式脂肪</span></div>
-                <div class="nutri-box"><span class="n-val" id="sum-fiber">0</span><span class="n-label" id="lbl-fiber">膳食纖維</span></div>
-                <div class="nutri-box"><span class="n-val" id="water-val">--</span><span class="n-label" id="lbl-water">目標水</span></div>
+            <div class="nutrition-grid nutrition-grid--summary">
+                <div class="nutri-box featured"><span class="n-val"><span id="sum-protein">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-pro">蛋白質</span></div>
+                <div class="nutri-box featured"><span class="n-val"><span id="sum-fat">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-fat">脂肪</span></div>
+                <div class="nutri-box featured"><span class="n-val"><span id="sum-carb">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-carb">碳水</span></div>
+                <div class="nutri-box featured"><span class="n-val"><span id="sum-fiber">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-fiber">膳食纖維</span></div>
+            </div>
+            <div class="dashboard-hidden-values" aria-hidden="true">
+                <div class="nutri-box"><span class="n-val"><span id="sum-sugar">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-sugar">糖</span></div>
+                <div class="nutri-box"><span class="n-val"><span id="sum-sodium">0</span><span class="n-unit">mg</span></span><span class="n-label" id="lbl-sod">鈉(mg)</span></div>
+                <div class="nutri-box"><span class="n-val"><span id="sum-sat-fat">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-sat">飽和脂肪</span></div>
+                <div class="nutri-box"><span class="n-val"><span id="sum-trans-fat">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-trans">反式脂肪</span></div>
+                <div class="nutri-box"><span class="n-val"><span id="water-val">--</span><span class="n-unit">ml</span></span><span class="n-label" id="lbl-water">目標水</span></div>
             </div>
         </div>
 

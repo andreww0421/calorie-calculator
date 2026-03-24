@@ -14,6 +14,7 @@ export {
     updatePetStatus,
     showEatingAnimation,
     petInteraction,
+    openDailySummaryDetails,
     updateCharts,
     updateWeightChart,
     renderListAndStats,
@@ -52,5 +53,6 @@ export {
 export {
     showDetailModal,
     showFavDetailModal,
+    showDailyNutritionSummary,
     _renderDetailModal
 } from './ui/detail-ui.js';

@@ -7,6 +7,12 @@ function createNutritionItem(value, label) {
     ]);
 }
 
+export function formatDisplayWeight(weight, emptyText = '--') {
+    const raw = String(weight ?? '').trim();
+    if (!raw) return emptyText;
+    return /^-?\d+(?:\.\d+)?$/.test(raw) ? `${raw} g` : raw;
+}
+
 export function createNutritionGrid(nutri, translations, options = {}) {
     const { fallback = '--', showUnits = true, caloriePrefix = 'Cal ' } = options;
     const valueOrFallback = (value) => (value !== undefined && value !== null ? value : fallback);
@@ -49,7 +55,7 @@ export function createItemSummaryList(items, emptyText = '--') {
         }, [
             createElement('span', { text: item?.name || emptyText }),
             createElement('span', {
-                text: item?.weight || emptyText,
+                text: formatDisplayWeight(item?.weight, emptyText),
                 style: { opacity: '0.7' }
             })
         ]));
