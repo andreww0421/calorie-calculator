@@ -10,8 +10,9 @@ import {
 import { i18n } from '../config.js';
 import { createButton, createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions, toggleFabMenu } from './shared-ui.js';
-import { updateChartTheme, updateMacroChartLanguage, updatePetStatus } from './charts-ui.js';
+import { renderListAndStats, updateChartTheme, updateMacroChartLanguage, updatePetStatus } from './charts-ui.js';
 import { confirmFavoriteMeal } from './favorites-ui.js';
+import { getDisplayDateLabel, getExtraUiText } from './locale-ui.js';
 
 export function updateMealUI() {
     const t = getTexts();
@@ -121,13 +122,14 @@ export function setLang(lang) {
     persistLang(lang);
 
     const t = i18n[lang] || i18n['zh-TW'];
+    const extra = getExtraUiText(lang);
     document.title = t.appTitle || 'Woof Cal';
 
     const mapping = {
         'txt-date-label': t.dateLabel,
         'txt-total-intake': t.totalIntake,
         'txt-kcal-unit': 'kcal',
-        'txt-daily-summary-hint': t.dailySummaryHint || (lang === 'en' ? 'Tap to view all nutrients' : '點擊查看完整營養與水分'),
+        'txt-daily-summary-hint': extra.dailySummaryHint,
         'lbl-pro': t.pro,
         'lbl-fat': t.fat,
         'lbl-carb': t.carb,
@@ -205,6 +207,17 @@ export function setLang(lang) {
         if (el && value !== undefined) el.innerText = value;
     });
 
+    const displayDateText = document.getElementById('display-date-text');
+    const currentDateValue = document.getElementById('current-date')?.value;
+    if (displayDateText) {
+        displayDateText.innerText = getDisplayDateLabel(currentDateValue, lang);
+    }
+
+    const dailySummaryStatus = document.getElementById('daily-summary-status');
+    if (dailySummaryStatus && !dailySummaryStatus.dataset.dynamic) {
+        dailySummaryStatus.innerText = extra.dailySummaryEmpty;
+    }
+
     const navAiBadge = document.querySelector('.nav-item.nav-ai .ai-badge');
     if (navAiBadge) navAiBadge.innerText = t.navAi || 'AI';
 
@@ -231,6 +244,7 @@ export function setLang(lang) {
 
     if (typeof updateProfileStats === 'function') updateProfileStats();
     updateMealUI();
+    renderListAndStats();
     updateMacroChartLanguage(t);
     updatePetStatus(parseFloat(document.getElementById('total-cal-display')?.innerText) || 0);
 }

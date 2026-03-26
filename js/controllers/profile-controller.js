@@ -12,6 +12,7 @@ import {
 import { reloadApp } from '../platform.js';
 import { renderListAndStats, showToast, updateMealUI } from '../ui.js';
 import { getTranslations, readProfileForm, reportControllerError } from './controller-shared.js';
+import { getDisplayDateLabel } from '../ui/locale-ui.js';
 
 function renderMacroGoals(container, translations, goals) {
     if (!container) return;
@@ -97,7 +98,7 @@ export function calculateProfile(auto = false) {
 export function changeDate() {
     const nextDate = document.getElementById('current-date').value;
     setSelectedDate(nextDate);
-    document.getElementById('display-date-text').innerText = nextDate;
+    document.getElementById('display-date-text').innerText = getDisplayDateLabel(nextDate);
     loadFoodData(nextDate);
 
     const weight = loadWeightData(nextDate);

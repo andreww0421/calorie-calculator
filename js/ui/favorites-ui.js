@@ -9,6 +9,7 @@ import {
     closeModal
 } from './shared-ui.js';
 import { showFavDetailModal } from './detail-ui.js';
+import { formatNutritionInline } from './locale-ui.js';
 
 function getFavoriteMealPrompt() {
     const t = getTexts();
@@ -47,7 +48,12 @@ export function openFavModal() {
             info.addEventListener('click', () => showFavDetailModal(index));
             info.appendChild(createElement('div', { text: item.name || '--' }));
             info.appendChild(createElement('span', {
-                text: `Cal ${cal} | P:${pro} F:${fat} C:${carb}`,
+                text: formatNutritionInline({
+                    calories: cal,
+                    protein: pro,
+                    fat,
+                    carbohydrate: carb
+                }, t),
                 style: {
                     fontSize: '0.85em',
                     opacity: '0.8',

@@ -9,6 +9,7 @@ import {
 import { createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions } from './shared-ui.js';
 import { showDailyNutritionSummary, showDetailModal } from './detail-ui.js';
+import { formatNutritionInline, getDisplayDateLabel, getExtraUiText } from './locale-ui.js';
 
 let macroChart = null;
 let weeklyChart = null;
@@ -33,38 +34,32 @@ function roundValue(value, digits = 1) {
 }
 
 function getDailySummaryStrings(progressPercent, remainingCalories) {
-    const isEnglish = curLang === 'en';
+    const extra = getExtraUiText(curLang);
 
     if (progressPercent >= 110) {
         return {
             progress: `${Math.round(progressPercent)}%`,
-            status: isEnglish
-                ? `${Math.abs(remainingCalories)} kcal over target`
-                : `已超過目標 ${Math.abs(remainingCalories)} kcal`
+            status: extra.dailySummaryOverTarget(Math.abs(remainingCalories))
         };
     }
 
     if (progressPercent >= 85) {
         return {
             progress: `${Math.round(progressPercent)}%`,
-            status: isEnglish
-                ? `${Math.max(remainingCalories, 0)} kcal left to goal`
-                : `快達標了，還差 ${Math.max(remainingCalories, 0)} kcal`
+            status: extra.dailySummaryLeftGoal(Math.max(remainingCalories, 0))
         };
     }
 
     if (progressPercent > 0) {
         return {
             progress: `${Math.round(progressPercent)}%`,
-            status: isEnglish
-                ? `${Math.max(remainingCalories, 0)} kcal left today`
-                : `目前還差 ${Math.max(remainingCalories, 0)} kcal`
+            status: extra.dailySummaryLeftToday(Math.max(remainingCalories, 0))
         };
     }
 
     return {
         progress: '0%',
-        status: isEnglish ? 'Start logging today\'s meals' : '開始記錄今天的飲食吧'
+        status: extra.dailySummaryEmpty
     };
 }
 
@@ -81,7 +76,10 @@ function updateDailySummaryCard(total, waterTarget) {
     const copy = getDailySummaryStrings(progressPercent, remainingCalories);
 
     if (progressEl) progressEl.innerText = copy.progress;
-    if (statusEl) statusEl.innerText = copy.status;
+    if (statusEl) {
+        statusEl.innerText = copy.status;
+        statusEl.dataset.dynamic = 'true';
+    }
 
     if (cardEl) {
         cardEl.dataset.progressState =
@@ -382,7 +380,7 @@ export function petInteraction() {
 
 export function openDailySummaryDetails() {
     const t = getTexts();
-    const isEnglish = curLang === 'en';
+    const extra = getExtraUiText(curLang);
     const totalCal = Number(document.getElementById('total-cal-display')?.innerText) || 0;
     const protein = Number(document.getElementById('sum-protein')?.innerText) || 0;
     const fat = Number(document.getElementById('sum-fat')?.innerText) || 0;
@@ -398,13 +396,14 @@ export function openDailySummaryDetails() {
         ? displayedTarget
         : (Number(targetCalories) || 0);
     const remaining = target > 0 ? Math.round(target - totalCal) : 0;
-    const dateText = document.getElementById('display-date-text')?.innerText || 'Today';
+    const currentDate = document.getElementById('current-date')?.value;
+    const dateText = getDisplayDateLabel(currentDate, curLang);
 
     showDailyNutritionSummary({
-        title: isEnglish ? `${dateText} Nutrition Summary` : `${dateText} 營養總覽`,
+        title: extra.dailySummaryTitle(dateText),
         goalLabel: t.goal || 'Goal',
         goalValue: target > 0 ? `${target} kcal` : '--',
-        remainingLabel: isEnglish ? 'Remaining' : '剩餘熱量',
+        remainingLabel: extra.remainingLabel,
         remainingValue: target > 0 ? `${remaining} kcal` : '--',
         waterLabel: t.water || 'Water',
         waterValue: waterTarget > 0 ? `${waterTarget} ml` : '--',
@@ -453,6 +452,8 @@ export function updateWeightChart() {
 }
 
 export function renderListAndStats() {
+    const t = getTexts();
+
     ['breakfast', 'lunch', 'dinner', 'snack'].forEach((type) => {
         clearElement(document.getElementById(`list-${type}`));
     });
@@ -484,7 +485,7 @@ export function renderListAndStats() {
         info.appendChild(createElement('div', { className: 'name', text: item.name || '--' }));
         info.appendChild(createElement('div', {
             className: 'detail',
-            text: `Cal ${Math.round(n.calories || 0)} | P:${n.protein || 0} F:${n.fat || 0} C:${n.carbohydrate || 0}`
+            text: formatNutritionInline(n, t)
         }));
 
         const actionWrap = createElement('div', {
@@ -493,7 +494,7 @@ export function renderListAndStats() {
 
         const favBtn = createElement('button', {
             className: 'btn-delete',
-            text: 'Save',
+            text: t.btnFavSave || 'Save',
             style: { backgroundColor: '#ff7675' }
         });
         favBtn.addEventListener('click', () => uiActions.addRecordToFav?.(index));
