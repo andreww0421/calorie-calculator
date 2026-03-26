@@ -123,7 +123,9 @@ export function setLang(lang) {
 
     const t = i18n[lang] || i18n['zh-TW'];
     const extra = getExtraUiText(lang);
-    document.title = t.appTitle || 'Woof Cal';
+    document.title = extra.metaTitle || t.appTitle || 'Woof Cal';
+    document.documentElement.lang = lang;
+    document.documentElement.dir = extra.direction || 'ltr';
 
     const mapping = {
         'txt-date-label': t.dateLabel,
@@ -199,7 +201,16 @@ export function setLang(lang) {
         'btn-chart-7d': t.chart7d,
         'btn-chart-30d': t.chart30d,
         'txt-detail-title': t.detailTitle,
-        'btn-detail-close': t.btnDetailClose
+        'btn-detail-close': t.btnDetailClose,
+        'txt-empty-eyebrow': extra.emptyStateEyebrow,
+        'txt-empty-title': extra.emptyStateTitle,
+        'txt-empty-copy': extra.emptyStateBody,
+        'txt-ai-guide-eyebrow': extra.aiGuideEyebrow,
+        'txt-ai-guide-title': extra.aiGuideTitle,
+        'txt-ai-guide-copy': extra.aiGuideBody,
+        'txt-ai-guide-tip-1': extra.aiGuideTip1,
+        'txt-ai-guide-tip-2': extra.aiGuideTip2,
+        'txt-ai-guide-tip-3': extra.aiGuideTip3
     };
 
     Object.entries(mapping).forEach(([id, value]) => {
@@ -217,6 +228,18 @@ export function setLang(lang) {
     if (dailySummaryStatus && !dailySummaryStatus.dataset.dynamic) {
         dailySummaryStatus.innerText = extra.dailySummaryEmpty;
     }
+
+    const descriptionText = extra.metaDescription;
+    [
+        ['meta[name="description"]', descriptionText],
+        ['meta[property="og:title"]', extra.metaOgTitle || document.title],
+        ['meta[property="og:description"]', descriptionText],
+        ['meta[name="twitter:title"]', extra.metaTitle || document.title],
+        ['meta[name="twitter:description"]', descriptionText]
+    ].forEach(([selector, value]) => {
+        const meta = document.querySelector(selector);
+        if (meta && value) meta.setAttribute('content', value);
+    });
 
     const navAiBadge = document.querySelector('.nav-item.nav-ai .ai-badge');
     if (navAiBadge) navAiBadge.innerText = t.navAi || 'AI';

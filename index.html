@@ -111,6 +111,12 @@
             </div>
         </div>
 
+        <div class="quick-start-card" id="daily-empty-state">
+            <div class="quick-start-eyebrow" id="txt-empty-eyebrow">新手開始</div>
+            <div class="quick-start-title" id="txt-empty-title">記下今天的第一餐</div>
+            <div class="quick-start-copy" id="txt-empty-copy">你可以先拍照交給 AI，或用手動輸入快速建立第一筆飲食紀錄。</div>
+        </div>
+
         <div class="card">
             <h3>🍽️ <span id="display-date-text">今日</span> <span id="txt-record-title">飲食紀錄</span></h3>
             <div id="meal-sections-container"></div>
@@ -194,6 +200,16 @@
     <div id="view-ai" class="view-section hidden">
         <div class="card">
             <h2 style="color: var(--accent-color);" id="txt-ai-title">📸 AI 飲食分析</h2>
+            <div class="ai-guide-card" id="ai-guide-card">
+                <div class="ai-guide-eyebrow" id="txt-ai-guide-eyebrow">AI Tips</div>
+                <div class="ai-guide-title" id="txt-ai-guide-title">讓 AI 更快更準</div>
+                <div class="ai-guide-copy" id="txt-ai-guide-copy">清楚照片、補充食材與分量，會讓分析更準確。</div>
+                <ul class="ai-guide-list">
+                    <li id="txt-ai-guide-tip-1">拍攝時盡量避免遮擋</li>
+                    <li id="txt-ai-guide-tip-2">有包裝食品時可補上品名</li>
+                    <li id="txt-ai-guide-tip-3">不確定時可以在重算前先編輯食材</li>
+                </ul>
+            </div>
             <div style="text-align: center;">
                 <input type="file" id="image-upload" accept="image/*" style="display: none;">
                 <button class="btn-ai" id="btn-take-photo">📸 1. 拍照 / 選擇圖片</button>

@@ -84,6 +84,27 @@ body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); c
 .dashboard-header[data-progress-state="good"] .summary-pill { background: rgba(255,255,255,0.28); }
 .dashboard-header[data-progress-state="over"] .summary-pill { background: rgba(255, 234, 167, 0.28); }
 .dashboard-header[data-progress-state="over"] .summary-status { color: #fff9d6; }
+.quick-start-card {
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(108, 92, 231, 0.08));
+    border: 1px solid rgba(46, 204, 113, 0.18);
+    border-radius: 20px;
+    padding: 18px 20px;
+    box-shadow: 0 10px 24px rgba(46, 204, 113, 0.08);
+}
+.quick-start-card[hidden] { display: none !important; }
+.quick-start-eyebrow,
+.ai-guide-eyebrow { font-size: 0.78em; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--primary-dark); opacity: 0.9; }
+.quick-start-title,
+.ai-guide-title { margin-top: 8px; font-size: 1.2em; font-weight: 700; color: var(--text-color); }
+.quick-start-copy,
+.ai-guide-copy { margin-top: 8px; line-height: 1.6; color: var(--text-color); opacity: 0.82; }
+.meal-empty-row { display: block !important; }
+.meal-empty-card {
+    padding: 14px 0;
+    text-align: left;
+}
+.meal-empty-title { font-weight: 700; color: var(--text-color); }
+.meal-empty-copy { margin-top: 4px; font-size: 0.92em; color: var(--nav-text); }
 .chart-container { position: relative; height: 250px; width: 100%; margin-bottom: 20px; }
 .chart-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
 @media (min-width: 600px) { .chart-grid { grid-template-columns: 1fr 1fr; } }
@@ -113,6 +134,21 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
 .loading-spinner { display: none; text-align: center; padding: 20px; color: var(--accent-color); font-weight: bold; }
 #image-preview { width: 100%; border-radius: 10px; margin-top: 15px; display: none; }
 .goal-section { display: none; margin-top: 20px; background: rgba(46, 204, 113, 0.1); padding: 15px; border-radius: 10px; text-align: center; }
+.ai-guide-card {
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.08), rgba(46, 204, 113, 0.08));
+    border: 1px solid rgba(108, 92, 231, 0.14);
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+.ai-guide-list {
+    margin: 12px 0 0;
+    padding-left: 18px;
+    color: var(--text-color);
+    opacity: 0.88;
+}
+.ai-guide-list li + li { margin-top: 6px; }
 .fab-container { display: none; }
 .fab-main { display: none; }
 .fab-menu { display: none; }
@@ -208,6 +244,25 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
 .toast.error { background-color: #e74c3c; }
 .toast.success { background-color: #2ecc71; }
 .toast.info { background-color: #3498db; }
+
+[dir="rtl"] .dashboard-hero,
+[dir="rtl"] .meal-header,
+[dir="rtl"] .fav-item-row,
+[dir="rtl"] .ai-item-row {
+    direction: rtl;
+}
+
+[dir="rtl"] .dashboard-status-panel,
+[dir="rtl"] .meal-empty-card,
+[dir="rtl"] .ai-guide-card,
+[dir="rtl"] .quick-start-card {
+    text-align: right;
+}
+
+[dir="rtl"] .ai-guide-list {
+    padding-right: 18px;
+    padding-left: 0;
+}
 
 @media (max-width: 640px) {
     .dashboard-hero {

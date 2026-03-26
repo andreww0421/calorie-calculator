@@ -8,6 +8,7 @@ import { formatAIRequestError } from '../analysis-errors.js';
 import { createButton, createElement, clearElement } from './dom-ui.js';
 import { getTexts, showToast } from './shared-ui.js';
 import { createNutritionGrid, createScoreBadge } from './modal-content-ui.js';
+import { getExtraUiText } from './locale-ui.js';
 
 function setAnalysisActionVisibility(isVisible) {
     const btnFavSave = document.getElementById('btn-ai-fav-save');
@@ -138,9 +139,10 @@ export async function recalculateAI() {
     if (!tempAIResult) return;
 
     const t = getTexts();
+    const extra = getExtraUiText();
     const items = collectAIItemsFromDOM();
     if (items.length === 0) {
-        showToast(t.aiItemsRequired || 'Please keep at least one item.', 'error');
+        showToast(t.aiItemsRequired || extra.aiItemsRequired || 'Please keep at least one item.', 'error');
         return;
     }
 

@@ -99,6 +99,26 @@ function getWeeklyCalories() {
     };
 }
 
+function createEmptyMealRow(title, body) {
+    const wrapper = createElement('div', {
+        className: 'meal-empty-card'
+    }, [
+        createElement('div', {
+            className: 'meal-empty-title',
+            text: title
+        }),
+        createElement('div', {
+            className: 'meal-empty-copy',
+            text: body
+        })
+    ]);
+
+    const item = document.createElement('li');
+    item.className = 'meal-empty-row';
+    item.appendChild(wrapper);
+    return item;
+}
+
 export function switchView(targetId) {
     document.querySelectorAll('.view-section').forEach((view) => {
         view.classList.remove('active-view');
@@ -453,6 +473,7 @@ export function updateWeightChart() {
 
 export function renderListAndStats() {
     const t = getTexts();
+    const extra = getExtraUiText(curLang);
 
     ['breakfast', 'lunch', 'dinner', 'snack'].forEach((type) => {
         clearElement(document.getElementById(`list-${type}`));
@@ -516,6 +537,12 @@ export function renderListAndStats() {
         if (listEl) listEl.appendChild(listItem);
     });
 
+    ['breakfast', 'lunch', 'dinner', 'snack'].forEach((type) => {
+        const listEl = document.getElementById(`list-${type}`);
+        if (!listEl || listEl.children.length > 0) return;
+        listEl.appendChild(createEmptyMealRow(extra.emptyMealTitle, extra.emptyMealBody));
+    });
+
     Object.keys(mealTotals).forEach((type) => {
         const el = document.getElementById(`prog-${type}`);
         if (el) el.innerText = `${Math.round(mealTotals[type])} kcal`;
@@ -534,6 +561,9 @@ export function renderListAndStats() {
     const weight = parseFloat(document.getElementById('weight')?.value) || 60;
     const waterTarget = Math.round(weight * 35);
     document.getElementById('water-val').innerText = waterTarget;
+
+    const emptyState = document.getElementById('daily-empty-state');
+    if (emptyState) emptyState.hidden = foodItems.length > 0;
 
     updateCharts(total);
     updatePetStatus(total.cal);
