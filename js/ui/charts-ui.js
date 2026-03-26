@@ -19,6 +19,11 @@ let calTrendChart = null;
 let proteinTrendChart = null;
 let petTimeout = null;
 let dashboardChartRange = 7;
+let chartLibraryPromise = null;
+let chartsInitialized = false;
+
+const CHART_JS_SRC = 'https://cdn.jsdelivr.net/npm/chart.js';
+const PET_PLACEHOLDER_SRC = 'pet_placeholder.svg';
 
 const PET_FRAMES = {
     hungry: 'dog_animation/dog_sad.gif',
@@ -28,6 +33,106 @@ const PET_FRAMES = {
     full: 'dog_animation/dog_fat.gif',
     eating: 'dog_animation/dog_eat.gif'
 };
+
+function loadChartLibrary() {
+    if (typeof globalThis.Chart === 'function') {
+        return Promise.resolve(globalThis.Chart);
+    }
+
+    if (chartLibraryPromise) {
+        return chartLibraryPromise;
+    }
+
+    chartLibraryPromise = new Promise((resolve, reject) => {
+        let script = document.querySelector('script[data-chartjs-loader="true"]');
+
+        const cleanupListeners = () => {
+            script?.removeEventListener('load', handleLoad);
+            script?.removeEventListener('error', handleError);
+        };
+
+        const handleLoad = () => {
+            cleanupListeners();
+            if (typeof globalThis.Chart === 'function') {
+                resolve(globalThis.Chart);
+                return;
+            }
+            chartLibraryPromise = null;
+            reject(new Error('Chart.js loaded without exposing Chart.'));
+        };
+
+        const handleError = () => {
+            cleanupListeners();
+            chartLibraryPromise = null;
+            reject(new Error('Chart.js failed to load.'));
+        };
+
+        if (!script) {
+            script = document.createElement('script');
+            script.src = CHART_JS_SRC;
+            script.async = true;
+            script.dataset.chartjsLoader = 'true';
+            document.head.appendChild(script);
+        }
+
+        if (typeof globalThis.Chart === 'function') {
+            handleLoad();
+            return;
+        }
+
+        script.addEventListener('load', handleLoad);
+        script.addEventListener('error', handleError);
+    });
+
+    return chartLibraryPromise;
+}
+
+function afterNextPaint(callback) {
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(callback);
+        });
+        return;
+    }
+    setTimeout(callback, 0);
+}
+
+function setPetFrame(petImg, frame, options = {}) {
+    if (!petImg) return;
+
+    const applyFrame = () => {
+        petImg.onerror = () => {
+            petImg.onerror = null;
+            petImg.src = PET_FRAMES.low;
+            petImg.dataset.petReady = 'true';
+        };
+        petImg.src = frame;
+        petImg.dataset.petReady = 'true';
+    };
+
+    if (options.defer && petImg.dataset.petReady !== 'true') {
+        afterNextPaint(applyFrame);
+        return;
+    }
+
+    applyFrame();
+}
+
+async function ensureDashboardChartsReady() {
+    try {
+        await initCharts();
+        const total = {
+            pro: parseFloat(document.getElementById('sum-protein')?.innerText) || 0,
+            fat: parseFloat(document.getElementById('sum-fat')?.innerText) || 0,
+            carb: parseFloat(document.getElementById('sum-carb')?.innerText) || 0
+        };
+        updateCharts(total);
+        updateWeightChart();
+        updateTrendCharts(dashboardChartRange);
+    } catch (error) {
+        console.error('Dashboard chart initialization failed.', error);
+    }
+}
 
 function roundValue(value, digits = 1) {
     const factor = 10 ** digits;
@@ -179,14 +284,7 @@ export function switchView(targetId) {
     });
 
     if (targetId === 'view-dashboard') {
-        const total = {
-            pro: parseFloat(document.getElementById('sum-protein')?.innerText) || 0,
-            fat: parseFloat(document.getElementById('sum-fat')?.innerText) || 0,
-            carb: parseFloat(document.getElementById('sum-carb')?.innerText) || 0
-        };
-        updateCharts(total);
-        updateWeightChart();
-        updateTrendCharts(dashboardChartRange);
+        void ensureDashboardChartsReady();
     }
 }
 
@@ -203,8 +301,11 @@ export function setChartRange(days) {
     updateTrendCharts(days);
 }
 
-export function initCharts() {
-    const t = getTexts();
+export async function initCharts() {
+    if (chartsInitialized) {
+        return true;
+    }
+
     const macroCanvas = document.getElementById('macroChart');
     const weeklyCanvas = document.getElementById('weeklyChart');
     const calTrendCanvas = document.getElementById('calTrendChart');
@@ -212,10 +313,16 @@ export function initCharts() {
     const weightCanvas = document.getElementById('weightChart');
 
     if (!macroCanvas || !weeklyCanvas || !calTrendCanvas || !proteinTrendCanvas || !weightCanvas) {
-        return;
+        return false;
     }
 
-    macroChart = new Chart(macroCanvas.getContext('2d'), {
+    const ChartConstructor = await loadChartLibrary();
+    if (chartsInitialized) {
+        return true;
+    }
+    const t = getTexts();
+
+    macroChart = new ChartConstructor(macroCanvas.getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: [t.pro, t.fat, t.carb],
@@ -236,7 +343,7 @@ export function initCharts() {
     });
 
     const weeklyData = getWeeklyCalories();
-    weeklyChart = new Chart(weeklyCanvas.getContext('2d'), {
+    weeklyChart = new ChartConstructor(weeklyCanvas.getContext('2d'), {
         type: 'bar',
         data: {
             labels: weeklyData.labels,
@@ -258,7 +365,7 @@ export function initCharts() {
         }
     });
 
-    calTrendChart = new Chart(calTrendCanvas.getContext('2d'), {
+    calTrendChart = new ChartConstructor(calTrendCanvas.getContext('2d'), {
         type: 'line',
         data: {
             labels: [],
@@ -282,7 +389,7 @@ export function initCharts() {
         }
     });
 
-    proteinTrendChart = new Chart(proteinTrendCanvas.getContext('2d'), {
+    proteinTrendChart = new ChartConstructor(proteinTrendCanvas.getContext('2d'), {
         type: 'line',
         data: {
             labels: [],
@@ -306,7 +413,7 @@ export function initCharts() {
         }
     });
 
-    weightChart = new Chart(weightCanvas.getContext('2d'), {
+    weightChart = new ChartConstructor(weightCanvas.getContext('2d'), {
         type: 'line',
         data: {
             labels: [],
@@ -331,8 +438,10 @@ export function initCharts() {
         }
     });
 
+    chartsInitialized = true;
     updateTrendCharts(dashboardChartRange);
     updateWeightChart();
+    return true;
 }
 
 export function updateTrendCharts(days) {
@@ -397,11 +506,9 @@ export function updatePetStatus(currentCal) {
         message = t.petMsg2 || 'Getting better...';
     }
 
-    petImg.onerror = () => {
-        petImg.onerror = null;
-        petImg.src = PET_FRAMES.low;
-    };
-    petImg.src = frame;
+    setPetFrame(petImg, frame, {
+        defer: petImg.getAttribute('src') === PET_PLACEHOLDER_SRC
+    });
     petMsg.innerText = message;
 }
 
@@ -415,11 +522,7 @@ export function showEatingAnimation() {
     const previousSrc = petImg.src;
     const previousMsg = petMsg.innerText;
 
-    petImg.onerror = () => {
-        petImg.onerror = null;
-        petImg.src = PET_FRAMES.low;
-    };
-    petImg.src = PET_FRAMES.eating;
+    setPetFrame(petImg, PET_FRAMES.eating);
     petMsg.innerText = t.petEatMsg || 'Nom nom...';
 
     petTimeout = setTimeout(() => {

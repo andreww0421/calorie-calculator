@@ -1,22 +1,17 @@
-const CACHE_NAME = 'woof-cal-v2';
+const CACHE_NAME = 'woof-cal-v3';
 const APP_SHELL = [
   './',
   './index.html',
   './style.css',
   './manifest.json',
-  './calorie_icon.png',
+  './favicon.svg',
+  './pet_placeholder.svg',
   './js/app.js',
   './js/api.js',
   './js/config.js',
   './js/data.js',
   './js/ui.js',
-  './js/utils.js',
-  './dog_animation/dog_idle.gif',
-  './dog_animation/dog_walk.gif',
-  './dog_animation/dog_sad.gif',
-  './dog_animation/dog_happy.gif',
-  './dog_animation/dog_fat.gif',
-  './dog_animation/dog_eat.gif'
+  './js/utils.js'
 ];
 
 self.addEventListener('install', event => {

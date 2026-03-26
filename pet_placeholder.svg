@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="petBg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#f2fff2"/>
+      <stop offset="100%" stop-color="#d9f7de"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="28" fill="url(#petBg)"/>
+  <circle cx="42" cy="33" r="12" fill="#70cf7e"/>
+  <circle cx="78" cy="33" r="12" fill="#70cf7e"/>
+  <circle cx="30" cy="56" r="11" fill="#70cf7e"/>
+  <circle cx="90" cy="56" r="11" fill="#70cf7e"/>
+  <path fill="#33a95d" d="M60 41c-14.9 0-27 11.4-27 25.4 0 10.8 8.6 19.2 27 19.2s27-8.4 27-19.2C87 52.4 74.9 41 60 41zm-10.6 18.2a4.4 4.4 0 1 1 0-8.8 4.4 4.4 0 0 1 0 8.8zm21.2 0a4.4 4.4 0 1 1 0-8.8 4.4 4.4 0 0 1 0 8.8zm-10.3 6.6c5.6 0 9.9 3.2 11.5 7.8H48.8c1.6-4.6 5.9-7.8 11.5-7.8z"/>
+</svg>

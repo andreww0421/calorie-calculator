@@ -22,10 +22,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="apple-touch-icon" href="calorie_icon.png">
-    <link rel="icon" type="image/png" href="calorie_icon.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .manual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .manual-grid input { width: 100%; font-size: 14px; }
@@ -70,7 +69,17 @@
     <!-- ==================== DAILY VIEW ==================== -->
     <div id="view-daily" class="view-section active-view">
         <div class="pet-card" id="pet-section">
-            <img id="pet-img" class="pet-image" src="dog_animation/dog_idle.gif" alt="Pet">
+            <img
+                id="pet-img"
+                class="pet-image"
+                src="pet_placeholder.svg"
+                alt="Pet companion"
+                width="120"
+                height="120"
+                decoding="async"
+                fetchpriority="low"
+                data-pet-ready="false"
+            >
             <div id="pet-msg" class="pet-message">汪！今天想吃什麼呢？</div>
         </div>
 

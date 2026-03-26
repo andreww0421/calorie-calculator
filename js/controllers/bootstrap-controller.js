@@ -21,8 +21,7 @@ import {
     setLang,
     setTheme,
     toggleTheme,
-    updateMealUI,
-    initCharts
+    updateMealUI
 } from '../ui.js';
 import { registerGlobalDiagnostics } from '../diagnostics.js';
 import { registerAppServiceWorker, reloadApp, clickFileInput } from '../platform.js';
@@ -37,6 +36,31 @@ async function registerServiceWorker() {
     } catch (error) {
         reportControllerError('Service Worker Register Error', error);
     }
+}
+
+function scheduleServiceWorkerRegistration() {
+    const runRegistration = () => {
+        void registerServiceWorker();
+    };
+
+    if (typeof window === 'undefined') {
+        runRegistration();
+        return;
+    }
+
+    if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(runRegistration, { timeout: 2500 });
+        return;
+    }
+
+    if (document.readyState === 'complete') {
+        setTimeout(runRegistration, 400);
+        return;
+    }
+
+    window.addEventListener('load', () => {
+        setTimeout(runRegistration, 400);
+    }, { once: true });
 }
 
 export function setupEventListeners() {
@@ -179,12 +203,6 @@ export function bootstrapApp() {
     }
 
     try {
-        initCharts();
-    } catch (error) {
-        reportControllerError('Init Charts Error', error);
-    }
-
-    try {
         renderListAndStats();
     } catch (error) {
         reportControllerError('Render Stats Error', error);
@@ -196,9 +214,5 @@ export function bootstrapApp() {
         reportControllerError('Usage Limit UI Error', error);
     }
 
-    try {
-        registerServiceWorker();
-    } catch (error) {
-        reportControllerError('Service Worker Error', error);
-    }
+    scheduleServiceWorkerRegistration();
 }
