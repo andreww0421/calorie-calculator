@@ -5,6 +5,7 @@ import {
     setTempAIResultSaved
 } from '../data.js';
 import { formatAIRequestError } from '../analysis-errors.js';
+import { normalizeAIAnalysisResult } from '../domain/ai-analysis-domain.js';
 import { createButton, createElement, clearElement } from './dom-ui.js';
 import { getTexts, showToast } from './shared-ui.js';
 import { createNutritionGrid, createScoreBadge } from './modal-content-ui.js';
@@ -163,21 +164,25 @@ export async function recalculateAI() {
     try {
         const result = await recalculateFromItems(items);
         if (result) {
+            const normalized = normalizeAIAnalysisResult(result, {
+                fallbackName: tempAIResult.name,
+                fallbackItems: items
+            });
             setTempAIResult({
-                name: result.foodName || tempAIResult.name,
+                name: normalized.foodName,
                 nutri: {
-                    calories: Number(result.calories) || 0,
-                    protein: Number(result.protein) || 0,
-                    fat: Number(result.fat) || 0,
-                    carbohydrate: Number(result.carbohydrate) || 0,
-                    sugar: Number(result.sugar) || 0,
-                    sodium: Number(result.sodium) || 0,
-                    saturatedFat: Number(result.saturatedFat) || 0,
-                    transFat: Number(result.transFat) || 0,
-                    fiber: Number(result.fiber) || 0
+                    calories: normalized.calories,
+                    protein: normalized.protein,
+                    fat: normalized.fat,
+                    carbohydrate: normalized.carbohydrate,
+                    sugar: normalized.sugar,
+                    sodium: normalized.sodium,
+                    saturatedFat: normalized.saturatedFat,
+                    transFat: normalized.transFat,
+                    fiber: normalized.fiber
                 },
-                items: Array.isArray(result.items) ? result.items : items,
-                healthScore: Number(result.healthScore) || 0
+                items: normalized.items.length > 0 ? normalized.items : items,
+                healthScore: normalized.healthScore
             });
             setTempAIResultSaved(false);
         }

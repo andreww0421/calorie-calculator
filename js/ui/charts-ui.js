@@ -9,7 +9,8 @@ import {
 import { createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions } from './shared-ui.js';
 import { showDailyNutritionSummary, showDetailModal } from './detail-ui.js';
-import { formatNutritionInline, getDisplayDateLabel, getExtraUiText } from './locale-ui.js';
+import { buildCoachContent, formatNutritionInline, getDisplayDateLabel, getExtraUiText } from './locale-ui.js';
+import { buildDailyCoaching, summarizeNutrition } from '../domain/nutrition-domain.js';
 
 let macroChart = null;
 let weeklyChart = null;
@@ -117,6 +118,48 @@ function createEmptyMealRow(title, body) {
     item.className = 'meal-empty-row';
     item.appendChild(wrapper);
     return item;
+}
+
+function renderCoachCard(total, target, calorieHistory) {
+    const card = document.getElementById('daily-coach-card');
+    if (!card) return;
+
+    const coach = buildDailyCoaching({
+        total,
+        targetCalories: target,
+        calorieHistory
+    });
+    const content = buildCoachContent(coach, curLang);
+    const headlineEl = document.getElementById('coach-headline');
+    const summaryEl = document.getElementById('coach-summary');
+    const tipsEl = document.getElementById('coach-tips');
+    const weeklyTitleEl = document.getElementById('coach-weekly-title');
+    const statsEl = document.getElementById('coach-weekly-stats');
+    const coachTitleEl = document.getElementById('txt-coach-title');
+
+    if (coachTitleEl) coachTitleEl.innerText = content.cardTitle;
+    if (headlineEl) headlineEl.innerText = content.headline;
+    if (summaryEl) summaryEl.innerText = content.summary;
+    if (weeklyTitleEl) weeklyTitleEl.innerText = content.weeklyTitle;
+
+    if (tipsEl) {
+        clearElement(tipsEl);
+        content.tips.forEach((tip) => {
+            tipsEl.appendChild(createElement('li', { text: tip }));
+        });
+    }
+
+    if (statsEl) {
+        clearElement(statsEl);
+        content.weeklyStats.forEach((stat) => {
+            statsEl.appendChild(createElement('div', {
+                className: 'coach-stat-chip',
+                text: stat
+            }));
+        });
+    }
+
+    card.dataset.coachStatus = coach.status;
 }
 
 export function switchView(targetId) {
@@ -327,7 +370,10 @@ export function updateChartTheme() {
 
 export function updatePetStatus(currentCal) {
     const target = Number(targetCalories) || 2000;
-    const ratio = Math.min(currentCal / target, 1.4);
+    const totalCalories = typeof currentCal === 'object'
+        ? Number(currentCal?.cal) || 0
+        : Number(currentCal) || 0;
+    const ratio = Math.min(totalCalories / target, 1.4);
     const petImg = document.getElementById('pet-img');
     const petMsg = document.getElementById('pet-msg');
     const t = getTexts();
@@ -386,7 +432,24 @@ export function petInteraction() {
     const petMsg = document.getElementById('pet-msg');
     if (!petMsg) return;
     const t = getTexts();
+    const displayedTarget = Number(document.getElementById('target-cal-display')?.innerText);
+    const target = Number.isFinite(displayedTarget) && displayedTarget > 0
+        ? displayedTarget
+        : (Number(targetCalories) || 0);
+    const total = {
+        cal: Number(document.getElementById('total-cal-display')?.innerText) || 0,
+        pro: Number(document.getElementById('sum-protein')?.innerText) || 0,
+        fiber: Number(document.getElementById('sum-fiber')?.innerText) || 0,
+        sod: Number(document.getElementById('sum-sodium')?.innerText) || 0
+    };
+    const coach = buildDailyCoaching({
+        total,
+        targetCalories: target,
+        calorieHistory: getCalorieHistory(7)
+    });
+    const coachTips = buildCoachContent(coach, curLang).tips;
     const messages = [
+        ...coachTips,
         t.petInteractMsg1,
         t.petInteractMsg2,
         t.petInteractMsg3,
@@ -479,24 +542,10 @@ export function renderListAndStats() {
         clearElement(document.getElementById(`list-${type}`));
     });
 
-    const total = { cal: 0, pro: 0, fat: 0, carb: 0, sugar: 0, sod: 0, sat: 0, trans: 0, fiber: 0 };
-    const mealTotals = { breakfast: 0, lunch: 0, dinner: 0, snack: 0 };
+    const { totals: total, mealTotals } = summarizeNutrition(foodItems);
 
     foodItems.forEach((item, index) => {
         const n = item.nutri || {};
-        total.cal += Number(n.calories) || 0;
-        total.pro += Number(n.protein) || 0;
-        total.fat += Number(n.fat) || 0;
-        total.carb += Number(n.carbohydrate) || 0;
-        total.sugar += Number(n.sugar) || 0;
-        total.sod += Number(n.sodium) || 0;
-        total.sat += Number(n.saturatedFat) || 0;
-        total.trans += Number(n.transFat) || 0;
-        total.fiber += Number(n.fiber) || 0;
-
-        if (mealTotals[item.type] !== undefined) {
-            mealTotals[item.type] += Number(n.calories) || 0;
-        }
 
         const info = createElement('div', {
             className: 'food-info',
@@ -565,8 +614,14 @@ export function renderListAndStats() {
     const emptyState = document.getElementById('daily-empty-state');
     if (emptyState) emptyState.hidden = foodItems.length > 0;
 
+    const displayedTarget = Number(document.getElementById('target-cal-display')?.innerText);
+    const target = Number.isFinite(displayedTarget) && displayedTarget > 0
+        ? displayedTarget
+        : (Number(targetCalories) || 0);
+    renderCoachCard(total, target, getCalorieHistory(7));
+
     updateCharts(total);
-    updatePetStatus(total.cal);
+    updatePetStatus(total);
     updateDailySummaryCard(total, waterTarget);
 }
 

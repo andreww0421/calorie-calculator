@@ -15,3 +15,10 @@ Cloudflare Worker source for the AI nutrition proxy lives here.
 ## Optional vars
 
 - `ALLOWED_ORIGIN`
+
+## Current behavior
+
+- verifies Turnstile before forwarding AI requests
+- applies a short IP cooldown
+- maps common Gemini quota / access / payload errors into stable app-facing error codes
+- rejects successful upstream responses that do not contain a valid candidate text payload

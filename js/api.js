@@ -5,6 +5,7 @@ import {
     refreshTurnstile,
     resetTurnstile
 } from './platform.js';
+import { extractAnalysisFromGeminiPayload } from './domain/ai-analysis-domain.js';
 
 async function postToWorker(payload, logLabel) {
     const turnstileToken = getTurnstileToken();
@@ -48,27 +49,20 @@ async function postToWorker(payload, logLabel) {
     }
 }
 
-function parseGeminiCandidate(data) {
-    if (!data.candidates || data.candidates.length === 0) throw new Error("AI returned no candidates");
-    let text = data.candidates[0].content.parts[0].text;
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(text);
-}
-
 export async function callCloudflareAI(base64, userDesc, mimeType = 'image/jpeg') {
     const data = await postToWorker({
         base64,
         userDesc: userDesc || "",
         mimeType
     }, "Sending AI request...");
-    return parseGeminiCandidate(data);
+    return extractAnalysisFromGeminiPayload(data);
 }
 
 export async function callCloudflareAIText(userText) {
     const data = await postToWorker({
         userText: userText || ""
     }, "Sending Text-only AI request...");
-    return parseGeminiCandidate(data);
+    return extractAnalysisFromGeminiPayload(data);
 }
 
 export async function recalculateFromItems(items) {

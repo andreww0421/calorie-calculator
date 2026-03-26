@@ -6,6 +6,7 @@ import {
     setTempAIResultSaved
 } from '../data.js';
 import { callCloudflareAI, callCloudflareAIText } from '../api.js';
+import { normalizeAIAnalysisResult } from '../domain/ai-analysis-domain.js';
 import { DAILY_LIMIT, isDevMode } from '../env.js';
 import {
     clearPreviewImage,
@@ -214,22 +215,23 @@ export function startAnalysis() {
     let isSoftError = false;
     const handleResult = (result) => {
         if (!result) return;
+        const normalized = normalizeAIAnalysisResult(result);
         incrementUsageCount();
         setTempAIResult({
-            name: result.foodName,
+            name: normalized.foodName,
             nutri: {
-                calories: Number(result.calories) || 0,
-                protein: Number(result.protein) || 0,
-                fat: Number(result.fat) || 0,
-                carbohydrate: Number(result.carbohydrate) || 0,
-                sugar: Number(result.sugar) || 0,
-                sodium: Number(result.sodium) || 0,
-                saturatedFat: Number(result.saturatedFat) || 0,
-                transFat: Number(result.transFat) || 0,
-                fiber: Number(result.fiber) || 0
+                calories: normalized.calories,
+                protein: normalized.protein,
+                fat: normalized.fat,
+                carbohydrate: normalized.carbohydrate,
+                sugar: normalized.sugar,
+                sodium: normalized.sodium,
+                saturatedFat: normalized.saturatedFat,
+                transFat: normalized.transFat,
+                fiber: normalized.fiber
             },
-            items: Array.isArray(result.items) ? result.items : [],
-            healthScore: Number(result.healthScore) || 0
+            items: normalized.items,
+            healthScore: normalized.healthScore
         });
         setTempAIResultSaved(false);
         showModal();

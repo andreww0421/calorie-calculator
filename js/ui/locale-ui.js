@@ -178,3 +178,233 @@ export function formatNutritionInline(nutri = {}, t = {}) {
 
     return `${t.cal || 'Calories'}: ${calories} | ${t.pro || 'Protein'}: ${protein}g | ${t.fat || 'Fat'}: ${fat}g | ${t.carb || 'Carb'}: ${carbohydrate}g`;
 }
+
+const COACH_COPY = {
+    'zh-TW': {
+        cardTitle: '今日教練建議',
+        weeklyTitle: '近 7 天節奏',
+        headlines: {
+            start_logging: '從第一餐開始建立今天的節奏',
+            over_target: '今天的熱量已經偏高',
+            near_goal: '今天很接近目標區間',
+            protein_gap: '蛋白質還有補強空間',
+            fiber_gap: '纖維可以再補一些',
+            sodium_high: '鈉含量今天偏高',
+            steady: '今天的進度很穩'
+        },
+        summaries: {
+            start_logging: '先記下第一餐，儀表板和 AI 建議就會開始為你工作。',
+            over_target: (coach) => `目前比目標多 ${coach.overCalories} kcal，後續餐次建議清爽一點。`,
+            near_goal: (coach) => `距離目標只差 ${coach.remainingCalories} kcal，晚點心份量可以保守。`,
+            protein_gap: (coach) => `距離今日蛋白質建議大約還差 ${coach.proteinGap}g。`,
+            fiber_gap: (coach) => `今天纖維距離建議值約還差 ${coach.fiberGap}g。`,
+            sodium_high: '建議下一餐避開重鹹或加工食品，讓整天更平衡。',
+            steady: '目前熱量與營養節奏都還不錯，持續記錄就好。'
+        },
+        tips: {
+            use_ai: '先用 AI 拍照記錄最快。',
+            log_first_meal: '如果趕時間，也可以手動輸入基本熱量與蛋白質。',
+            protein_boost: '下一餐可優先補雞蛋、豆腐、雞胸或優格。',
+            fiber_boost: '加一份蔬菜、水果或全穀類，纖維會更完整。',
+            watch_sodium: '接下來多喝水，並把醬料與湯品減量。',
+            portion_reset: '下一餐主食或點心減半，通常就能拉回區間。',
+            keep_momentum: '保持現在的紀錄節奏，晚餐前再看一次摘要卡。'
+        },
+        weeklyAverage: (value) => `平均 ${value} kcal`,
+        weeklyDays: (days) => `${days} 天有完成記錄`,
+        weeklyBest: (day, cal) => `${day} 最高 ${cal} kcal`
+    },
+    'zh-CN': {
+        cardTitle: '今日教练建议',
+        weeklyTitle: '近 7 天节奏',
+        headlines: {
+            start_logging: '从第一餐开始建立今天的节奏',
+            over_target: '今天的热量已经偏高',
+            near_goal: '今天很接近目标区间',
+            protein_gap: '蛋白质还有补强空间',
+            fiber_gap: '纤维可以再补一些',
+            sodium_high: '钠含量今天偏高',
+            steady: '今天的进度很稳'
+        },
+        summaries: {
+            start_logging: '先记下第一餐，仪表板和 AI 建议就会开始发挥作用。',
+            over_target: (coach) => `目前比目标多 ${coach.overCalories} kcal，后续餐次建议清爽一点。`,
+            near_goal: (coach) => `距离目标只差 ${coach.remainingCalories} kcal，之后加餐可以保守一点。`,
+            protein_gap: (coach) => `距离今日蛋白质建议大约还差 ${coach.proteinGap}g。`,
+            fiber_gap: (coach) => `今天纤维距离建议值约还差 ${coach.fiberGap}g。`,
+            sodium_high: '建议下一餐减少重口味和加工食品，让整天更平衡。',
+            steady: '当前热量和营养节奏都不错，继续保持记录。'
+        },
+        tips: {
+            use_ai: '先用 AI 拍照记录会最快。',
+            log_first_meal: '赶时间时，也可以先手动输入热量和蛋白质。',
+            protein_boost: '下一餐可优先补鸡蛋、豆腐、鸡胸或酸奶。',
+            fiber_boost: '加一份蔬菜、水果或全谷类，纤维会更完整。',
+            watch_sodium: '接下来多喝水，并减少酱料和汤汁。',
+            portion_reset: '下一餐主食或零食减半，通常就能拉回区间。',
+            keep_momentum: '保持现在的记录节奏，晚餐前再看一次摘要卡。'
+        },
+        weeklyAverage: (value) => `平均 ${value} kcal`,
+        weeklyDays: (days) => `${days} 天完成记录`,
+        weeklyBest: (day, cal) => `${day} 最高 ${cal} kcal`
+    },
+    en: {
+        cardTitle: 'Daily Coach',
+        weeklyTitle: 'Last 7 Days',
+        headlines: {
+            start_logging: 'Build today with the first meal',
+            over_target: 'Calories are already trending high',
+            near_goal: 'You are close to your target zone',
+            protein_gap: 'Protein still needs a boost',
+            fiber_gap: 'Fiber can use a lift',
+            sodium_high: 'Sodium is running high today',
+            steady: 'Today is moving in a solid direction'
+        },
+        summaries: {
+            start_logging: 'Log the first meal and the dashboard can start coaching the rest of your day.',
+            over_target: (coach) => `You are about ${coach.overCalories} kcal over target, so the next meal should stay lighter.`,
+            near_goal: (coach) => `Only about ${coach.remainingCalories} kcal remain, so snacks should stay modest.`,
+            protein_gap: (coach) => `You are still about ${coach.proteinGap}g short of your protein target.`,
+            fiber_gap: (coach) => `You are still about ${coach.fiberGap}g short of a strong fiber day.`,
+            sodium_high: 'A lighter, less salty next meal will help rebalance the day.',
+            steady: 'Calories and nutrients look fairly steady so far. Keep logging.'
+        },
+        tips: {
+            use_ai: 'Use AI photo logging if you want the fastest start.',
+            log_first_meal: 'If you are busy, add a quick manual entry with calories and protein first.',
+            protein_boost: 'Try eggs, tofu, chicken breast, Greek yogurt, or milk next.',
+            fiber_boost: 'Add vegetables, fruit, beans, or whole grains to lift fiber.',
+            watch_sodium: 'Drink more water and go lighter on soup, sauce, and packaged foods.',
+            portion_reset: 'Cut the next carb or snack portion in half to recover the day.',
+            keep_momentum: 'Stay with the current pace and check the summary card again before dinner.'
+        },
+        weeklyAverage: (value) => `${value} kcal avg`,
+        weeklyDays: (days) => `${days} logged days`,
+        weeklyBest: (day, cal) => `${day} peak ${cal} kcal`
+    },
+    ja: {
+        cardTitle: '今日のコーチメモ',
+        weeklyTitle: '直近7日',
+        headlines: {
+            start_logging: 'まずは最初の食事から始めましょう',
+            over_target: '今日はカロリーが少し高めです',
+            near_goal: '目標レンジにかなり近いです',
+            protein_gap: 'たんぱく質をもう少し補えます',
+            fiber_gap: '食物繊維を少し足したいです',
+            sodium_high: '塩分が高めです',
+            steady: '今日は安定した流れです'
+        },
+        summaries: {
+            start_logging: '最初の食事を記録すると、今日のガイドが動き始めます。',
+            over_target: (coach) => `目標より約 ${coach.overCalories} kcal 多いので、次の食事は軽めがおすすめです。`,
+            near_goal: (coach) => `残りは約 ${coach.remainingCalories} kcal なので、間食は控えめで十分です。`,
+            protein_gap: (coach) => `今日のたんぱく質目安まで約 ${coach.proteinGap}g 足りません。`,
+            fiber_gap: (coach) => `食物繊維は目安まで約 ${coach.fiberGap}g 足りません。`,
+            sodium_high: '次の食事は塩分の少ないものを選ぶと整いやすいです。',
+            steady: '今のところカロリーと栄養の流れは良好です。'
+        },
+        tips: {
+            use_ai: '最初はAI写真記録がいちばん速いです。',
+            log_first_meal: '急いでいる時はカロリーとたんぱく質だけ先に入力してもOKです。',
+            protein_boost: '次は卵、豆腐、鶏むね、ヨーグルトを優先すると補いやすいです。',
+            fiber_boost: '野菜、果物、豆、全粒穀物を足すと繊維が伸びます。',
+            watch_sodium: '水分を増やして、汁物やソースは少し控えめにしましょう。',
+            portion_reset: '次の主食か間食を半分にすると戻しやすいです。',
+            keep_momentum: 'このペースを維持して、夕食前にもう一度まとめを見ましょう。'
+        },
+        weeklyAverage: (value) => `平均 ${value} kcal`,
+        weeklyDays: (days) => `${days} 日記録`,
+        weeklyBest: (day, cal) => `${day} 最高 ${cal} kcal`
+    },
+    ko: {
+        cardTitle: '오늘의 코치 메모',
+        weeklyTitle: '최근 7일',
+        headlines: {
+            start_logging: '첫 끼부터 오늘 흐름을 시작해보세요',
+            over_target: '오늘은 열량이 조금 높은 편이에요',
+            near_goal: '목표 구간에 꽤 가까워요',
+            protein_gap: '단백질을 조금 더 채울 수 있어요',
+            fiber_gap: '식이섬유를 더하면 좋아요',
+            sodium_high: '나트륨이 높은 편이에요',
+            steady: '오늘 흐름이 꽤 안정적이에요'
+        },
+        summaries: {
+            start_logging: '첫 식사를 기록하면 오늘의 대시보드가 제대로 움직이기 시작해요.',
+            over_target: (coach) => `목표보다 약 ${coach.overCalories} kcal 높아서 다음 식사는 가볍게 가는 편이 좋아요.`,
+            near_goal: (coach) => `남은 열량이 약 ${coach.remainingCalories} kcal 정도라 간식은 가볍게 충분해요.`,
+            protein_gap: (coach) => `단백질 목표까지 약 ${coach.proteinGap}g 정도가 더 필요해요.`,
+            fiber_gap: (coach) => `식이섬유는 권장량까지 약 ${coach.fiberGap}g 정도 더 필요해요.`,
+            sodium_high: '다음 끼니는 국물과 소스를 줄이면 균형이 좋아져요.',
+            steady: '현재 칼로리와 영양 흐름이 꽤 괜찮아요.'
+        },
+        tips: {
+            use_ai: '가장 빠른 시작은 AI 사진 기록이에요.',
+            log_first_meal: '바쁘면 칼로리와 단백질만 먼저 수동 입력해도 괜찮아요.',
+            protein_boost: '다음 식사는 달걀, 두부, 닭가슴살, 그릭요거트를 우선해보세요.',
+            fiber_boost: '채소, 과일, 콩류, 통곡물을 더하면 섬유질이 올라가요.',
+            watch_sodium: '물을 더 마시고 국물, 소스, 가공식품을 조금 줄여보세요.',
+            portion_reset: '다음 탄수화물이나 간식 양을 절반 정도 줄이면 흐름이 돌아와요.',
+            keep_momentum: '지금 페이스를 유지하고 저녁 전에 요약 카드를 다시 확인해보세요.'
+        },
+        weeklyAverage: (value) => `평균 ${value} kcal`,
+        weeklyDays: (days) => `${days}일 기록`,
+        weeklyBest: (day, cal) => `${day} 최고 ${cal} kcal`
+    },
+    ar: {
+        cardTitle: 'ملاحظات اليوم',
+        weeklyTitle: 'آخر 7 أيام',
+        headlines: {
+            start_logging: 'ابدأ اليوم بتسجيل أول وجبة',
+            over_target: 'السعرات اليوم أعلى من المطلوب',
+            near_goal: 'أنت قريب من نطاق الهدف',
+            protein_gap: 'البروتين ما زال يحتاج دعماً',
+            fiber_gap: 'الألياف تحتاج دفعة إضافية',
+            sodium_high: 'الصوديوم مرتفع اليوم',
+            steady: 'إيقاع اليوم جيد حتى الآن'
+        },
+        summaries: {
+            start_logging: 'بمجرد تسجيل أول وجبة سيبدأ التطبيق بإعطائك صورة أوضح لباقي اليوم.',
+            over_target: (coach) => `أنت أعلى من الهدف بحوالي ${coach.overCalories} kcal، لذلك من الأفضل أن تكون الوجبة التالية أخف.`,
+            near_goal: (coach) => `المتبقي حوالي ${coach.remainingCalories} kcal فقط، لذلك يكفي سناك خفيف إذا احتجته.`,
+            protein_gap: (coach) => `ما زال ينقصك حوالي ${coach.proteinGap}g للوصول إلى هدف البروتين اليومي.`,
+            fiber_gap: (coach) => `ما زال ينقصك حوالي ${coach.fiberGap}g للوصول إلى يوم غني بالألياف.`,
+            sodium_high: 'اختر وجبة أقل ملوحة لاحقاً حتى يعود التوازن لباقي اليوم.',
+            steady: 'السعرات والعناصر الغذائية تسير بشكل متوازن حتى الآن.'
+        },
+        tips: {
+            use_ai: 'ابدأ بتسجيل صورة بالذكاء الاصطناعي إذا أردت أسرع طريقة.',
+            log_first_meal: 'إذا كنت مستعجلاً، أدخل السعرات والبروتين يدوياً أولاً.',
+            protein_boost: 'في الوجبة القادمة جرّب البيض أو الدجاج أو اللبن أو التوفو.',
+            fiber_boost: 'أضف خضاراً أو فاكهة أو بقوليات أو حبوباً كاملة لرفع الألياف.',
+            watch_sodium: 'اشرب ماء أكثر وخفف من الشوربة والصلصات والأطعمة المصنعة.',
+            portion_reset: 'تقليل النشويات أو السناك التالي إلى النصف يساعدك على العودة للمسار.',
+            keep_momentum: 'حافظ على الإيقاع الحالي وراجع البطاقة مرة أخرى قبل العشاء.'
+        },
+        weeklyAverage: (value) => `المتوسط ${value} kcal`,
+        weeklyDays: (days) => `${days} أيام مسجلة`,
+        weeklyBest: (day, cal) => `${day} الأعلى ${cal} kcal`
+    }
+};
+
+export function buildCoachContent(coach, lang = curLang) {
+    const copy = COACH_COPY[lang] || COACH_COPY.en;
+    const headline = copy.headlines[coach?.status] || copy.headlines.steady;
+    const summaryTemplate = copy.summaries[coach?.status] || copy.summaries.steady;
+    const summary = typeof summaryTemplate === 'function' ? summaryTemplate(coach) : summaryTemplate;
+    const tips = (coach?.tipKeys || [])
+        .map((key) => copy.tips[key])
+        .filter(Boolean);
+
+    return {
+        cardTitle: copy.cardTitle,
+        weeklyTitle: copy.weeklyTitle,
+        headline,
+        summary,
+        tips,
+        weeklyStats: [
+            copy.weeklyAverage(coach?.weekly?.averageCalories || 0),
+            copy.weeklyDays(coach?.weekly?.loggedDays || 0),
+            copy.weeklyBest(coach?.weekly?.bestDayLabel || '--', coach?.weekly?.bestDayCalories || 0)
+        ]
+    };
+}

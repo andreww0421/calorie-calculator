@@ -78,6 +78,17 @@ export function buildAIErrorFeedback(error, translations = {}) {
         };
     }
 
+    if (
+        combinedErrorText.includes('ai_invalid_payload') ||
+        combinedErrorText.includes('ai_invalid_response')
+    ) {
+        return {
+            isSoftError: false,
+            type: 'error',
+            message: translations.aiInvalidResponse || 'AI returned an incomplete nutrition result. Please try again with a clearer photo or description.'
+        };
+    }
+
     return {
         isSoftError: false,
         type: 'error',
@@ -95,6 +106,9 @@ export function formatAIRequestError(error, translations = {}) {
     const parsed = parseStructuredAIError(rawMessage);
     const payload = parsed?.error || parsed;
     if (payload?.message) return payload.message;
+    if (/AI_INVALID_(PAYLOAD|RESPONSE)/.test(rawMessage)) {
+        return translations.aiInvalidResponse || 'AI returned an incomplete nutrition result. Please try again with a clearer photo or description.';
+    }
 
     return `${translations.alertAiFail || 'AI analysis failed: '}${rawMessage}`;
 }

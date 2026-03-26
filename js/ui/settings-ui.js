@@ -13,56 +13,32 @@ import { getTexts, uiActions, toggleFabMenu } from './shared-ui.js';
 import { renderListAndStats, updateChartTheme, updateMacroChartLanguage, updatePetStatus } from './charts-ui.js';
 import { confirmFavoriteMeal } from './favorites-ui.js';
 import { getDisplayDateLabel, getExtraUiText } from './locale-ui.js';
+import { getMealPlan } from '../domain/nutrition-domain.js';
 
 export function updateMealUI() {
     const t = getTexts();
     const m = t.meals || {};
-    const configs = {
-        '4': {
-            sections: ['breakfast', 'lunch', 'dinner', 'snack'],
-            titles: { breakfast: m.breakfast, lunch: m.lunch, dinner: m.dinner, snack: m.snack },
-            ratios: { breakfast: 0.25, lunch: 0.35, dinner: 0.30, snack: 0.10 }
-        },
-        '3': {
-            sections: ['breakfast', 'lunch', 'dinner'],
-            titles: { breakfast: m.breakfast, lunch: m.lunch, dinner: m.dinner },
-            ratios: { breakfast: 0.30, lunch: 0.40, dinner: 0.30 }
-        },
-        '2': {
-            sections: ['lunch', 'dinner'],
-            titles: { lunch: m.meal1, dinner: m.meal2 },
-            ratios: { lunch: 0.50, dinner: 0.50 }
-        },
-        '1': {
-            sections: ['dinner'],
-            titles: { dinner: m.mealBig },
-            ratios: { dinner: 1.0 }
-        }
-    };
-
-    const config = configs[currentMealMode];
+    const mealPlan = getMealPlan(currentMealMode, m, targetCalories);
     const container = document.getElementById('meal-sections-container');
     const manualSelect = document.getElementById('manual-type');
     const modalBtns = document.getElementById('modal-meal-buttons');
     const favoriteMealBtns = document.getElementById('favorite-meal-buttons');
-    if (!container || !manualSelect || !modalBtns || !favoriteMealBtns || !config) return;
+    if (!container || !manualSelect || !modalBtns || !favoriteMealBtns || mealPlan.length === 0) return;
 
     clearElement(container);
     clearElement(manualSelect);
     clearElement(modalBtns);
     clearElement(favoriteMealBtns);
 
-    config.sections.forEach((type) => {
-        const suggested = targetCalories > 0 ? Math.round(targetCalories * config.ratios[type]) : 0;
-
+    mealPlan.forEach(({ type, title, suggestedCalories }) => {
         const titleWrap = createElement('div');
         titleWrap.appendChild(createElement('span', {
             className: 'meal-title',
-            text: config.titles[type]
+            text: title
         }));
         titleWrap.appendChild(createElement('span', {
             className: 'meal-goal',
-            text: `(${t.suggest}: ${suggested})`
+            text: `(${t.suggest}: ${suggestedCalories})`
         }));
 
         const header = createElement('div', { className: 'meal-header' }, [
@@ -81,15 +57,15 @@ export function updateMealUI() {
         container.appendChild(section);
 
         manualSelect.appendChild(createElement('option', {
-            text: config.titles[type],
+            text: title,
             attrs: { value: type }
         }));
 
-        modalBtns.appendChild(createButton(config.titles[type], () => {
+        modalBtns.appendChild(createButton(title, () => {
             uiActions.confirmAddFood?.(type);
         }, { className: `meal-btn ${type}` }));
 
-        favoriteMealBtns.appendChild(createButton(config.titles[type], () => {
+        favoriteMealBtns.appendChild(createButton(title, () => {
             confirmFavoriteMeal(type);
         }, { className: `meal-btn ${type}` }));
     });

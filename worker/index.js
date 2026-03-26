@@ -81,6 +81,13 @@ function buildGeminiPayload(requestBody, systemPrompt) {
     throw new Error('Please provide image or text input.');
 }
 
+function hasCandidateText(data) {
+    return Boolean(
+        data?.candidates?.[0]?.content?.parts?.[0]?.text &&
+        String(data.candidates[0].content.parts[0].text).trim()
+    );
+}
+
 function mapGeminiError(status, googleData, rawText) {
     const googleError = googleData?.error || {};
     const details = Array.isArray(googleError.details) ? googleError.details : [];
@@ -251,6 +258,15 @@ export default {
             if (!googleResponse.ok) {
                 const mapped = mapGeminiError(googleResponse.status, googleData, rawText);
                 return jsonResponse(env, mapped.body, mapped.status, mapped.headers);
+            }
+
+            if (!hasCandidateText(googleData)) {
+                return jsonResponse(env, {
+                    error: {
+                        code: 'AI_INVALID_RESPONSE',
+                        message: 'AI provider returned an invalid response payload.'
+                    }
+                }, 502);
             }
 
             return jsonResponse(env, googleData, 200);

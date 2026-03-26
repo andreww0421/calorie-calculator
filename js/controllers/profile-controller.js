@@ -13,6 +13,7 @@ import { reloadApp } from '../platform.js';
 import { renderListAndStats, showToast, updateMealUI } from '../ui.js';
 import { getTranslations, readProfileForm, reportControllerError } from './controller-shared.js';
 import { getDisplayDateLabel } from '../ui/locale-ui.js';
+import { calculateMacroGoals } from '../domain/nutrition-domain.js';
 
 function renderMacroGoals(container, translations, goals) {
     if (!container) return;
@@ -85,11 +86,7 @@ export function calculateProfile(auto = false) {
     updateMealUI();
 
     renderMacroGoals(document.getElementById('macro-goals'), t, {
-        protein: Math.round((computedTarget * 0.2) / 4),
-        fat: Math.round((computedTarget * 0.3) / 9),
-        carb: Math.round((computedTarget * 0.5) / 4),
-        sugar: Math.round((computedTarget * 0.1) / 4),
-        saturatedFat: Math.round((computedTarget * 0.1) / 9)
+        ...calculateMacroGoals(computedTarget)
     });
 
     renderListAndStats();

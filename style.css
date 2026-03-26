@@ -98,6 +98,44 @@ body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); c
 .ai-guide-title { margin-top: 8px; font-size: 1.2em; font-weight: 700; color: var(--text-color); }
 .quick-start-copy,
 .ai-guide-copy { margin-top: 8px; line-height: 1.6; color: var(--text-color); opacity: 0.82; }
+.coach-card {
+    background:
+        radial-gradient(circle at top right, rgba(108, 92, 231, 0.10), transparent 30%),
+        linear-gradient(135deg, rgba(46, 204, 113, 0.10), rgba(116, 185, 255, 0.10));
+    border: 1px solid rgba(46, 204, 113, 0.14);
+}
+.coach-headline { margin-top: 8px; font-size: 1.18em; font-weight: 700; color: var(--text-color); }
+.coach-summary { margin-top: 8px; line-height: 1.6; color: var(--text-color); opacity: 0.84; }
+.coach-tip-list {
+    margin: 14px 0 0;
+    padding-left: 18px;
+    color: var(--text-color);
+}
+.coach-tip-list li + li { margin-top: 6px; }
+.coach-weekly-block {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(46, 204, 113, 0.12);
+}
+.coach-weekly-title {
+    font-size: 0.9em;
+    font-weight: 700;
+    color: var(--primary-dark);
+}
+.coach-weekly-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+.coach-stat-chip {
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.58);
+    border: 1px solid rgba(46, 204, 113, 0.14);
+    font-size: 0.86em;
+    color: var(--text-color);
+}
 .meal-empty-row { display: block !important; }
 .meal-empty-card {
     padding: 14px 0;
@@ -260,6 +298,11 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
 }
 
 [dir="rtl"] .ai-guide-list {
+    padding-right: 18px;
+    padding-left: 0;
+}
+
+[dir="rtl"] .coach-tip-list {
     padding-right: 18px;
     padding-left: 0;
 }

@@ -43,6 +43,25 @@ test('getExtraUiText exposes locale metadata and onboarding copy', async () => {
     assert.match(arabic.aiGuideTitle, /[\u0600-\u06FF]/);
 });
 
+test('buildCoachContent returns localized coach text', async () => {
+    const { buildCoachContent } = await loadLocaleModule();
+    const coach = buildCoachContent({
+        status: 'protein_gap',
+        proteinGap: 22,
+        tipKeys: ['protein_boost', 'fiber_boost'],
+        weekly: {
+            averageCalories: 1540,
+            loggedDays: 5,
+            bestDayLabel: '03-24',
+            bestDayCalories: 1820
+        }
+    }, 'en');
+
+    assert.match(coach.cardTitle, /Daily Coach/i);
+    assert.equal(coach.tips.length, 2);
+    assert.equal(coach.weeklyStats.length, 3);
+});
+
 test('getDisplayDateLabel localizes today and falls back when date is missing', async () => {
     const { getDisplayDateLabel } = await loadLocaleModule();
     const today = getLocalDateString();
