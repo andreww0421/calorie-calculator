@@ -5,6 +5,7 @@ import {
     importData,
     setTargetCalories,
     setCurrentMealMode,
+    setCurrentGoalType,
     loadWeightData,
     loadFoodData,
     setSelectedDate
@@ -12,17 +13,22 @@ import {
 import { reloadApp } from '../platform.js';
 import { renderListAndStats, showToast, updateMealUI } from '../ui.js';
 import { getTranslations, readProfileForm, reportControllerError } from './controller-shared.js';
-import { getDisplayDateLabel } from '../ui/locale-ui.js';
-import { calculateMacroGoals } from '../domain/nutrition-domain.js';
+import { getDisplayDateLabel, getGoalUiText, getGoalSummaryText } from '../ui/locale-ui.js';
+import { calculateNutritionTargets } from '../domain/nutrition-domain.js';
 
-function renderMacroGoals(container, translations, goals) {
+function renderMacroGoals(container, translations, goalUi, plan) {
     if (!container) return;
+    const goals = plan?.macroGoals || {};
     container.replaceChildren(
         (() => {
             const strong = document.createElement('strong');
             strong.textContent = translations.macroGoalTitle || 'Recommended macro targets';
             return strong;
         })(),
+        document.createElement('br'),
+        document.createTextNode(
+            `${goalUi.goalSummaryLabel || 'Goal'}: ${getGoalSummaryText(plan?.goalType || 'lose')} | ${goalUi.calorieTargetLabel || 'Calories'}: ${plan?.targetCalories || 0} kcal`
+        ),
         document.createElement('br'),
         document.createTextNode(
             `P ${translations.pro}: ${goals.protein}g | F ${translations.fat}: ${goals.fat}g | C ${translations.carb}: ${goals.carb}g`
@@ -58,7 +64,9 @@ export function calculateProfile(auto = false) {
     const act = parseFloat(document.getElementById('activity').value);
     const g = document.getElementById('gender').value;
     const mode = document.getElementById('meal-mode').value;
+    const goalType = document.getElementById('goal-type')?.value || 'lose';
     const t = getTranslations();
+    const goalUi = getGoalUiText();
 
     if (!h || !w || !a) {
         if (!auto) showToast(t.alertFill || 'Please fill in the required profile fields.', 'error');
@@ -69,15 +77,20 @@ export function calculateProfile(auto = false) {
         ? (10 * w + 6.25 * h - 5 * a + 5)
         : (10 * w + 6.25 * h - 5 * a - 161);
     const tdee = Math.round(bmr * act);
-    let computedTarget = Math.round(tdee - 500);
-    if (computedTarget < bmr) computedTarget = Math.round(bmr);
+    const nutritionPlan = calculateNutritionTargets({
+        weightKg: w,
+        tdee,
+        bmr,
+        goalType
+    });
 
-    setTargetCalories(computedTarget);
+    setTargetCalories(nutritionPlan.targetCalories);
     setCurrentMealMode(mode);
+    setCurrentGoalType(nutritionPlan.goalType);
 
     document.getElementById('tdee-val').innerText = tdee;
-    document.getElementById('target-cal-val').innerText = computedTarget;
-    document.getElementById('target-cal-display').innerText = computedTarget;
+    document.getElementById('target-cal-val').innerText = nutritionPlan.targetCalories;
+    document.getElementById('target-cal-display').innerText = nutritionPlan.targetCalories;
 
     const goalResult = document.getElementById('goal-result');
     if (goalResult) goalResult.style.display = 'block';
@@ -85,9 +98,7 @@ export function calculateProfile(auto = false) {
     saveProfile(readProfileForm());
     updateMealUI();
 
-    renderMacroGoals(document.getElementById('macro-goals'), t, {
-        ...calculateMacroGoals(computedTarget)
-    });
+    renderMacroGoals(document.getElementById('macro-goals'), t, goalUi, nutritionPlan);
 
     renderListAndStats();
 }
@@ -111,6 +122,9 @@ export function saveCurrentWeight() {
         showToast(t.alertWeightSaved || 'Weight saved.', 'success');
         document.getElementById('weight').value = weightValue;
         saveProfile(readProfileForm());
+        if (document.getElementById('goal-result')?.style.display === 'block') {
+            calculateProfile(true);
+        }
         if (typeof updateProfileStats === 'function') updateProfileStats();
         return true;
     }

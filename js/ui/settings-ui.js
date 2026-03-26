@@ -12,7 +12,7 @@ import { createButton, createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions, toggleFabMenu } from './shared-ui.js';
 import { renderListAndStats, updateChartTheme, updateMacroChartLanguage, updatePetStatus } from './charts-ui.js';
 import { confirmFavoriteMeal } from './favorites-ui.js';
-import { getDisplayDateLabel, getExtraUiText } from './locale-ui.js';
+import { getDisplayDateLabel, getExtraUiText, getGoalUiText } from './locale-ui.js';
 import { getMealPlan } from '../domain/nutrition-domain.js';
 
 export function updateMealUI() {
@@ -99,6 +99,7 @@ export function setLang(lang) {
 
     const t = i18n[lang] || i18n['zh-TW'];
     const extra = getExtraUiText(lang);
+    const goalUi = getGoalUiText(lang);
     document.title = extra.metaTitle || t.appTitle || 'Woof Cal';
     document.documentElement.lang = lang;
     document.documentElement.dir = extra.direction || 'ltr';
@@ -140,6 +141,10 @@ export function setLang(lang) {
         'opt-act-2': t.act2,
         'opt-act-3': t.act3,
         'opt-act-4': t.act4,
+        'lbl-goal-type': goalUi.goalTypeLabel,
+        'opt-goal-lose': goalUi.goalTypes.lose,
+        'opt-goal-maintain': goalUi.goalTypes.maintain,
+        'opt-goal-gain': goalUi.goalTypes.gain,
         'lbl-meal-mode': t.mealMode,
         'opt-mode-4': t.mode4,
         'opt-mode-3': t.mode3,
@@ -246,4 +251,12 @@ export function setLang(lang) {
     renderListAndStats();
     updateMacroChartLanguage(t);
     updatePetStatus(parseFloat(document.getElementById('total-cal-display')?.innerText) || 0);
+
+    const goalResult = document.getElementById('goal-result');
+    const hasProfileInputs = ['age', 'height', 'weight'].every((id) => (
+        Boolean(document.getElementById(id)?.value)
+    ));
+    if (goalResult?.style.display === 'block' && hasProfileInputs) {
+        document.getElementById('btn-calc')?.click();
+    }
 }

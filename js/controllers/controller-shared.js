@@ -21,7 +21,8 @@ export function readProfileForm() {
         height: document.getElementById('height').value,
         weight: document.getElementById('weight').value,
         activity: document.getElementById('activity').value,
-        mealMode: document.getElementById('meal-mode').value
+        mealMode: document.getElementById('meal-mode').value,
+        goalType: document.getElementById('goal-type')?.value || 'lose'
     };
 }
 
@@ -33,5 +34,8 @@ export function applyProfileToForm(profile) {
     document.getElementById('weight').value = profile.weight || '';
     document.getElementById('activity').value = profile.activity || '1.2';
     if (profile.mealMode) document.getElementById('meal-mode').value = profile.mealMode;
+    if (profile.goalType && document.getElementById('goal-type')) {
+        document.getElementById('goal-type').value = profile.goalType;
+    }
     return true;
 }

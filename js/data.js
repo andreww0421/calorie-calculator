@@ -5,6 +5,7 @@ export {
     tempAIResultSaved,
     selectedDate,
     currentMealMode,
+    currentGoalType,
     favoriteFoods,
     curLang,
     curTheme,
@@ -14,6 +15,7 @@ export {
     setTempAIResultSaved,
     setSelectedDate,
     setCurrentMealMode,
+    setCurrentGoalType,
     setFavoriteFoods,
     setCurLang,
     setCurTheme

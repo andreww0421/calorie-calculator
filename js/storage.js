@@ -80,7 +80,8 @@ function normalizeProfile(profile) {
         height: String(profile.height ?? ''),
         weight: String(profile.weight ?? ''),
         activity: String(profile.activity || '1.2'),
-        mealMode: String(profile.mealMode || '4')
+        mealMode: String(profile.mealMode || '4'),
+        goalType: String(profile.goalType || 'lose')
     };
 }
 

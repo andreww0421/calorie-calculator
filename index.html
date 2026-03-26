@@ -139,6 +139,16 @@
             </div>
         </div>
 
+        <div class="goal-insights-card card" id="goal-insights-card">
+            <div class="goal-insights-header">
+                <div class="quick-start-eyebrow" id="goal-insights-title">目標進度</div>
+                <div class="goal-insights-headline" id="goal-insights-headline">近 7 天分析</div>
+                <div class="goal-insights-summary" id="goal-insights-summary">持續記錄可以讓系統更準確地追蹤你的目標節奏。</div>
+                <div class="goal-insights-subtitle" id="goal-insights-subtitle">近 7 天達成與連續記錄</div>
+            </div>
+            <div class="goal-insights-grid" id="goal-insights-stats"></div>
+        </div>
+
         <div class="card">
             <h3>🍽️ <span id="display-date-text">今日</span> <span id="txt-record-title">飲食紀錄</span></h3>
             <div id="meal-sections-container"></div>
@@ -284,6 +294,14 @@
                         <option id="opt-act-2" value="1.375">輕度 (每週運動1-3天)</option>
                         <option id="opt-act-3" value="1.55">中度 (每週運動3-5天)</option>
                         <option id="opt-act-4" value="1.725">高度 (每週運動6-7天)</option>
+                    </select>
+                </div>
+                <div class="settings-item">
+                    <label id="lbl-goal-type">目標</label>
+                    <select id="goal-type">
+                        <option id="opt-goal-lose" value="lose">減重</option>
+                        <option id="opt-goal-maintain" value="maintain">維持體重</option>
+                        <option id="opt-goal-gain" value="gain">增肌</option>
                     </select>
                 </div>
                 <div class="settings-item">

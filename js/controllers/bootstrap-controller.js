@@ -76,6 +76,7 @@ export function setupEventListeners() {
     document.getElementById('btn-fav-save-main').addEventListener('click', saveToFavorites);
     document.getElementById('btn-fav-load-main').addEventListener('click', () => openFavModal());
     document.getElementById('meal-mode').addEventListener('change', () => calculateProfile());
+    document.getElementById('goal-type')?.addEventListener('change', () => calculateProfile());
     document.getElementById('btn-calc').addEventListener('click', () => calculateProfile());
     document.getElementById('btn-ai-fav-save').addEventListener('click', saveAIResultToFavorites);
     document.getElementById('btn-cancel').addEventListener('click', tryCloseAnalysisModal);

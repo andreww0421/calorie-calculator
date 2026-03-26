@@ -164,6 +164,157 @@ export function getExtraUiText(lang = curLang) {
     return EXTRA_UI_TEXT[lang] || EXTRA_UI_TEXT.en;
 }
 
+const GOAL_UI_TEXT = {
+    'zh-TW': {
+        goalTypeLabel: '\u76EE\u6A19',
+        goalSummaryLabel: '\u76EE\u524D\u76EE\u6A19',
+        calorieTargetLabel: '\u71B1\u91CF\u76EE\u6A19',
+        reportTitle: '\u76EE\u6A19\u9032\u5EA6',
+        reportSubtitle: '\u8FD1 7 \u5929\u9054\u6A19\u8207\u9023\u7E8C\u8A18\u9304',
+        goalTypes: {
+            lose: '\u6E1B\u91CD',
+            maintain: '\u7DAD\u6301\u9AD4\u91CD',
+            gain: '\u589E\u808C'
+        },
+        reportHeadline: (goal) => `${goal} \u9031\u9032\u5EA6`,
+        reportSummary: (insights) => `\u5DF2\u8A18\u9304 ${insights.loggedDays}/7 \u5929\uff0c\u71B1\u91CF\u9054\u6A19 ${insights.calorieTargetDays} \u5929\uff0c\u86CB\u767D\u8CEA\u9054\u6A19 ${insights.proteinTargetDays} \u5929`,
+        statStreak: '\u9023\u7E8C\u8A18\u9304',
+        statBestStreak: '\u6700\u4F73 streak',
+        statCalories: '\u71B1\u91CF\u9054\u6A19',
+        statProtein: '\u86CB\u767D\u8CEA\u9054\u6A19',
+        formatDayCount: (value) => `${value} \u5929`,
+        formatWindowCount: (value, total) => `${value}/${total}`
+    },
+    'zh-CN': {
+        goalTypeLabel: '\u76EE\u6807',
+        goalSummaryLabel: '\u5F53\u524D\u76EE\u6807',
+        calorieTargetLabel: '\u70ED\u91CF\u76EE\u6807',
+        reportTitle: '\u76EE\u6807\u8FDB\u5EA6',
+        reportSubtitle: '\u8FD1 7 \u5929\u8FBE\u6807\u4E0E\u8FDE\u7EED\u8BB0\u5F55',
+        goalTypes: {
+            lose: '\u51CF\u91CD',
+            maintain: '\u7EF4\u6301\u4F53\u91CD',
+            gain: '\u589E\u808C'
+        },
+        reportHeadline: (goal) => `${goal} \u5468\u8FDB\u5EA6`,
+        reportSummary: (insights) => `\u5DF2\u8BB0\u5F55 ${insights.loggedDays}/7 \u5929\uFF0C\u70ED\u91CF\u8FBE\u6807 ${insights.calorieTargetDays} \u5929\uFF0C\u86CB\u767D\u8D28\u8FBE\u6807 ${insights.proteinTargetDays} \u5929`,
+        statStreak: '\u8FDE\u7EED\u8BB0\u5F55',
+        statBestStreak: '\u6700\u4F73 streak',
+        statCalories: '\u70ED\u91CF\u8FBE\u6807',
+        statProtein: '\u86CB\u767D\u8D28\u8FBE\u6807',
+        formatDayCount: (value) => `${value} \u5929`,
+        formatWindowCount: (value, total) => `${value}/${total}`
+    },
+    en: {
+        goalTypeLabel: 'Goal',
+        goalSummaryLabel: 'Current Goal',
+        calorieTargetLabel: 'Calorie Target',
+        reportTitle: 'Goal Progress',
+        reportSubtitle: 'Last 7 days of adherence and logging',
+        goalTypes: {
+            lose: 'Lose Weight',
+            maintain: 'Maintain Weight',
+            gain: 'Build Muscle'
+        },
+        reportHeadline: (goal) => `${goal} weekly progress`,
+        reportSummary: (insights) => `${insights.loggedDays}/7 days logged, calories on target ${insights.calorieTargetDays} days, protein on target ${insights.proteinTargetDays} days`,
+        statStreak: 'Current streak',
+        statBestStreak: 'Best streak',
+        statCalories: 'Calorie goal',
+        statProtein: 'Protein goal',
+        formatDayCount: (value) => `${value}d`,
+        formatWindowCount: (value, total) => `${value}/${total}`
+    },
+    ja: {
+        goalTypeLabel: '\u76EE\u6A19',
+        goalSummaryLabel: '\u73FE\u5728\u306E\u76EE\u6A19',
+        calorieTargetLabel: '\u30AB\u30ED\u30EA\u30FC\u76EE\u6A19',
+        reportTitle: '\u76EE\u6A19\u9032\u6357',
+        reportSubtitle: '\u76F4\u8FD1 7 \u65E5\u306E\u9054\u6210\u5EA6\u3068\u8A18\u9332',
+        goalTypes: {
+            lose: '\u6E1B\u91CF',
+            maintain: '\u7DAD\u6301',
+            gain: '\u5897\u91CF'
+        },
+        reportHeadline: (goal) => `${goal} \u306E\u9031\u9593\u9032\u6357`,
+        reportSummary: (insights) => `\u8A18\u9332 ${insights.loggedDays}/7 \u65E5\u3001\u30AB\u30ED\u30EA\u30FC\u9054\u6210 ${insights.calorieTargetDays} \u65E5\u3001\u305F\u3093\u3071\u304F\u8CEA\u9054\u6210 ${insights.proteinTargetDays} \u65E5`,
+        statStreak: '\u9023\u7D9A\u8A18\u9332',
+        statBestStreak: '\u6700\u9577 streak',
+        statCalories: '\u30AB\u30ED\u30EA\u30FC\u9054\u6210',
+        statProtein: '\u305F\u3093\u3071\u304F\u8CEA\u9054\u6210',
+        formatDayCount: (value) => `${value}\u65E5`,
+        formatWindowCount: (value, total) => `${value}/${total}`
+    },
+    ko: {
+        goalTypeLabel: '\uBAA9\uD45C',
+        goalSummaryLabel: '\uD604\uC7AC \uBAA9\uD45C',
+        calorieTargetLabel: '\uCE7C\uB85C\uB9AC \uBAA9\uD45C',
+        reportTitle: '\uBAA9\uD45C \uC9C4\uD589',
+        reportSubtitle: '\uCD5C\uADFC 7\uC77C \uB2EC\uC131\uB3C4\uC640 \uAE30\uB85D',
+        goalTypes: {
+            lose: '\uAC10\uB7C9',
+            maintain: '\uC720\uC9C0',
+            gain: '\uC99D\uADFC'
+        },
+        reportHeadline: (goal) => `${goal} \uC8FC\uAC04 \uC9C4\uD589`,
+        reportSummary: (insights) => `7\uC77C \uC911 ${insights.loggedDays}\uC77C \uAE30\uB85D, \uCE7C\uB85C\uB9AC \uB2EC\uC131 ${insights.calorieTargetDays}\uC77C, \uB2E8\uBC31\uC9C8 \uB2EC\uC131 ${insights.proteinTargetDays}\uC77C`,
+        statStreak: '\uC5F0\uC18D \uAE30\uB85D',
+        statBestStreak: '\uCD5C\uACE0 streak',
+        statCalories: '\uCE7C\uB85C\uB9AC \uB2EC\uC131',
+        statProtein: '\uB2E8\uBC31\uC9C8 \uB2EC\uC131',
+        formatDayCount: (value) => `${value}\uC77C`,
+        formatWindowCount: (value, total) => `${value}/${total}`
+    },
+    ar: {
+        goalTypeLabel: '\u0627\u0644\u0647\u062F\u0641',
+        goalSummaryLabel: '\u0627\u0644\u0647\u062F\u0641 \u0627\u0644\u062D\u0627\u0644\u064A',
+        calorieTargetLabel: '\u0647\u062F\u0641 \u0627\u0644\u0633\u0639\u0631\u0627\u062A',
+        reportTitle: '\u062A\u0642\u062F\u0645 \u0627\u0644\u0647\u062F\u0641',
+        reportSubtitle: '\u0622\u062E\u0631 7 \u0623\u064A\u0627\u0645 \u0645\u0646 \u0627\u0644\u0627\u0644\u062A\u0632\u0627\u0645 \u0648\u0627\u0644\u062A\u0633\u062C\u064A\u0644',
+        goalTypes: {
+            lose: '\u062E\u0633\u0627\u0631\u0629 \u0627\u0644\u0648\u0632\u0646',
+            maintain: '\u0627\u0644\u062D\u0641\u0627\u0638 \u0639\u0644\u0649 \u0627\u0644\u0648\u0632\u0646',
+            gain: '\u0628\u0646\u0627\u0621 \u0627\u0644\u0639\u0636\u0644'
+        },
+        reportHeadline: (goal) => `\u0627\u0644\u062A\u0642\u062F\u0645 \u0627\u0644\u0623\u0633\u0628\u0648\u0639\u064A \u0644\u0647\u062F\u0641 ${goal}`,
+        reportSummary: (insights) => `\u062A\u0645 \u0627\u0644\u062A\u0633\u062C\u064A\u0644 ${insights.loggedDays}/7 \u0623\u064A\u0627\u0645\u060C \u0648\u062A\u062D\u0642\u0642 \u0647\u062F\u0641 \u0627\u0644\u0633\u0639\u0631\u0627\u062A ${insights.calorieTargetDays} \u0623\u064A\u0627\u0645\u060C \u0648\u0647\u062F\u0641 \u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646 ${insights.proteinTargetDays} \u0623\u064A\u0627\u0645`,
+        statStreak: '\u062A\u0633\u062C\u064A\u0644 \u0645\u062A\u062A\u0627\u0644\u064A',
+        statBestStreak: '\u0623\u0641\u0636\u0644 streak',
+        statCalories: '\u0647\u062F\u0641 \u0627\u0644\u0633\u0639\u0631\u0627\u062A',
+        statProtein: '\u0647\u062F\u0641 \u0627\u0644\u0628\u0631\u0648\u062A\u064A\u0646',
+        formatDayCount: (value) => `${value} \u0623\u064A\u0627\u0645`,
+        formatWindowCount: (value, total) => `${value}/${total}`
+    }
+};
+
+export function getGoalUiText(lang = curLang) {
+    return GOAL_UI_TEXT[lang] || GOAL_UI_TEXT.en;
+}
+
+export function getGoalSummaryText(goalType = 'lose', lang = curLang) {
+    const goalUi = getGoalUiText(lang);
+    return goalUi.goalTypes?.[goalType] || goalUi.goalTypes?.lose || GOAL_UI_TEXT.en.goalTypes.lose;
+}
+
+export function buildGoalInsightsContent(insights, lang = curLang) {
+    const copy = getGoalUiText(lang);
+    const goalLabel = getGoalSummaryText(insights?.goalType || 'lose', lang);
+    const windowSize = insights?.windowSize || 7;
+
+    return {
+        title: copy.reportTitle,
+        subtitle: copy.reportSubtitle,
+        headline: copy.reportHeadline(goalLabel),
+        summary: copy.reportSummary(insights || { loggedDays: 0, calorieTargetDays: 0, proteinTargetDays: 0 }),
+        stats: [
+            { label: copy.statStreak, value: copy.formatDayCount?.(insights?.currentStreak || 0) || `${insights?.currentStreak || 0}` },
+            { label: copy.statBestStreak, value: copy.formatDayCount?.(insights?.bestStreak || 0) || `${insights?.bestStreak || 0}` },
+            { label: copy.statCalories, value: copy.formatWindowCount?.(insights?.calorieTargetDays || 0, windowSize) || `${insights?.calorieTargetDays || 0}/${windowSize}` },
+            { label: copy.statProtein, value: copy.formatWindowCount?.(insights?.proteinTargetDays || 0, windowSize) || `${insights?.proteinTargetDays || 0}/${windowSize}` }
+        ]
+    };
+}
+
 export function getDisplayDateLabel(dateText = selectedDate, lang = curLang) {
     const normalizedDate = dateText || selectedDate || getLocalDateString();
     const extra = getExtraUiText(lang);

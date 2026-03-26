@@ -87,3 +87,23 @@ test('formatNutritionInline uses translated nutrient labels', async () => {
 
     assert.equal(summary, 'Calories: 245 | Protein: 18.5g | Fat: 7g | Carb: 29g');
 });
+
+test('goal UI helpers expose localized goal labels and insight content', async () => {
+    const { getGoalUiText, getGoalSummaryText, buildGoalInsightsContent } = await loadLocaleModule();
+    const english = getGoalUiText('en');
+    const headline = buildGoalInsightsContent({
+        goalType: 'gain',
+        windowSize: 7,
+        loggedDays: 6,
+        calorieTargetDays: 4,
+        proteinTargetDays: 5,
+        currentStreak: 3,
+        bestStreak: 4
+    }, 'en');
+
+    assert.equal(english.goalTypes.gain, 'Build Muscle');
+    assert.equal(getGoalSummaryText('maintain', 'en'), 'Maintain Weight');
+    assert.match(headline.headline, /Build Muscle/i);
+    assert.equal(headline.stats[0].value, '3d');
+    assert.equal(headline.stats[2].value, '4/7');
+});

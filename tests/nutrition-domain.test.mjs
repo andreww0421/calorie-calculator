@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 
 import {
     buildDailyCoaching,
+    buildGoalInsights,
     buildWeeklySummary,
+    calculateNutritionTargets,
     calculateMacroGoals,
     getMealPlan,
     summarizeNutrition
@@ -30,6 +32,27 @@ test('calculateMacroGoals uses target calories', () => {
         sugar: 50,
         saturatedFat: 22
     });
+});
+
+test('calculateNutritionTargets adapts calories and protein by goal type', () => {
+    const losePlan = calculateNutritionTargets({
+        weightKg: 70,
+        tdee: 2400,
+        bmr: 1600,
+        goalType: 'lose'
+    });
+    const gainPlan = calculateNutritionTargets({
+        weightKg: 70,
+        tdee: 2400,
+        bmr: 1600,
+        goalType: 'gain'
+    });
+
+    assert.equal(losePlan.targetCalories, 1900);
+    assert.equal(losePlan.macroGoals.protein, 140);
+    assert.equal(gainPlan.targetCalories, 2650);
+    assert.equal(gainPlan.macroGoals.protein, 154);
+    assert.ok(gainPlan.macroGoals.carb > losePlan.macroGoals.carb);
 });
 
 test('summarizeNutrition aggregates totals and meal buckets', () => {
@@ -72,4 +95,33 @@ test('buildDailyCoaching identifies protein gaps and weekly stats', () => {
     assert.ok(coach.proteinGap > 0);
     assert.ok(coach.tipKeys.includes('protein_boost'));
     assert.equal(coach.weekly.loggedDays, 2);
+});
+
+test('buildGoalInsights tracks adherence and logging streaks', () => {
+    const insights = buildGoalInsights({
+        calorieHistory: [
+            { date: '03-20', calories: 1500 },
+            { date: '03-21', calories: 0 },
+            { date: '03-22', calories: 1980 },
+            { date: '03-23', calories: 1925 },
+            { date: '03-24', calories: 2050 }
+        ],
+        proteinHistory: [
+            { date: '03-20', protein: 120 },
+            { date: '03-21', protein: 0 },
+            { date: '03-22', protein: 145 },
+            { date: '03-23', protein: 138 },
+            { date: '03-24', protein: 150 }
+        ],
+        targetCalories: 2000,
+        proteinTarget: 150,
+        goalType: 'lose'
+    });
+
+    assert.equal(insights.windowSize, 5);
+    assert.equal(insights.loggedDays, 4);
+    assert.equal(insights.calorieTargetDays, 3);
+    assert.equal(insights.proteinTargetDays, 3);
+    assert.equal(insights.currentStreak, 3);
+    assert.equal(insights.bestStreak, 3);
 });

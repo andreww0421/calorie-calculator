@@ -136,6 +136,52 @@ body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); c
     font-size: 0.86em;
     color: var(--text-color);
 }
+.goal-insights-card {
+    margin-top: 18px;
+    background:
+        radial-gradient(circle at top left, rgba(85, 239, 196, 0.14), transparent 28%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(46, 204, 113, 0.08));
+    border: 1px solid rgba(46, 204, 113, 0.14);
+}
+.goal-insights-headline {
+    margin-top: 8px;
+    font-size: 1.16em;
+    font-weight: 700;
+    color: var(--text-color);
+}
+.goal-insights-summary,
+.goal-insights-subtitle {
+    margin-top: 8px;
+    line-height: 1.6;
+    color: var(--text-color);
+}
+.goal-insights-summary { opacity: 0.86; }
+.goal-insights-subtitle {
+    font-size: 0.92em;
+    color: var(--nav-text);
+}
+.goal-insights-grid {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+.goal-insights-stat {
+    padding: 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(46, 204, 113, 0.12);
+}
+.goal-insights-stat-value {
+    font-size: 1.24em;
+    font-weight: 700;
+    color: var(--primary-dark);
+}
+.goal-insights-stat-label {
+    margin-top: 6px;
+    font-size: 0.9em;
+    color: var(--nav-text);
+}
 .meal-empty-row { display: block !important; }
 .meal-empty-card {
     padding: 14px 0;
@@ -293,7 +339,9 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
 [dir="rtl"] .dashboard-status-panel,
 [dir="rtl"] .meal-empty-card,
 [dir="rtl"] .ai-guide-card,
-[dir="rtl"] .quick-start-card {
+[dir="rtl"] .quick-start-card,
+[dir="rtl"] .goal-insights-card,
+[dir="rtl"] .goal-insights-stat {
     text-align: right;
 }
 
@@ -314,6 +362,10 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
 
     .dashboard-status-panel {
         min-width: 0;
+    }
+
+    .goal-insights-grid {
+        grid-template-columns: 1fr;
     }
 
     .nutrition-grid,
