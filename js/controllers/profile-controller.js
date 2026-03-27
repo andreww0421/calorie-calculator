@@ -13,32 +13,9 @@ import {
 import { reloadApp } from '../platform.js';
 import { renderListAndStats, showToast, updateMealUI } from '../ui.js';
 import { getTranslations, readProfileForm, reportControllerError } from './controller-shared.js';
-import { getDisplayDateLabel, getGoalUiText, getGoalSummaryText } from '../ui/locale-ui.js';
-import { calculateNutritionTargets } from '../domain/nutrition-domain.js';
-
-function renderMacroGoals(container, translations, goalUi, plan) {
-    if (!container) return;
-    const goals = plan?.macroGoals || {};
-    container.replaceChildren(
-        (() => {
-            const strong = document.createElement('strong');
-            strong.textContent = translations.macroGoalTitle || 'Recommended macro targets';
-            return strong;
-        })(),
-        document.createElement('br'),
-        document.createTextNode(
-            `${goalUi.goalSummaryLabel || 'Goal'}: ${getGoalSummaryText(plan?.goalType || 'lose')} | ${goalUi.calorieTargetLabel || 'Calories'}: ${plan?.targetCalories || 0} kcal`
-        ),
-        document.createElement('br'),
-        document.createTextNode(
-            `P ${translations.pro}: ${goals.protein}g | F ${translations.fat}: ${goals.fat}g | C ${translations.carb}: ${goals.carb}g`
-        ),
-        document.createElement('br'),
-        document.createTextNode(
-            `${translations.sugar}: ${goals.sugar}g | ${translations.sod.replace('(mg)', '')}: 2300mg | ${translations.sat}: ${goals.saturatedFat}g`
-        )
-    );
-}
+import { getDisplayDateLabel, getGoalUiText } from '../ui/locale-ui.js';
+import { calculateProfilePlan } from '../domain/profile-domain.js';
+import { renderProfileGoalResult } from '../ui/profile-ui.js';
 
 export async function handleImportData(input) {
     const t = getTranslations();
@@ -57,50 +34,44 @@ export async function handleImportData(input) {
     }
 }
 
-export function calculateProfile(auto = false) {
-    const h = parseFloat(document.getElementById('height').value);
-    const w = parseFloat(document.getElementById('weight').value);
-    const a = parseFloat(document.getElementById('age').value);
-    const act = parseFloat(document.getElementById('activity').value);
-    const g = document.getElementById('gender').value;
-    const mode = document.getElementById('meal-mode').value;
-    const goalType = document.getElementById('goal-type')?.value || 'lose';
+export function calculateProfile(auto = false, options = {}) {
     const t = getTranslations();
     const goalUi = getGoalUiText();
+    const formProfile = readProfileForm();
+    const profilePlan = calculateProfilePlan(formProfile);
 
-    if (!h || !w || !a) {
+    if (!profilePlan) {
         if (!auto) showToast(t.alertFill || 'Please fill in the required profile fields.', 'error');
-        return;
+        return null;
     }
 
-    const bmr = g === 'male'
-        ? (10 * w + 6.25 * h - 5 * a + 5)
-        : (10 * w + 6.25 * h - 5 * a - 161);
-    const tdee = Math.round(bmr * act);
-    const nutritionPlan = calculateNutritionTargets({
-        weightKg: w,
-        tdee,
-        bmr,
-        goalType
+    setTargetCalories(profilePlan.targetCalories);
+    setCurrentMealMode(formProfile.mealMode || profilePlan.mealMode || '4');
+    setCurrentGoalType(profilePlan.goalType);
+
+    renderProfileGoalResult(profilePlan, t, goalUi);
+
+    if (options.persist !== false) {
+        saveProfile(formProfile);
+    }
+
+    if (options.refreshMeals !== false) {
+        updateMealUI();
+    }
+
+    if (options.renderList !== false) {
+        renderListAndStats();
+    }
+
+    return profilePlan;
+}
+
+export function refreshProfilePresentation() {
+    return calculateProfile(true, {
+        persist: false,
+        refreshMeals: false,
+        renderList: false
     });
-
-    setTargetCalories(nutritionPlan.targetCalories);
-    setCurrentMealMode(mode);
-    setCurrentGoalType(nutritionPlan.goalType);
-
-    document.getElementById('tdee-val').innerText = tdee;
-    document.getElementById('target-cal-val').innerText = nutritionPlan.targetCalories;
-    document.getElementById('target-cal-display').innerText = nutritionPlan.targetCalories;
-
-    const goalResult = document.getElementById('goal-result');
-    if (goalResult) goalResult.style.display = 'block';
-
-    saveProfile(readProfileForm());
-    updateMealUI();
-
-    renderMacroGoals(document.getElementById('macro-goals'), t, goalUi, nutritionPlan);
-
-    renderListAndStats();
 }
 
 export function changeDate() {

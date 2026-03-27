@@ -10,8 +10,8 @@ import {
 import { createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions } from './shared-ui.js';
 import { showDailyNutritionSummary, showDetailModal } from './detail-ui.js';
-import { buildCoachContent, buildGoalInsightsContent, formatNutritionInline, getDisplayDateLabel, getExtraUiText } from './locale-ui.js';
-import { buildDailyCoaching, buildGoalInsights, calculateMacroGoals, summarizeNutrition } from '../domain/nutrition-domain.js';
+import { buildCoachContent, formatNutritionInline, getDisplayDateLabel, getExtraUiText } from './locale-ui.js';
+import { buildDailyCoaching, summarizeNutrition } from '../domain/nutrition-domain.js';
 
 let macroChart = null;
 let weeklyChart = null;
@@ -268,53 +268,6 @@ function renderCoachCard(total, target, calorieHistory) {
     }
 
     card.dataset.coachStatus = coach.status;
-}
-
-function renderGoalInsightsCard(targetCaloriesValue) {
-    const card = document.getElementById('goal-insights-card');
-    if (!card) return;
-
-    const weightKg = parseFloat(document.getElementById('weight')?.value) || 0;
-    const macroGoals = calculateMacroGoals(targetCaloriesValue, {
-        goalType: currentGoalType,
-        weightKg
-    });
-    const insights = buildGoalInsights({
-        calorieHistory: getCalorieHistory(7),
-        proteinHistory: getProteinHistory(7),
-        targetCalories: targetCaloriesValue,
-        proteinTarget: macroGoals.protein,
-        goalType: currentGoalType
-    });
-    const content = buildGoalInsightsContent(insights, curLang);
-    const titleEl = document.getElementById('goal-insights-title');
-    const headlineEl = document.getElementById('goal-insights-headline');
-    const summaryEl = document.getElementById('goal-insights-summary');
-    const subtitleEl = document.getElementById('goal-insights-subtitle');
-    const statsEl = document.getElementById('goal-insights-stats');
-
-    if (titleEl) titleEl.innerText = content.title;
-    if (headlineEl) headlineEl.innerText = content.headline;
-    if (summaryEl) summaryEl.innerText = content.summary;
-    if (subtitleEl) subtitleEl.innerText = content.subtitle;
-
-    if (statsEl) {
-        clearElement(statsEl);
-        content.stats.forEach((stat) => {
-            statsEl.appendChild(createElement('div', { className: 'goal-insights-stat' }, [
-                createElement('div', {
-                    className: 'goal-insights-stat-value',
-                    text: stat.value
-                }),
-                createElement('div', {
-                    className: 'goal-insights-stat-label',
-                    text: stat.label
-                })
-            ]));
-        });
-    }
-
-    card.dataset.goalType = currentGoalType;
 }
 
 export function switchView(targetId) {
@@ -774,7 +727,6 @@ export function renderListAndStats() {
         ? displayedTarget
         : (Number(targetCalories) || 0);
     renderCoachCard(total, target, getCalorieHistory(7));
-    renderGoalInsightsCard(target);
 
     updateCharts(total);
     updatePetStatus(total);

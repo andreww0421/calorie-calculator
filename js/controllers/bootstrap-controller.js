@@ -6,8 +6,7 @@ import {
     loadProfile,
     loadWeightData,
     exportData,
-    selectedDate,
-    persistLang
+    selectedDate
 } from '../data.js';
 import {
     closeModal,
@@ -24,7 +23,7 @@ import {
     updateMealUI
 } from '../ui.js';
 import { registerGlobalDiagnostics } from '../diagnostics.js';
-import { registerAppServiceWorker, reloadApp, clickFileInput } from '../platform.js';
+import { registerAppServiceWorker, clickFileInput } from '../platform.js';
 import { reportControllerError, applyProfileToForm } from './controller-shared.js';
 import { calculateProfile, changeDate, handleImportData, saveCurrentWeight } from './profile-controller.js';
 import { handleFileSelect, startAnalysis, tryCloseAnalysisModal, applyUsageLimitState } from './analysis-controller.js';
@@ -136,8 +135,8 @@ export function setupEventListeners() {
     document.querySelectorAll('.lang-option').forEach((option) => {
         option.addEventListener('click', function onLangOptionClick() {
             const lang = this.getAttribute('data-lang');
-            persistLang(lang);
-            reloadApp();
+            closeModal('lang-modal');
+            setLang(lang);
         });
     });
 
@@ -170,7 +169,7 @@ export function bootstrapApp() {
 
     try {
         setTheme(curTheme);
-        setLang(curLang);
+        setLang(curLang, { refreshAppState: false });
         const curDateEl = document.getElementById('current-date');
         if (curDateEl) curDateEl.value = selectedDate;
     } catch (error) {
@@ -180,7 +179,10 @@ export function bootstrapApp() {
     try {
         const profile = loadProfile();
         if (applyProfileToForm(profile)) {
-            calculateProfile(true);
+            calculateProfile(true, {
+                persist: false,
+                renderList: false
+            });
         } else {
             updateMealUI();
         }

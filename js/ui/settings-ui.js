@@ -13,7 +13,9 @@ import { getTexts, uiActions, toggleFabMenu } from './shared-ui.js';
 import { renderListAndStats, updateChartTheme, updateMacroChartLanguage, updatePetStatus } from './charts-ui.js';
 import { confirmFavoriteMeal } from './favorites-ui.js';
 import { getDisplayDateLabel, getExtraUiText, getGoalUiText } from './locale-ui.js';
+import { calculateProfilePlan } from '../domain/profile-domain.js';
 import { getMealPlan } from '../domain/nutrition-domain.js';
+import { renderProfileGoalResult } from './profile-ui.js';
 
 export function updateMealUI() {
     const t = getTexts();
@@ -93,7 +95,8 @@ export function openLangModal() {
     toggleFabMenu();
 }
 
-export function setLang(lang) {
+export function setLang(lang, options = {}) {
+    const { refreshAppState = true } = options;
     setCurLang(lang);
     persistLang(lang);
 
@@ -246,17 +249,28 @@ export function setLang(lang) {
         if (el && value) el.placeholder = value;
     });
 
-    if (typeof updateProfileStats === 'function') updateProfileStats();
-    updateMealUI();
-    renderListAndStats();
-    updateMacroChartLanguage(t);
-    updatePetStatus(parseFloat(document.getElementById('total-cal-display')?.innerText) || 0);
+    if (refreshAppState) {
+        if (typeof updateProfileStats === 'function') updateProfileStats();
+        updateMealUI();
+        renderListAndStats();
+        updateMacroChartLanguage(t);
+        updatePetStatus(parseFloat(document.getElementById('total-cal-display')?.innerText) || 0);
 
-    const goalResult = document.getElementById('goal-result');
-    const hasProfileInputs = ['age', 'height', 'weight'].every((id) => (
-        Boolean(document.getElementById(id)?.value)
-    ));
-    if (goalResult?.style.display === 'block' && hasProfileInputs) {
-        document.getElementById('btn-calc')?.click();
+        const goalResult = document.getElementById('goal-result');
+        if (goalResult?.style.display === 'block') {
+            const profilePlan = calculateProfilePlan({
+                gender: document.getElementById('gender')?.value,
+                age: document.getElementById('age')?.value,
+                height: document.getElementById('height')?.value,
+                weight: document.getElementById('weight')?.value,
+                activity: document.getElementById('activity')?.value,
+                goalType: document.getElementById('goal-type')?.value,
+                mealMode: document.getElementById('meal-mode')?.value
+            });
+
+            if (profilePlan) {
+                renderProfileGoalResult(profilePlan, t, goalUi);
+            }
+        }
     }
 }
