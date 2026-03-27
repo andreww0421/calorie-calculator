@@ -1,8 +1,9 @@
-import { favoriteFoods, persistFavorites } from '../data.js';
+import { favoriteFoods } from '../data.js';
+import { dispatchAppAction } from '../state/app-actions.js';
+import { showEatingAnimation } from './charts-ui.js';
 import { createElement, clearElement } from './dom-ui.js';
 import {
     getTexts,
-    uiActions,
     getPendingFavoriteIndex,
     setPendingFavoriteIndex,
     clearPendingFavoriteIndex,
@@ -19,6 +20,31 @@ function getFavoriteMealPrompt() {
 function getFavoriteQuickAddLabel() {
     const t = getTexts();
     return t.btnAddRecord || t.btnAdd || 'Add';
+}
+
+function cloneFavoriteEntry(item, type) {
+    return {
+        type,
+        name: item?.name || '',
+        nutri: {
+            calories: Number(item?.nutri?.calories || item?.cal || 0) || 0,
+            protein: Number(item?.nutri?.protein || 0) || 0,
+            fat: Number(item?.nutri?.fat || 0) || 0,
+            carbohydrate: Number(item?.nutri?.carbohydrate || 0) || 0,
+            sugar: Number(item?.nutri?.sugar || 0) || 0,
+            sodium: Number(item?.nutri?.sodium || 0) || 0,
+            saturatedFat: Number(item?.nutri?.saturatedFat || 0) || 0,
+            transFat: Number(item?.nutri?.transFat || 0) || 0,
+            fiber: Number(item?.nutri?.fiber || 0) || 0
+        },
+        items: Array.isArray(item?.items)
+            ? item.items.map((food) => ({
+                name: String(food?.name || ''),
+                weight: String(food?.weight || '')
+            }))
+            : [],
+        healthScore: Number(item?.healthScore) || 0
+    };
 }
 
 export function openFavModal() {
@@ -109,13 +135,16 @@ export function openFavoriteMealModal(index) {
 export function confirmFavoriteMeal(type) {
     const index = getPendingFavoriteIndex();
     if (index === null) return;
+    const item = favoriteFoods[index];
+    if (!item) return;
 
-    const added = uiActions.addFavoriteFoodToMeal?.(index, type);
-    if (added) {
-        clearPendingFavoriteIndex();
-        closeModal('favorite-meal-modal');
-        closeModal('fav-modal');
-    }
+    dispatchAppAction('ADD_FOOD_ITEM', {
+        entry: cloneFavoriteEntry(item, type)
+    });
+    showEatingAnimation?.();
+    clearPendingFavoriteIndex();
+    closeModal('favorite-meal-modal');
+    closeModal('fav-modal');
 }
 
 export function pickFav(index) {
@@ -125,8 +154,6 @@ export function pickFav(index) {
 export function deleteFav(index) {
     const t = getTexts();
     if (confirm(t.alertDel || 'Delete this item?')) {
-        favoriteFoods.splice(index, 1);
-        persistFavorites();
-        openFavModal();
+        dispatchAppAction('DELETE_FAVORITE', { index });
     }
 }

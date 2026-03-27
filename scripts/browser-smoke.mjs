@@ -233,6 +233,12 @@ async function run() {
     assert(Boolean(title), 'Page title is empty.');
     results.push(`Loaded page: ${title}`);
 
+    const iconHref = await client.evaluate(`
+      document.querySelector('link[rel="icon"]')?.getAttribute('href') || ''
+    `);
+    assert(/calorie_icon\.png$/i.test(iconHref), `App icon should point to calorie_icon.png, got ${iconHref}`);
+    results.push('App icon uses the original black-background logo');
+
     if (!URL_ARG) {
       const reloaded = client.waitForEvent('Page.loadEventFired', () => true, 15000);
       await client.evaluate(`
@@ -706,7 +712,7 @@ async function run() {
 
     const recalcState = await client.evaluate(`
       (async () => {
-        const dataModule = await import('./js/data.js');
+        const actionModule = await import('./js/state/app-actions.js');
         const analysisModule = await import('./js/ui/analysis-ui.js');
         const originalFetch = window.fetch;
         const originalTurnstile = window.turnstile;
@@ -746,24 +752,26 @@ async function run() {
           headers: { 'Content-Type': 'application/json' }
         });
 
-        dataModule.setTempAIResult({
-          name: 'Pending Bowl',
-          nutri: {
-            calories: 100,
-            protein: 1,
-            fat: 1,
-            carbohydrate: 1,
-            sugar: 1,
-            sodium: 1,
-            saturatedFat: 1,
-            transFat: 0,
-            fiber: 1
+        actionModule.dispatchAppAction('SET_TEMP_AI_RESULT', {
+          result: {
+            name: 'Pending Bowl',
+            nutri: {
+              calories: 100,
+              protein: 1,
+              fat: 1,
+              carbohydrate: 1,
+              sugar: 1,
+              sodium: 1,
+              saturatedFat: 1,
+              transFat: 0,
+              fiber: 1
+            },
+            items: [{ name: 'Rice', weight: '100' }],
+            healthScore: 7
           },
-          items: [{ name: 'Rice', weight: '100' }],
-          healthScore: 7
+          saved: false,
+          openModal: true
         });
-        dataModule.setTempAIResultSaved(false);
-        analysisModule.showModal();
 
         const recalcPromise = analysisModule.recalculateAI();
         const pending = {
@@ -783,8 +791,7 @@ async function run() {
         };
 
         document.getElementById('analysis-modal').style.display = 'none';
-        dataModule.setTempAIResult(null);
-        dataModule.setTempAIResultSaved(false);
+        actionModule.dispatchAppAction('CLEAR_TEMP_AI_RESULT');
         window.fetch = originalFetch;
         window.turnstile = originalTurnstile;
 

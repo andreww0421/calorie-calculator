@@ -1,7 +1,6 @@
 import { bindUIActions } from './ui.js';
 import { setupTurnstileHandlers } from './controllers/analysis-controller.js';
 import {
-    addFavoriteFoodToMeal,
     addRecordToFav,
     confirmAddFood,
     deleteItem
@@ -13,8 +12,7 @@ setupTurnstileHandlers();
 bindUIActions({
     confirmAddFood,
     deleteItem,
-    addRecordToFav,
-    addFavoriteFoodToMeal
+    addRecordToFav
 });
 
 document.addEventListener('DOMContentLoaded', bootstrapApp);

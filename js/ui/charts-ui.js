@@ -1,17 +1,16 @@
 import {
-    foodItems,
     targetCalories,
     curLang,
-    currentGoalType,
     getWeightHistory,
     getCalorieHistory,
     getProteinHistory
 } from '../data.js';
+import { createDailyViewModel, getAppState } from '../state/app-state.js';
 import { createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions } from './shared-ui.js';
 import { showDailyNutritionSummary, showDetailModal } from './detail-ui.js';
 import { buildCoachContent, formatNutritionInline, getDisplayDateLabel, getExtraUiText } from './locale-ui.js';
-import { buildDailyCoaching, summarizeNutrition } from '../domain/nutrition-domain.js';
+import { buildDailyCoaching } from '../domain/nutrition-domain.js';
 
 let macroChart = null;
 let weeklyChart = null;
@@ -170,11 +169,8 @@ function getDailySummaryStrings(progressPercent, remainingCalories) {
     };
 }
 
-function updateDailySummaryCard(total, waterTarget) {
-    const displayedTarget = Number(document.getElementById('target-cal-display')?.innerText);
-    const target = Number.isFinite(displayedTarget) && displayedTarget > 0
-        ? displayedTarget
-        : (Number(targetCalories) || 0);
+function updateDailySummaryCard(total, waterTarget, targetCaloriesValue) {
+    const target = Number(targetCaloriesValue) || Number(targetCalories) || 0;
     const progressPercent = target > 0 ? Math.min((total.cal / target) * 100, 199) : 0;
     const remainingCalories = target > 0 ? Math.round(target - total.cal) : 0;
     const progressEl = document.getElementById('daily-summary-progress');
@@ -226,18 +222,18 @@ function createEmptyMealRow(title, body) {
     return item;
 }
 
-function renderCoachCard(total, target, calorieHistory) {
+function renderCoachCard(viewModel) {
     const card = document.getElementById('daily-coach-card');
     if (!card) return;
 
     const coach = buildDailyCoaching({
-        total,
-        targetCalories: target,
-        calorieHistory,
-        goalType: currentGoalType,
-        weightKg: parseFloat(document.getElementById('weight')?.value) || 0
+        total: viewModel.totals,
+        targetCalories: viewModel.targetCalories,
+        calorieHistory: viewModel.calorieHistory,
+        goalType: viewModel.goalType,
+        weightKg: viewModel.profileWeight || 0
     });
-    const content = buildCoachContent(coach, curLang);
+    const content = buildCoachContent(coach, viewModel.lang);
     const headlineEl = document.getElementById('coach-headline');
     const summaryEl = document.getElementById('coach-summary');
     const tipsEl = document.getElementById('coach-tips');
@@ -480,8 +476,8 @@ export function updateChartTheme() {
     });
 }
 
-export function updatePetStatus(currentCal) {
-    const target = Number(targetCalories) || 2000;
+export function updatePetStatus(currentCal, options = {}) {
+    const target = Number(options.targetCalories) || Number(targetCalories) || 2000;
     const totalCalories = typeof currentCal === 'object'
         ? Number(currentCal?.cal) || 0
         : Number(currentCal) || 0;
@@ -642,17 +638,15 @@ export function updateWeightChart() {
     weightChart.update();
 }
 
-export function renderListAndStats() {
+export function renderListAndStats(viewModel = createDailyViewModel(getAppState())) {
     const t = getTexts();
-    const extra = getExtraUiText(curLang);
+    const extra = getExtraUiText(viewModel.lang);
 
     ['breakfast', 'lunch', 'dinner', 'snack'].forEach((type) => {
         clearElement(document.getElementById(`list-${type}`));
     });
 
-    const { totals: total, mealTotals } = summarizeNutrition(foodItems);
-
-    foodItems.forEach((item, index) => {
+    viewModel.foodItems.forEach((item, index) => {
         const n = item.nutri || {};
 
         const info = createElement('div', {
@@ -700,37 +694,30 @@ export function renderListAndStats() {
         listEl.appendChild(createEmptyMealRow(extra.emptyMealTitle, extra.emptyMealBody));
     });
 
-    Object.keys(mealTotals).forEach((type) => {
+    Object.keys(viewModel.mealTotals).forEach((type) => {
         const el = document.getElementById(`prog-${type}`);
-        if (el) el.innerText = `${Math.round(mealTotals[type])} kcal`;
+        if (el) el.innerText = `${Math.round(viewModel.mealTotals[type])} kcal`;
     });
 
-    document.getElementById('total-cal-display').innerText = Math.round(total.cal);
-    document.getElementById('sum-protein').innerText = roundValue(total.pro).toFixed(1);
-    document.getElementById('sum-fat').innerText = roundValue(total.fat).toFixed(1);
-    document.getElementById('sum-carb').innerText = roundValue(total.carb).toFixed(1);
-    document.getElementById('sum-sugar').innerText = roundValue(total.sugar).toFixed(1);
-    document.getElementById('sum-sodium').innerText = Math.round(total.sod);
-    document.getElementById('sum-sat-fat').innerText = roundValue(total.sat).toFixed(1);
-    document.getElementById('sum-trans-fat').innerText = roundValue(total.trans).toFixed(1);
-    document.getElementById('sum-fiber').innerText = roundValue(total.fiber).toFixed(1);
-
-    const weight = parseFloat(document.getElementById('weight')?.value) || 60;
-    const waterTarget = Math.round(weight * 35);
-    document.getElementById('water-val').innerText = waterTarget;
+    document.getElementById('total-cal-display').innerText = Math.round(viewModel.totals.cal);
+    document.getElementById('sum-protein').innerText = roundValue(viewModel.totals.pro).toFixed(1);
+    document.getElementById('sum-fat').innerText = roundValue(viewModel.totals.fat).toFixed(1);
+    document.getElementById('sum-carb').innerText = roundValue(viewModel.totals.carb).toFixed(1);
+    document.getElementById('sum-sugar').innerText = roundValue(viewModel.totals.sugar).toFixed(1);
+    document.getElementById('sum-sodium').innerText = Math.round(viewModel.totals.sod);
+    document.getElementById('sum-sat-fat').innerText = roundValue(viewModel.totals.sat).toFixed(1);
+    document.getElementById('sum-trans-fat').innerText = roundValue(viewModel.totals.trans).toFixed(1);
+    document.getElementById('sum-fiber').innerText = roundValue(viewModel.totals.fiber).toFixed(1);
+    document.getElementById('water-val').innerText = viewModel.waterTarget;
 
     const emptyState = document.getElementById('daily-empty-state');
-    if (emptyState) emptyState.hidden = foodItems.length > 0;
+    if (emptyState) emptyState.hidden = viewModel.foodItems.length > 0;
 
-    const displayedTarget = Number(document.getElementById('target-cal-display')?.innerText);
-    const target = Number.isFinite(displayedTarget) && displayedTarget > 0
-        ? displayedTarget
-        : (Number(targetCalories) || 0);
-    renderCoachCard(total, target, getCalorieHistory(7));
+    renderCoachCard(viewModel);
 
-    updateCharts(total);
-    updatePetStatus(total);
-    updateDailySummaryCard(total, waterTarget);
+    updateCharts(viewModel.totals);
+    updatePetStatus(viewModel.totals, { targetCalories: viewModel.targetCalories });
+    updateDailySummaryCard(viewModel.totals, viewModel.waterTarget, viewModel.targetCalories);
 }
 
 export function updateMacroChartLanguage(translations) {

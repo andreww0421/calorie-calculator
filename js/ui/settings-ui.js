@@ -3,19 +3,16 @@ import {
     currentMealMode,
     curTheme,
     setCurTheme,
-    setCurLang,
-    persistTheme,
-    persistLang
+    persistTheme
 } from '../data.js';
 import { i18n } from '../config.js';
+import { dispatchAppAction } from '../state/app-actions.js';
 import { createButton, createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions, toggleFabMenu } from './shared-ui.js';
-import { renderListAndStats, updateChartTheme, updateMacroChartLanguage, updatePetStatus } from './charts-ui.js';
+import { updateChartTheme, updateMacroChartLanguage } from './charts-ui.js';
 import { confirmFavoriteMeal } from './favorites-ui.js';
 import { getDisplayDateLabel, getExtraUiText, getGoalUiText } from './locale-ui.js';
-import { calculateProfilePlan } from '../domain/profile-domain.js';
 import { getMealPlan } from '../domain/nutrition-domain.js';
-import { renderProfileGoalResult } from './profile-ui.js';
 
 export function updateMealUI() {
     const t = getTexts();
@@ -74,12 +71,17 @@ export function updateMealUI() {
 }
 
 export function toggleTheme() {
-    setTheme(curTheme === 'light' ? 'dark' : 'light');
+    dispatchAppAction('SET_THEME', {
+        theme: curTheme === 'light' ? 'dark' : 'light'
+    });
 }
 
-export function setTheme(theme) {
+export function setTheme(theme, options = {}) {
+    const { persist = false } = options;
     setCurTheme(theme);
-    persistTheme(theme);
+    if (persist) {
+        persistTheme(theme);
+    }
     document.documentElement.setAttribute('data-theme', theme);
     updateChartTheme(theme);
 
@@ -95,11 +97,7 @@ export function openLangModal() {
     toggleFabMenu();
 }
 
-export function setLang(lang, options = {}) {
-    const { refreshAppState = true } = options;
-    setCurLang(lang);
-    persistLang(lang);
-
+export function setLang(lang) {
     const t = i18n[lang] || i18n['zh-TW'];
     const extra = getExtraUiText(lang);
     const goalUi = getGoalUiText(lang);
@@ -248,29 +246,5 @@ export function setLang(lang, options = {}) {
         const el = document.getElementById(id);
         if (el && value) el.placeholder = value;
     });
-
-    if (refreshAppState) {
-        if (typeof updateProfileStats === 'function') updateProfileStats();
-        updateMealUI();
-        renderListAndStats();
-        updateMacroChartLanguage(t);
-        updatePetStatus(parseFloat(document.getElementById('total-cal-display')?.innerText) || 0);
-
-        const goalResult = document.getElementById('goal-result');
-        if (goalResult?.style.display === 'block') {
-            const profilePlan = calculateProfilePlan({
-                gender: document.getElementById('gender')?.value,
-                age: document.getElementById('age')?.value,
-                height: document.getElementById('height')?.value,
-                weight: document.getElementById('weight')?.value,
-                activity: document.getElementById('activity')?.value,
-                goalType: document.getElementById('goal-type')?.value,
-                mealMode: document.getElementById('meal-mode')?.value
-            });
-
-            if (profilePlan) {
-                renderProfileGoalResult(profilePlan, t, goalUi);
-            }
-        }
-    }
+    updateMacroChartLanguage(t);
 }

@@ -1,13 +1,10 @@
 import {
     foodItems,
     favoriteFoods,
-    tempAIResult,
-    saveFoodData,
-    persistFavorites,
-    setTempAIResultSaved,
-    loadFoodData
+    tempAIResult
 } from '../data.js';
-import { closeModal, renderListAndStats, showEatingAnimation, showToast } from '../ui.js';
+import { dispatchAppAction } from '../state/app-actions.js';
+import { closeModal, showEatingAnimation, showToast } from '../ui.js';
 import { getTranslations } from './controller-shared.js';
 
 function normalizeNutri(source = {}) {
@@ -34,9 +31,7 @@ function cloneFoodItems(items) {
 }
 
 function appendFoodItem(entry) {
-    foodItems.push(entry);
-    saveFoodData();
-    renderListAndStats();
+    dispatchAppAction('ADD_FOOD_ITEM', { entry });
     showEatingAnimation?.();
 }
 
@@ -61,9 +56,7 @@ function clearManualInputs() {
 export function deleteItem(index) {
     const t = getTranslations();
     if (confirm(t.alertDel || 'Delete this item?')) {
-        foodItems.splice(index, 1);
-        saveFoodData();
-        renderListAndStats();
+        dispatchAppAction('DELETE_FOOD_ITEM', { index });
     }
 }
 
@@ -77,29 +70,15 @@ export function addRecordToFav(index) {
         return;
     }
 
-    favoriteFoods.push({
-        name: item.name,
-        nutri: normalizeNutri(item),
-        items: cloneFoodItems(item.items),
-        healthScore: item.healthScore || 0
+    dispatchAppAction('ADD_FAVORITE', {
+        favorite: {
+            name: item.name,
+            nutri: normalizeNutri(item),
+            items: cloneFoodItems(item.items),
+            healthScore: item.healthScore || 0
+        }
     });
-    persistFavorites();
     showToast(t.alertFavAdded || 'Saved to favorites.', 'success');
-}
-
-export function addFavoriteFoodToMeal(index, type) {
-    const favorite = favoriteFoods[index];
-    if (!favorite) return false;
-
-    appendFoodItem({
-        type,
-        name: favorite.name,
-        nutri: normalizeNutri(favorite),
-        items: cloneFoodItems(favorite.items),
-        healthScore: Number(favorite.healthScore) || 0
-    });
-
-    return true;
 }
 
 export function confirmAddFood(type) {
@@ -112,7 +91,7 @@ export function confirmAddFood(type) {
         items: cloneFoodItems(tempAIResult.items),
         healthScore: tempAIResult.healthScore || 0
     });
-    setTempAIResultSaved(true);
+    dispatchAppAction('MARK_TEMP_AI_SAVED', { saved: true });
     closeModal('analysis-modal');
 }
 
@@ -161,23 +140,24 @@ export function saveToFavorites() {
         return;
     }
 
-    favoriteFoods.push({
-        name,
-        nutri: {
-            calories: cal,
-            protein: parseFloat(document.getElementById('manual-pro').value) || 0,
-            fat: parseFloat(document.getElementById('manual-fat').value) || 0,
-            carbohydrate: parseFloat(document.getElementById('manual-carb').value) || 0,
-            sugar: parseFloat(document.getElementById('manual-sugar').value) || 0,
-            sodium: parseFloat(document.getElementById('manual-sod').value) || 0,
-            saturatedFat: parseFloat(document.getElementById('manual-sat').value) || 0,
-            transFat: parseFloat(document.getElementById('manual-trans').value) || 0,
-            fiber: parseFloat(document.getElementById('manual-fiber').value) || 0
+    dispatchAppAction('ADD_FAVORITE', {
+        favorite: {
+            name,
+            nutri: {
+                calories: cal,
+                protein: parseFloat(document.getElementById('manual-pro').value) || 0,
+                fat: parseFloat(document.getElementById('manual-fat').value) || 0,
+                carbohydrate: parseFloat(document.getElementById('manual-carb').value) || 0,
+                sugar: parseFloat(document.getElementById('manual-sugar').value) || 0,
+                sodium: parseFloat(document.getElementById('manual-sod').value) || 0,
+                saturatedFat: parseFloat(document.getElementById('manual-sat').value) || 0,
+                transFat: parseFloat(document.getElementById('manual-trans').value) || 0,
+                fiber: parseFloat(document.getElementById('manual-fiber').value) || 0
+            },
+            items: [],
+            healthScore: 0
         },
-        items: [],
-        healthScore: 0
     });
-    persistFavorites();
     showToast(t.alertFavAdded || 'Saved to favorites.', 'success');
 }
 
@@ -190,17 +170,19 @@ export function saveAIResultToFavorites() {
         return;
     }
 
-    favoriteFoods.push({
-        name: tempAIResult.name,
-        nutri: normalizeNutri(tempAIResult),
-        items: cloneFoodItems(tempAIResult.items),
-        healthScore: tempAIResult.healthScore || 0
+    dispatchAppAction('ADD_FAVORITE', {
+        favorite: {
+            name: tempAIResult.name,
+            nutri: normalizeNutri(tempAIResult),
+            items: cloneFoodItems(tempAIResult.items),
+            healthScore: tempAIResult.healthScore || 0
+        }
     });
-    persistFavorites();
     showToast(t.alertFavAdded || 'Saved to favorites.', 'success');
 }
 
 export function reloadSelectedDateRecords() {
-    loadFoodData(document.getElementById('current-date').value);
-    renderListAndStats();
+    dispatchAppAction('SET_SELECTED_DATE', {
+        date: document.getElementById('current-date').value
+    });
 }

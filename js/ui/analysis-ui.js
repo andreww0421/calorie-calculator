@@ -1,9 +1,6 @@
 import { recalculateFromItems } from '../api.js';
-import {
-    tempAIResult,
-    setTempAIResult,
-    setTempAIResultSaved
-} from '../data.js';
+import { dispatchAppAction } from '../state/app-actions.js';
+import { getAppState } from '../state/app-state.js';
 import { formatAIRequestError } from '../analysis-errors.js';
 import { normalizeAIAnalysisResult } from '../domain/ai-analysis-domain.js';
 import { createButton, createElement, clearElement } from './dom-ui.js';
@@ -58,8 +55,8 @@ function createAIItemEditorRow(item, index) {
     return row;
 }
 
-function renderAnalysisContent() {
-    const data = tempAIResult;
+function renderAnalysisContent(result = getAppState().tempAIResult) {
+    const data = result;
     if (!data) return;
 
     const t = getTexts();
@@ -114,29 +111,29 @@ function renderAnalysisContent() {
 }
 
 export function showModal() {
+    const { tempAIResult } = getAppState();
     if (!tempAIResult) return;
-    renderAnalysisContent();
+    renderAnalysisContent(tempAIResult);
     document.getElementById('analysis-modal').style.display = 'flex';
 }
 
 export function addAIItem() {
+    const { tempAIResult } = getAppState();
     if (!tempAIResult) return;
     const nextItems = collectAIItemsFromDOM();
     nextItems.push({ name: '', weight: '' });
-    setTempAIResult({ ...tempAIResult, items: nextItems });
-    setTempAIResultSaved(false);
-    renderAnalysisContent();
+    dispatchAppAction('SET_TEMP_AI_ITEMS', { items: nextItems, saved: false });
 }
 
 export function removeAIItem(index) {
+    const { tempAIResult } = getAppState();
     if (!tempAIResult?.items) return;
     const nextItems = tempAIResult.items.filter((_, idx) => idx !== index);
-    setTempAIResult({ ...tempAIResult, items: nextItems });
-    setTempAIResultSaved(false);
-    renderAnalysisContent();
+    dispatchAppAction('SET_TEMP_AI_ITEMS', { items: nextItems, saved: false });
 }
 
 export async function recalculateAI() {
+    const { tempAIResult } = getAppState();
     if (!tempAIResult) return;
 
     const t = getTexts();
@@ -146,9 +143,6 @@ export async function recalculateAI() {
         showToast(t.aiItemsRequired || extra.aiItemsRequired || 'Please keep at least one item.', 'error');
         return;
     }
-
-    setTempAIResult({ ...tempAIResult, items });
-    setTempAIResultSaved(false);
 
     const content = document.getElementById('analysis-content');
     setAnalysisActionVisibility(false);
@@ -161,6 +155,12 @@ export async function recalculateAI() {
         }));
     }
 
+    dispatchAppAction('SET_TEMP_AI_ITEMS', {
+        items,
+        saved: false,
+        syncModal: false
+    });
+
     try {
         const result = await recalculateFromItems(items);
         if (result) {
@@ -168,27 +168,28 @@ export async function recalculateAI() {
                 fallbackName: tempAIResult.name,
                 fallbackItems: items
             });
-            setTempAIResult({
-                name: normalized.foodName,
-                nutri: {
-                    calories: normalized.calories,
-                    protein: normalized.protein,
-                    fat: normalized.fat,
-                    carbohydrate: normalized.carbohydrate,
-                    sugar: normalized.sugar,
-                    sodium: normalized.sodium,
-                    saturatedFat: normalized.saturatedFat,
-                    transFat: normalized.transFat,
-                    fiber: normalized.fiber
+            dispatchAppAction('SET_TEMP_AI_RESULT', {
+                result: {
+                    name: normalized.foodName,
+                    nutri: {
+                        calories: normalized.calories,
+                        protein: normalized.protein,
+                        fat: normalized.fat,
+                        carbohydrate: normalized.carbohydrate,
+                        sugar: normalized.sugar,
+                        sodium: normalized.sodium,
+                        saturatedFat: normalized.saturatedFat,
+                        transFat: normalized.transFat,
+                        fiber: normalized.fiber
+                    },
+                    items: normalized.items.length > 0 ? normalized.items : items,
+                    healthScore: normalized.healthScore
                 },
-                items: normalized.items.length > 0 ? normalized.items : items,
-                healthScore: normalized.healthScore
+                saved: false
             });
-            setTempAIResultSaved(false);
         }
     } catch (error) {
         showToast(formatAIRequestError(error, t), 'error');
     }
 
-    renderAnalysisContent();
 }

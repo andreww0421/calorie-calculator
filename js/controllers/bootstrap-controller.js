@@ -1,10 +1,7 @@
 import {
-    curLang,
-    curTheme,
     initializeAppData,
     loadFoodData,
     loadProfile,
-    loadWeightData,
     exportData,
     selectedDate
 } from '../data.js';
@@ -14,20 +11,31 @@ import {
     openLangModal,
     openDailySummaryDetails,
     petInteraction,
-    renderListAndStats,
     switchView,
     setChartRange,
-    setLang,
-    setTheme,
     toggleTheme,
-    updateMealUI
 } from '../ui.js';
 import { registerGlobalDiagnostics } from '../diagnostics.js';
 import { registerAppServiceWorker, clickFileInput } from '../platform.js';
+import { dispatchAppAction } from '../state/app-actions.js';
+import { initializeAppState, refreshAppState, subscribeAppState } from '../state/app-state.js';
 import { reportControllerError, applyProfileToForm } from './controller-shared.js';
 import { calculateProfile, changeDate, handleImportData, saveCurrentWeight } from './profile-controller.js';
 import { handleFileSelect, startAnalysis, tryCloseAnalysisModal, applyUsageLimitState } from './analysis-controller.js';
 import { addManualFood, saveToFavorites, saveAIResultToFavorites } from './record-controller.js';
+import { syncAppStateUI } from '../ui/app-state-ui.js';
+
+let hasRegisteredAppStateSubscription = false;
+
+function registerAppStateSubscription() {
+    if (hasRegisteredAppStateSubscription) return;
+
+    subscribeAppState((state, previousState, meta = {}) => {
+        syncAppStateUI(state, previousState, meta);
+    });
+
+    hasRegisteredAppStateSubscription = true;
+}
 
 async function registerServiceWorker() {
     try {
@@ -136,7 +144,7 @@ export function setupEventListeners() {
         option.addEventListener('click', function onLangOptionClick() {
             const lang = this.getAttribute('data-lang');
             closeModal('lang-modal');
-            setLang(lang);
+            dispatchAppAction('SET_LANGUAGE', { lang });
         });
     });
 
@@ -151,6 +159,7 @@ export function bootstrapApp() {
 
     try {
         initializeAppData();
+        initializeAppState();
     } catch (error) {
         reportControllerError('Initialize App Data Error', error);
     }
@@ -163,17 +172,23 @@ export function bootstrapApp() {
 
     try {
         setupEventListeners();
+        registerAppStateSubscription();
     } catch (error) {
         reportControllerError('Event Listeners Error', error);
     }
 
     try {
-        setTheme(curTheme);
-        setLang(curLang, { refreshAppState: false });
-        const curDateEl = document.getElementById('current-date');
-        if (curDateEl) curDateEl.value = selectedDate;
+        const profile = loadProfile();
+        applyProfileToForm(profile);
     } catch (error) {
-        reportControllerError('Theme/Lang UI Error', error);
+        reportControllerError('Profile Form Hydration Error', error);
+    }
+
+    try {
+        loadFoodData(selectedDate);
+        refreshAppState({}, { reason: 'bootstrap:hydrate' });
+    } catch (error) {
+        reportControllerError('Load Food Data Error', error);
     }
 
     try {
@@ -181,34 +196,12 @@ export function bootstrapApp() {
         if (applyProfileToForm(profile)) {
             calculateProfile(true, {
                 persist: false,
+                refreshMeals: false,
                 renderList: false
             });
-        } else {
-            updateMealUI();
         }
     } catch (error) {
-        reportControllerError('Profile/MealUI Error', error);
-    }
-
-    try {
-        loadFoodData(selectedDate);
-    } catch (error) {
-        reportControllerError('Load Food Data Error', error);
-    }
-
-    try {
-        const weight = loadWeightData(selectedDate);
-        if (weight !== null && document.getElementById('daily-weight-input')) {
-            document.getElementById('daily-weight-input').value = weight;
-        }
-    } catch (error) {
-        reportControllerError('Load Weight Error', error);
-    }
-
-    try {
-        renderListAndStats();
-    } catch (error) {
-        reportControllerError('Render Stats Error', error);
+        reportControllerError('Profile Plan Hydration Error', error);
     }
 
     try {

@@ -4,8 +4,7 @@ import { curLang } from '../data.js';
 export let uiActions = {
     confirmAddFood: null,
     deleteItem: null,
-    addRecordToFav: null,
-    addFavoriteFoodToMeal: null
+    addRecordToFav: null
 };
 
 let pendingFavoriteIndex = null;

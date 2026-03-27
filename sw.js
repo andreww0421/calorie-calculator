@@ -1,10 +1,10 @@
-const CACHE_NAME = 'woof-cal-v3';
+const CACHE_NAME = 'woof-cal-v4';
 const APP_SHELL = [
   './',
   './index.html',
   './style.css',
   './manifest.json',
-  './favicon.svg',
+  './calorie_icon.png',
   './pet_placeholder.svg',
   './js/app.js',
   './js/api.js',

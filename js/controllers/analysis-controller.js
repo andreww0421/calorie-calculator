@@ -1,10 +1,6 @@
 import { toBase64 } from '../utils.js';
-import {
-    tempAIResult,
-    tempAIResultSaved,
-    setTempAIResult,
-    setTempAIResultSaved
-} from '../data.js';
+import { dispatchAppAction } from '../state/app-actions.js';
+import { getAppState } from '../state/app-state.js';
 import { callCloudflareAI, callCloudflareAIText } from '../api.js';
 import { normalizeAIAnalysisResult } from '../domain/ai-analysis-domain.js';
 import { DAILY_LIMIT, isDevMode } from '../env.js';
@@ -15,7 +11,7 @@ import {
     showPreviewImage
 } from '../platform.js';
 import { buildAIErrorFeedback } from '../analysis-errors.js';
-import { closeModal, showModal, showToast } from '../ui.js';
+import { closeModal, showToast } from '../ui.js';
 import { getTranslations, reportControllerError } from './controller-shared.js';
 import { loadUsageState, saveUsageState } from '../storage.js';
 
@@ -48,14 +44,14 @@ export function setupTurnstileHandlers() {
 
 export function tryCloseAnalysisModal() {
     const t = getTranslations();
-    if (tempAIResult && !tempAIResultSaved) {
+    const state = getAppState();
+    if (state.tempAIResult && !state.tempAIResultSaved) {
         if (!confirm(t.unsavedWarning || 'Your AI analysis is not saved yet. Close anyway?')) {
             return;
         }
     }
 
-    setTempAIResult(null);
-    setTempAIResultSaved(false);
+    dispatchAppAction('CLEAR_TEMP_AI_RESULT');
     closeModal('analysis-modal');
 }
 
@@ -217,24 +213,26 @@ export function startAnalysis() {
         if (!result) return;
         const normalized = normalizeAIAnalysisResult(result);
         incrementUsageCount();
-        setTempAIResult({
-            name: normalized.foodName,
-            nutri: {
-                calories: normalized.calories,
-                protein: normalized.protein,
-                fat: normalized.fat,
-                carbohydrate: normalized.carbohydrate,
-                sugar: normalized.sugar,
-                sodium: normalized.sodium,
-                saturatedFat: normalized.saturatedFat,
-                transFat: normalized.transFat,
-                fiber: normalized.fiber
+        dispatchAppAction('SET_TEMP_AI_RESULT', {
+            result: {
+                name: normalized.foodName,
+                nutri: {
+                    calories: normalized.calories,
+                    protein: normalized.protein,
+                    fat: normalized.fat,
+                    carbohydrate: normalized.carbohydrate,
+                    sugar: normalized.sugar,
+                    sodium: normalized.sodium,
+                    saturatedFat: normalized.saturatedFat,
+                    transFat: normalized.transFat,
+                    fiber: normalized.fiber
+                },
+                items: normalized.items,
+                healthScore: normalized.healthScore
             },
-            items: normalized.items,
-            healthScore: normalized.healthScore
+            saved: false,
+            openModal: true
         });
-        setTempAIResultSaved(false);
-        showModal();
     };
 
     const handleError = (error) => {

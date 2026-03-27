@@ -1,21 +1,15 @@
 import {
     saveWeightData,
     selectedDate,
-    saveProfile,
     importData,
-    setTargetCalories,
-    setCurrentMealMode,
-    setCurrentGoalType,
-    loadWeightData,
-    loadFoodData,
-    setSelectedDate
+    saveProfile
 } from '../data.js';
 import { reloadApp } from '../platform.js';
-import { renderListAndStats, showToast, updateMealUI } from '../ui.js';
+import { showToast } from '../ui.js';
+import { dispatchAppAction } from '../state/app-actions.js';
+import { refreshAppState } from '../state/app-state.js';
 import { getTranslations, readProfileForm, reportControllerError } from './controller-shared.js';
-import { getDisplayDateLabel, getGoalUiText } from '../ui/locale-ui.js';
 import { calculateProfilePlan } from '../domain/profile-domain.js';
-import { renderProfileGoalResult } from '../ui/profile-ui.js';
 
 export async function handleImportData(input) {
     const t = getTranslations();
@@ -36,7 +30,6 @@ export async function handleImportData(input) {
 
 export function calculateProfile(auto = false, options = {}) {
     const t = getTranslations();
-    const goalUi = getGoalUiText();
     const formProfile = readProfileForm();
     const profilePlan = calculateProfilePlan(formProfile);
 
@@ -45,23 +38,12 @@ export function calculateProfile(auto = false, options = {}) {
         return null;
     }
 
-    setTargetCalories(profilePlan.targetCalories);
-    setCurrentMealMode(formProfile.mealMode || profilePlan.mealMode || '4');
-    setCurrentGoalType(profilePlan.goalType);
-
-    renderProfileGoalResult(profilePlan, t, goalUi);
-
-    if (options.persist !== false) {
-        saveProfile(formProfile);
-    }
-
-    if (options.refreshMeals !== false) {
-        updateMealUI();
-    }
-
-    if (options.renderList !== false) {
-        renderListAndStats();
-    }
+    dispatchAppAction('APPLY_PROFILE_PLAN', {
+        profile: formProfile,
+        goalType: profilePlan.goalType,
+        targetCalories: profilePlan.targetCalories,
+        persist: options.persist !== false
+    });
 
     return profilePlan;
 }
@@ -76,13 +58,7 @@ export function refreshProfilePresentation() {
 
 export function changeDate() {
     const nextDate = document.getElementById('current-date').value;
-    setSelectedDate(nextDate);
-    document.getElementById('display-date-text').innerText = getDisplayDateLabel(nextDate);
-    loadFoodData(nextDate);
-
-    const weight = loadWeightData(nextDate);
-    document.getElementById('daily-weight-input').value = weight !== null ? weight : '';
-    renderListAndStats();
+    dispatchAppAction('SET_SELECTED_DATE', { date: nextDate });
 }
 
 export function saveCurrentWeight() {
@@ -92,11 +68,13 @@ export function saveCurrentWeight() {
     if (saveWeightData(selectedDate, weightValue)) {
         showToast(t.alertWeightSaved || 'Weight saved.', 'success');
         document.getElementById('weight').value = weightValue;
-        saveProfile(readProfileForm());
+        const profile = readProfileForm();
         if (document.getElementById('goal-result')?.style.display === 'block') {
             calculateProfile(true);
+        } else {
+            saveProfile(profile);
+            refreshAppState({ profile }, { reason: 'weight:save' });
         }
-        if (typeof updateProfileStats === 'function') updateProfileStats();
         return true;
     }
 
