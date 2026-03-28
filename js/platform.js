@@ -13,7 +13,9 @@ const turnstileState = {
     widgetId: null,
     initialized: false,
     unavailableReason: '',
-    lastErrorCode: ''
+    lastErrorCode: '',
+    isExecuting: false,
+    lastToken: ''
 };
 
 function getTurnstileInstance() {
@@ -90,6 +92,8 @@ export function markTurnstileUnavailable(reason = 'TURNSTILE_UNAVAILABLE') {
     turnstileState.unavailableReason = String(reason || 'TURNSTILE_UNAVAILABLE');
     turnstileState.lastErrorCode = String(reason || 'TURNSTILE_UNAVAILABLE');
     turnstileState.initialized = false;
+    turnstileState.isExecuting = false;
+    turnstileState.lastToken = '';
     setTurnstileContainerVisibility(false);
 }
 
@@ -99,6 +103,8 @@ export function getTurnstileStatus() {
         initialized: turnstileState.initialized,
         unavailableReason: turnstileState.unavailableReason,
         lastErrorCode: turnstileState.lastErrorCode,
+        isExecuting: turnstileState.isExecuting,
+        hasToken: Boolean(turnstileState.lastToken),
         supportedHost: isAllowedTurnstileHostname(),
         available: isAllowedTurnstileHostname()
             && Boolean(getTurnstileInstance())
@@ -135,17 +141,22 @@ export async function initializeTurnstileWidget(selector = TURNSTILE_WIDGET_SELE
                 turnstileState.widgetId = instance.render(selector, {
                     sitekey: TURNSTILE_SITE_KEY,
                     size: 'invisible',
+                    execution: 'execute',
                     retry: 'never',
+                    callback: (token) => {
+                        turnstileState.isExecuting = false;
+                        turnstileState.lastToken = String(token || '');
+                    },
+                    'expired-callback': () => {
+                        turnstileState.isExecuting = false;
+                        turnstileState.lastToken = '';
+                    },
                     'timeout-callback': () => window.onTurnstileTimeout?.(),
                     'error-callback': (errorCode) => window.onTurnstileError?.(errorCode)
                 });
             }
 
             turnstileState.initialized = true;
-            try {
-                instance.execute(turnstileState.widgetId);
-            } catch {}
-
             return getTurnstileStatus();
         })().catch((error) => {
             markTurnstileUnavailable(error?.message || 'TURNSTILE_SCRIPT_LOAD_FAILED');
@@ -160,7 +171,9 @@ export function getTurnstileToken(selector = TURNSTILE_WIDGET_SELECTOR) {
     const instance = getTurnstileInstance();
     if (!instance) return null;
     try {
-        return instance.getResponse(getTurnstileHandle(selector)) || null;
+        const token = instance.getResponse(getTurnstileHandle(selector)) || null;
+        turnstileState.lastToken = token || '';
+        return token;
     } catch {
         return null;
     }
@@ -169,6 +182,8 @@ export function getTurnstileToken(selector = TURNSTILE_WIDGET_SELECTOR) {
 export function resetTurnstile(selector = TURNSTILE_WIDGET_SELECTOR) {
     const instance = getTurnstileInstance();
     if (!instance || turnstileState.unavailableReason) return;
+    turnstileState.isExecuting = false;
+    turnstileState.lastToken = '';
     try {
         instance.reset(getTurnstileHandle(selector));
     } catch {}
@@ -176,10 +191,15 @@ export function resetTurnstile(selector = TURNSTILE_WIDGET_SELECTOR) {
 
 export function executeTurnstile(selector = TURNSTILE_WIDGET_SELECTOR) {
     const instance = getTurnstileInstance();
-    if (!instance || turnstileState.unavailableReason) return;
+    if (!instance || turnstileState.unavailableReason || turnstileState.isExecuting) return false;
+    turnstileState.isExecuting = true;
     try {
         instance.execute(getTurnstileHandle(selector));
-    } catch {}
+        return true;
+    } catch {
+        turnstileState.isExecuting = false;
+        return false;
+    }
 }
 
 export function refreshTurnstile(selector = TURNSTILE_WIDGET_SELECTOR) {
@@ -190,11 +210,15 @@ export function refreshTurnstile(selector = TURNSTILE_WIDGET_SELECTOR) {
 
 export function registerTurnstileCallbacks({ onTimeout, onError } = {}) {
     window.onTurnstileTimeout = () => {
+        turnstileState.isExecuting = false;
+        turnstileState.lastToken = '';
         if (typeof onTimeout === 'function') onTimeout();
         return true;
     };
 
     window.onTurnstileError = (errorCode) => {
+        turnstileState.isExecuting = false;
+        turnstileState.lastToken = '';
         turnstileState.lastErrorCode = String(errorCode || '');
         if (typeof onError === 'function') onError(errorCode);
         return true;

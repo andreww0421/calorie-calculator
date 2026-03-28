@@ -1,6 +1,7 @@
 import { WORKER_URL } from './env.js';
 import { getAppState } from './state/app-state.js';
 import {
+    executeTurnstile,
     getTurnstileToken,
     getTurnstileStatus,
     initializeTurnstileWidget,
@@ -25,6 +26,7 @@ async function postToWorker(payload, logLabel) {
             throw new Error('TURNSTILE_UNAVAILABLE');
         }
 
+        executeTurnstile();
         throw new Error("Turnstile_Pending");
     }
 

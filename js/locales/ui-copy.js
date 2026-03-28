@@ -1,3 +1,5 @@
+import zhTWUiCopy from './ui-copy-zh-TW.js';
+
 export const uiCopyCatalog = {
     'zh-TW': {
         extra: {
@@ -492,3 +494,5 @@ export const uiCopyCatalog = {
         }
     }
 };
+
+uiCopyCatalog['zh-TW'] = zhTWUiCopy;

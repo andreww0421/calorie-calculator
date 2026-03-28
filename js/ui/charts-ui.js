@@ -1,6 +1,7 @@
 import { createDailyViewModel, getAppState } from '../state/app-state.js';
 import { createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions } from './shared-ui.js';
+import { executeTurnstile, initializeTurnstileWidget } from '../platform.js';
 import { showDetailModal } from './detail-ui.js';
 import { buildCoachContent, formatNutritionInline, getExtraUiText } from './locale-ui.js';
 import { buildDailyCoaching } from '../domain/nutrition-domain.js';
@@ -115,6 +116,13 @@ export function switchView(targetId) {
 
     if (targetId === 'view-dashboard') {
         void ensureDashboardChartsReady();
+        return;
+    }
+
+    if (targetId === 'view-ai') {
+        void initializeTurnstileWidget().then(() => {
+            executeTurnstile();
+        });
     }
 }
 
