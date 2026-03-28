@@ -1,5 +1,5 @@
-import { curLang } from './data.js';
 import { WORKER_URL } from './env.js';
+import { getAppState } from './state/app-state.js';
 import {
     getTurnstileToken,
     refreshTurnstile,
@@ -21,7 +21,7 @@ async function postToWorker(payload, logLabel) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 turnstileToken,
-                lang: curLang || 'zh-TW',
+                lang: getAppState().curLang || 'zh-TW',
                 ...payload
             })
         });
@@ -55,14 +55,14 @@ export async function callCloudflareAI(base64, userDesc, mimeType = 'image/jpeg'
         userDesc: userDesc || "",
         mimeType
     }, "Sending AI request...");
-    return extractAnalysisFromGeminiPayload(data);
+    return data?.result || extractAnalysisFromGeminiPayload(data);
 }
 
 export async function callCloudflareAIText(userText) {
     const data = await postToWorker({
         userText: userText || ""
     }, "Sending Text-only AI request...");
-    return extractAnalysisFromGeminiPayload(data);
+    return data?.result || extractAnalysisFromGeminiPayload(data);
 }
 
 export async function recalculateFromItems(items) {

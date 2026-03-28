@@ -1,4 +1,4 @@
-const CACHE_NAME = 'woof-cal-v4';
+const CACHE_NAME = 'woof-cal-v5';
 const APP_SHELL = [
   './',
   './index.html',
@@ -9,7 +9,6 @@ const APP_SHELL = [
   './js/app.js',
   './js/api.js',
   './js/config.js',
-  './js/data.js',
   './js/ui.js',
   './js/utils.js'
 ];

@@ -1,9 +1,5 @@
-import {
-    foodItems,
-    favoriteFoods,
-    tempAIResult
-} from '../data.js';
 import { dispatchAppAction } from '../state/app-actions.js';
+import { getAppState } from '../state/app-state.js';
 import { closeModal, showEatingAnimation, showToast } from '../ui.js';
 import { getTranslations } from './controller-shared.js';
 
@@ -61,11 +57,12 @@ export function deleteItem(index) {
 }
 
 export function addRecordToFav(index) {
-    const item = foodItems[index];
+    const state = getAppState();
+    const item = state.foodItems[index];
     const t = getTranslations();
     if (!item) return;
 
-    if (favoriteFoods.some((favorite) => favorite.name === item.name)) {
+    if (state.favoriteFoods.some((favorite) => favorite.name === item.name)) {
         showToast(t.alertFavExist || 'This food is already saved in favorites.', 'error');
         return;
     }
@@ -82,6 +79,7 @@ export function addRecordToFav(index) {
 }
 
 export function confirmAddFood(type) {
+    const { tempAIResult } = getAppState();
     if (!tempAIResult) return;
 
     appendFoodItem({
@@ -135,7 +133,7 @@ export function saveToFavorites() {
         showToast(t.alertNameCal || 'Enter name and calories.', 'error');
         return;
     }
-    if (favoriteFoods.some((favorite) => favorite.name === name)) {
+    if (getAppState().favoriteFoods.some((favorite) => favorite.name === name)) {
         showToast(t.alertFavExist || 'This food is already saved in favorites.', 'error');
         return;
     }
@@ -162,6 +160,7 @@ export function saveToFavorites() {
 }
 
 export function saveAIResultToFavorites() {
+    const { tempAIResult, favoriteFoods } = getAppState();
     if (!tempAIResult) return;
     const t = getTranslations();
 

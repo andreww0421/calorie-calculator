@@ -1,3 +1,12 @@
+import {
+    WorkerContractError,
+    buildGeminiPayload,
+    normalizeGeminiResponse,
+    parseRetryDelaySeconds,
+    validateAIRequestBody,
+    validateRequestSize
+} from './contract.js';
+
 const ipCache = new Map();
 const COOLDOWN_TIME = 15 * 1000;
 const MODEL_NAME = 'gemini-2.5-flash';
@@ -20,6 +29,7 @@ function buildCorsHeaders(env) {
         'Access-Control-Allow-Origin': getAllowedOrigin(env),
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
+        'Cache-Control': 'no-store',
         Vary: 'Origin'
     };
 }
@@ -35,60 +45,26 @@ function jsonResponse(env, body, status = 200, extraHeaders = {}) {
     });
 }
 
-function parseRetryDelaySeconds(details) {
-    if (!Array.isArray(details)) return null;
-    for (const detail of details) {
-        if (typeof detail?.retryDelay === 'string') {
-            const match = detail.retryDelay.match(/(\d+(?:\.\d+)?)s/i);
-            if (match) return Math.ceil(Number(match[1]));
-        }
-    }
-    return null;
-}
+function logJson(level, message, meta = {}) {
+    const payload = JSON.stringify({
+        message,
+        ...meta
+    });
 
-function buildGeminiPayload(requestBody, systemPrompt) {
-    if (requestBody.userText) {
-        return {
-            contents: [{
-                parts: [{
-                    text: `${systemPrompt}\n\nUser description:\n${requestBody.userText}`
-                }]
-            }]
-        };
+    if (level === 'error') {
+        console.error(payload);
+        return;
     }
 
-    if (requestBody.base64) {
-        let finalPrompt = systemPrompt;
-        if (requestBody.userDesc) {
-            finalPrompt += `\n\nExtra description:\n${requestBody.userDesc}`;
-        }
-
-        return {
-            contents: [{
-                parts: [
-                    { text: finalPrompt },
-                    {
-                        inline_data: {
-                            mime_type: requestBody.mimeType || 'image/jpeg',
-                            data: requestBody.base64
-                        }
-                    }
-                ]
-            }]
-        };
+    if (level === 'warn') {
+        console.warn(payload);
+        return;
     }
 
-    throw new Error('Please provide image or text input.');
+    console.log(payload);
 }
 
-function hasCandidateText(data) {
-    return Boolean(
-        data?.candidates?.[0]?.content?.parts?.[0]?.text &&
-        String(data.candidates[0].content.parts[0].text).trim()
-    );
-}
-
-function mapGeminiError(status, googleData, rawText) {
+function mapGeminiError(status, googleData, rawText, requestId) {
     const googleError = googleData?.error || {};
     const details = Array.isArray(googleError.details) ? googleError.details : [];
     const retryAfterSeconds = parseRetryDelaySeconds(details);
@@ -101,7 +77,8 @@ function mapGeminiError(status, googleData, rawText) {
                 error: {
                     code: 'AI_QUOTA_EXCEEDED',
                     message: 'AI service quota is exhausted. Please retry later.',
-                    retryAfterSeconds: retryAfterSeconds || 60
+                    retryAfterSeconds: retryAfterSeconds || 60,
+                    requestId
                 }
             }
         };
@@ -114,7 +91,8 @@ function mapGeminiError(status, googleData, rawText) {
             body: {
                 error: {
                     code: 'AI_BAD_REQUEST',
-                    message: 'AI request payload is invalid.'
+                    message: 'AI request payload is invalid.',
+                    requestId
                 }
             }
         };
@@ -127,27 +105,50 @@ function mapGeminiError(status, googleData, rawText) {
             body: {
                 error: {
                     code: 'AI_ACCESS_DENIED',
-                    message: 'AI provider denied this request.'
+                    message: 'AI provider denied this request.',
+                    requestId
                 }
             }
         };
     }
 
-    console.error('Gemini upstream error:', status, googleData || rawText);
+    logJson('error', 'gemini_upstream_error', {
+        requestId,
+        status,
+        upstreamStatus: googleError.status || null,
+        upstreamMessage: googleError.message || rawText || 'unknown'
+    });
+
     return {
         status: 502,
         headers: {},
         body: {
             error: {
                 code: 'AI_UPSTREAM_ERROR',
-                message: 'AI service is temporarily unavailable.'
+                message: 'AI service is temporarily unavailable.',
+                requestId
             }
         }
     };
 }
 
+function mapContractError(env, error, requestId) {
+    if (!(error instanceof WorkerContractError)) return null;
+
+    return jsonResponse(env, {
+        error: {
+            code: error.code,
+            message: error.message,
+            requestId,
+            ...error.details
+        }
+    }, error.status);
+}
+
 export default {
     async fetch(request, env) {
+        const requestId = crypto.randomUUID();
+
         if (request.method === 'OPTIONS') {
             return new Response(null, { status: 204, headers: buildCorsHeaders(env) });
         }
@@ -157,7 +158,8 @@ export default {
             return jsonResponse(env, {
                 error: {
                     code: 'FORBIDDEN_ORIGIN',
-                    message: 'Request origin is not allowed.'
+                    message: 'Request origin is not allowed.',
+                    requestId
                 }
             }, 403);
         }
@@ -166,12 +168,15 @@ export default {
             return jsonResponse(env, {
                 error: {
                     code: 'METHOD_NOT_ALLOWED',
-                    message: 'Only POST requests are allowed.'
+                    message: 'Only POST requests are allowed.',
+                    requestId
                 }
             }, 405, { Allow: 'POST, OPTIONS' });
         }
 
         try {
+            validateRequestSize(request);
+
             let requestBody;
             try {
                 requestBody = await request.json();
@@ -179,12 +184,15 @@ export default {
                 return jsonResponse(env, {
                     error: {
                         code: 'INVALID_JSON',
-                        message: 'Request body must be valid JSON.'
+                        message: 'Request body must be valid JSON.',
+                        requestId
                     }
                 }, 400);
             }
 
+            const validatedBody = validateAIRequestBody(requestBody);
             const clientIP = request.headers.get('CF-Connecting-IP') || '';
+
             if (clientIP) {
                 const now = Date.now();
                 const lastTime = ipCache.get(clientIP);
@@ -194,7 +202,8 @@ export default {
                         error: {
                             code: 'REQUEST_COOLDOWN',
                             message: `Please wait ${waitSec} seconds before retrying.`,
-                            retryAfterSeconds: waitSec
+                            retryAfterSeconds: waitSec,
+                            requestId
                         }
                     }, 429, { 'Retry-After': String(waitSec) });
                 }
@@ -202,28 +211,19 @@ export default {
                 if (ipCache.size > 5000) ipCache.clear();
             }
 
-            const turnstileToken = requestBody.turnstileToken;
-            if (!turnstileToken) {
-                return jsonResponse(env, {
-                    error: {
-                        code: 'TURNSTILE_MISSING',
-                        message: 'Turnstile token is missing.'
-                    }
-                }, 403);
-            }
-
             if (!env.TURNSTILE_SECRET_KEY || !env.GEMINI_API_KEY) {
                 return jsonResponse(env, {
                     error: {
                         code: 'SERVER_CONFIG_ERROR',
-                        message: 'Missing Worker secret configuration.'
+                        message: 'Missing Worker secret configuration.',
+                        requestId
                     }
                 }, 500);
             }
 
             const formData = new FormData();
             formData.append('secret', env.TURNSTILE_SECRET_KEY);
-            formData.append('response', turnstileToken);
+            formData.append('response', validatedBody.turnstileToken);
             if (clientIP) formData.append('remoteip', clientIP);
 
             const turnstileVerify = await fetch(
@@ -232,17 +232,22 @@ export default {
             );
             const turnstileOutcome = await turnstileVerify.json();
             if (!turnstileOutcome.success) {
+                logJson('warn', 'turnstile_invalid', {
+                    requestId,
+                    clientIP,
+                    outcomeCodes: turnstileOutcome['error-codes'] || []
+                });
                 return jsonResponse(env, {
                     error: {
                         code: 'TURNSTILE_INVALID',
-                        message: 'Security verification failed.'
+                        message: 'Security verification failed.',
+                        requestId
                     }
                 }, 403);
             }
 
-            const lang = requestBody.lang || 'zh-TW';
-            const systemPrompt = PROMPT_MAP[lang] || PROMPT_MAP['zh-TW'];
-            const geminiPayload = buildGeminiPayload(requestBody, systemPrompt);
+            const systemPrompt = PROMPT_MAP[validatedBody.lang] || PROMPT_MAP['zh-TW'];
+            const geminiPayload = buildGeminiPayload(validatedBody, systemPrompt);
             const googleUrl =
                 `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY.trim())}`;
 
@@ -253,29 +258,43 @@ export default {
             });
 
             const rawText = await googleResponse.text();
-            const googleData = rawText ? JSON.parse(rawText) : {};
+            let googleData = {};
+            try {
+                googleData = rawText ? JSON.parse(rawText) : {};
+            } catch {
+                googleData = {};
+            }
 
             if (!googleResponse.ok) {
-                const mapped = mapGeminiError(googleResponse.status, googleData, rawText);
+                const mapped = mapGeminiError(googleResponse.status, googleData, rawText, requestId);
                 return jsonResponse(env, mapped.body, mapped.status, mapped.headers);
             }
 
-            if (!hasCandidateText(googleData)) {
-                return jsonResponse(env, {
-                    error: {
-                        code: 'AI_INVALID_RESPONSE',
-                        message: 'AI provider returned an invalid response payload.'
-                    }
-                }, 502);
+            const result = normalizeGeminiResponse(googleData);
+            return jsonResponse(env, {
+                result,
+                requestId
+            }, 200);
+        } catch (error) {
+            const contractResponse = mapContractError(env, error, requestId);
+            if (contractResponse) {
+                logJson('warn', 'worker_contract_rejected', {
+                    requestId,
+                    code: error.code,
+                    status: error.status
+                });
+                return contractResponse;
             }
 
-            return jsonResponse(env, googleData, 200);
-        } catch (error) {
-            console.error('Worker fatal error:', error);
+            logJson('error', 'worker_fatal_error', {
+                requestId,
+                error: error instanceof Error ? error.message : String(error)
+            });
             return jsonResponse(env, {
                 error: {
                     code: 'INTERNAL_ERROR',
-                    message: 'Unexpected Worker error.'
+                    message: 'Unexpected Worker error.',
+                    requestId
                 }
             }, 500);
         }

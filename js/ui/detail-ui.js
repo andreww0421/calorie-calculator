@@ -1,15 +1,15 @@
-import { foodItems, favoriteFoods } from '../data.js';
+import { getAppState } from '../state/app-state.js';
 import { createElement, clearElement } from './dom-ui.js';
 import { getTexts } from './shared-ui.js';
 import { createItemSummaryList, createNutritionGrid, createScoreBadge } from './modal-content-ui.js';
 
 export function showDetailModal(index) {
-    const item = foodItems[index];
+    const item = getAppState().foodItems[index];
     if (item) renderDetailModal(item);
 }
 
 export function showFavDetailModal(index) {
-    const item = favoriteFoods[index];
+    const item = getAppState().favoriteFoods[index];
     if (item) renderDetailModal(item);
 }
 

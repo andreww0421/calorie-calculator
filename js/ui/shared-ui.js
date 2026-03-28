@@ -1,5 +1,5 @@
-import { i18n } from '../config.js';
-import { curLang } from '../data.js';
+import { getLocaleTranslations } from '../locales/index.js';
+import { getAppState } from '../state/app-state.js';
 
 export let uiActions = {
     confirmAddFood: null,
@@ -14,7 +14,7 @@ export function bindUIActions(nextActions = {}) {
 }
 
 export function getTexts() {
-    return i18n[curLang] || i18n['zh-TW'];
+    return getLocaleTranslations(getAppState().curLang);
 }
 
 export function showToast(message, type = 'info') {

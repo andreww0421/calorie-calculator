@@ -55,15 +55,17 @@ function createAIItemEditorRow(item, index) {
     return row;
 }
 
-function renderAnalysisContent(result = getAppState().tempAIResult) {
-    const data = result;
-    if (!data) return;
+function renderAnalysisLoading(content, text) {
+    clearElement(content);
+    content.appendChild(createElement('div', {
+        text,
+        style: { textAlign: 'center', padding: '30px' }
+    }));
+}
 
+function renderAnalysisResult(content, result) {
     const t = getTexts();
-    const content = document.getElementById('analysis-content');
-    const btnFavSave = document.getElementById('btn-ai-fav-save');
-    const modalBtns = document.getElementById('modal-meal-buttons');
-    if (!content) return;
+    const data = result;
 
     clearElement(content);
 
@@ -106,15 +108,93 @@ function renderAnalysisContent(result = getAppState().tempAIResult) {
 
     wrapper.appendChild(itemsSection);
     content.appendChild(wrapper);
+}
 
-    if (btnFavSave || modalBtns) setAnalysisActionVisibility(true);
+function getAnalysisStatusText(state) {
+    const t = getTexts();
+    const flow = state.analysisFlow || {};
+
+    if (flow.quotaExceeded) {
+        return t.aiQuotaExceededButton || 'AI daily limit reached';
+    }
+
+    if (flow.status === 'cooldown' && flow.cooldownRemaining > 0) {
+        return `Cooldown (${flow.cooldownRemaining}s)`;
+    }
+
+    return t.btnAnalyze || 'Analyze';
+}
+
+export function syncAnalysisView(state = getAppState()) {
+    const t = getTexts();
+    const flow = state.analysisFlow || {};
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const photoBtn = document.getElementById('btn-take-photo');
+    const imageUpload = document.getElementById('image-upload');
+    const loadingEl = document.getElementById('ai-loading');
+
+    if (loadingEl) {
+        const loadingText = loadingEl.querySelector('#txt-ai-loading');
+        if (loadingText) loadingText.textContent = t.aiLoading || 'AI is analyzing...';
+        loadingEl.style.display = ['analyzing', 'recalculating'].includes(flow.status) ? 'block' : 'none';
+    }
+
+    if (analyzeBtn) {
+        const isBusy = ['analyzing', 'recalculating'].includes(flow.status);
+        analyzeBtn.style.display = isBusy ? 'none' : 'inline-block';
+        analyzeBtn.disabled = flow.quotaExceeded || flow.status === 'cooldown';
+        analyzeBtn.style.opacity = analyzeBtn.disabled ? '0.6' : '';
+        analyzeBtn.style.cursor = analyzeBtn.disabled ? 'not-allowed' : '';
+        analyzeBtn.replaceChildren(
+            document.createTextNode('2. '),
+            Object.assign(document.createElement('span'), {
+                id: 'txt-analyze-btn',
+                textContent: getAnalysisStatusText(state)
+            })
+        );
+    }
+
+    const disableSourceInputs = flow.quotaExceeded || ['analyzing', 'recalculating', 'cooldown'].includes(flow.status);
+
+    if (photoBtn) {
+        photoBtn.disabled = disableSourceInputs;
+        photoBtn.style.opacity = disableSourceInputs ? '0.5' : '';
+        photoBtn.style.cursor = disableSourceInputs ? 'not-allowed' : '';
+    }
+
+    if (imageUpload) {
+        imageUpload.disabled = disableSourceInputs;
+    }
+}
+
+export function renderAnalysisModalState(state = getAppState(), meta = {}) {
+    const modal = document.getElementById('analysis-modal');
+    const content = document.getElementById('analysis-content');
+    if (!modal || !content) return;
+
+    if (!state.tempAIResult) {
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        }
+        return;
+    }
+
+    const isRecalculating = state.analysisFlow?.status === 'recalculating';
+    if (isRecalculating) {
+        setAnalysisActionVisibility(false);
+        renderAnalysisLoading(content, getTexts().aiLoading || 'AI is analyzing...');
+    } else {
+        renderAnalysisResult(content, state.tempAIResult);
+        setAnalysisActionVisibility(true);
+    }
+
+    if (meta.openModal || modal.style.display === 'flex') {
+        modal.style.display = 'flex';
+    }
 }
 
 export function showModal() {
-    const { tempAIResult } = getAppState();
-    if (!tempAIResult) return;
-    renderAnalysisContent(tempAIResult);
-    document.getElementById('analysis-modal').style.display = 'flex';
+    renderAnalysisModalState(getAppState(), { openModal: true });
 }
 
 export function addAIItem() {
@@ -144,21 +224,19 @@ export async function recalculateAI() {
         return;
     }
 
-    const content = document.getElementById('analysis-content');
-    setAnalysisActionVisibility(false);
-
-    if (content) {
-        clearElement(content);
-        content.appendChild(createElement('div', {
-            text: t.aiLoading || 'AI is analyzing...',
-            style: { textAlign: 'center', padding: '30px' }
-        }));
-    }
-
     dispatchAppAction('SET_TEMP_AI_ITEMS', {
         items,
         saved: false,
         syncModal: false
+    });
+    dispatchAppAction('SET_ANALYSIS_FLOW', {
+        flow: {
+            status: 'recalculating',
+            source: 'items',
+            isSoftError: false,
+            lastError: ''
+        },
+        reason: 'analysis:recalculate-start'
     });
 
     try {
@@ -189,7 +267,14 @@ export async function recalculateAI() {
             });
         }
     } catch (error) {
+        dispatchAppAction('SET_ANALYSIS_FLOW', {
+            flow: {
+                status: 'editing',
+                isSoftError: false,
+                lastError: formatAIRequestError(error, t)
+            },
+            reason: 'analysis:recalculate-error'
+        });
         showToast(formatAIRequestError(error, t), 'error');
     }
-
 }

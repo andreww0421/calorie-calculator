@@ -1,12 +1,6 @@
-import {
-    targetCalories,
-    currentMealMode,
-    curTheme,
-    setCurTheme,
-    persistTheme
-} from '../data.js';
-import { i18n } from '../config.js';
+import { getLocaleTranslations } from '../locales/index.js';
 import { dispatchAppAction } from '../state/app-actions.js';
+import { getAppState } from '../state/app-state.js';
 import { createButton, createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions, toggleFabMenu } from './shared-ui.js';
 import { updateChartTheme, updateMacroChartLanguage } from './charts-ui.js';
@@ -14,10 +8,137 @@ import { confirmFavoriteMeal } from './favorites-ui.js';
 import { getDisplayDateLabel, getExtraUiText, getGoalUiText } from './locale-ui.js';
 import { getMealPlan } from '../domain/nutrition-domain.js';
 
+const TEXT_BINDINGS = [
+    ['txt-date-label', ({ t }) => t.dateLabel],
+    ['txt-total-intake', ({ t }) => t.totalIntake],
+    ['txt-kcal-unit', () => 'kcal'],
+    ['txt-daily-summary-hint', ({ extra }) => extra.dailySummaryHint],
+    ['lbl-pro', ({ t }) => t.pro],
+    ['lbl-fat', ({ t }) => t.fat],
+    ['lbl-carb', ({ t }) => t.carb],
+    ['lbl-sugar', ({ t }) => t.sugar],
+    ['lbl-sod', ({ t }) => t.sod],
+    ['lbl-sat', ({ t }) => t.sat],
+    ['lbl-trans', ({ t }) => t.trans],
+    ['lbl-fiber', ({ t }) => t.fiber || 'Fiber'],
+    ['lbl-water', ({ t }) => t.water],
+    ['txt-chart-title', ({ t }) => t.chartTitle],
+    ['txt-ai-title', ({ t }) => t.aiTitle],
+    ['btn-take-photo', ({ t }) => t.btnPhoto],
+    ['txt-analyze-btn', ({ t }) => t.btnAnalyze],
+    ['txt-ai-loading', ({ t }) => t.aiLoading],
+    ['txt-record-title', ({ t }) => t.txtRecordTitle || t.recordTitle],
+    ['txt-manual-label', ({ t }) => t.txtManualLabel || t.manualLabel],
+    ['btn-add-record', ({ t }) => t.btnAddRecord || t.btnAdd],
+    ['btn-fav-save', ({ t }) => t.btnFavSave],
+    ['btn-fav-load', ({ t }) => t.btnFavLoad],
+    ['btn-fav-ai', ({ t }) => t.btnFavAi],
+    ['txt-settings-title', ({ t }) => t.settingsTitle],
+    ['lbl-gender', ({ t }) => t.gender],
+    ['opt-male', ({ t }) => t.male],
+    ['opt-female', ({ t }) => t.female],
+    ['lbl-age', ({ t }) => t.age],
+    ['lbl-height', ({ t }) => t.height],
+    ['lbl-weight', ({ t }) => t.txtWeightSettingsTitle || t.weight],
+    ['lbl-activity', ({ t }) => t.activity],
+    ['opt-act-1', ({ t }) => t.act1],
+    ['opt-act-2', ({ t }) => t.act2],
+    ['opt-act-3', ({ t }) => t.act3],
+    ['opt-act-4', ({ t }) => t.act4],
+    ['lbl-goal-type', ({ goalUi }) => goalUi.goalTypeLabel],
+    ['opt-goal-lose', ({ goalUi }) => goalUi.goalTypes.lose],
+    ['opt-goal-maintain', ({ goalUi }) => goalUi.goalTypes.maintain],
+    ['opt-goal-gain', ({ goalUi }) => goalUi.goalTypes.gain],
+    ['lbl-meal-mode', ({ t }) => t.mealMode],
+    ['opt-mode-4', ({ t }) => t.mode4],
+    ['opt-mode-3', ({ t }) => t.mode3],
+    ['opt-mode-2', ({ t }) => t.mode2],
+    ['opt-mode-1', ({ t }) => t.mode1],
+    ['btn-calc', ({ t }) => t.btnCalc],
+    ['txt-res-tdee', ({ t }) => t.resTdee],
+    ['txt-res-target', ({ t }) => t.resTarget],
+    ['txt-modal-title', ({ t }) => t.modalTitle],
+    ['txt-modal-ask', ({ t }) => t.modalAsk],
+    ['btn-cancel', ({ t }) => t.btnCancel],
+    ['txt-fav-title', ({ t }) => t.favTitle],
+    ['btn-fav-close', ({ t }) => t.btnClose],
+    ['txt-fav-meal-title', ({ t }) => t.favTitle],
+    ['txt-fav-meal-ask', ({ t }) => t.favTitle],
+    ['btn-fav-meal-close', ({ t }) => t.btnCancel],
+    ['menu-import-setting', ({ t }) => t.menuImport],
+    ['menu-export-setting', ({ t }) => t.menuExport],
+    ['menu-theme-setting', ({ t }) => t.menuTheme],
+    ['menu-lang-setting', ({ t }) => t.menuLang],
+    ['txt-lang-title', ({ t }) => t.langTitle],
+    ['btn-lang-cancel', ({ t }) => t.langCancel],
+    ['txt-weight-title', ({ t }) => t.weightTitle],
+    ['btn-save-weight', ({ t }) => t.btnSaveWeight],
+    ['txt-weight-chart-title', ({ t }) => t.weightChartTitle],
+    ['txt-text-ai-label', ({ t }) => t.textAiLabel],
+    ['txt-app-settings-title', ({ t }) => t.appSettingsTitle],
+    ['nav-daily', ({ t }) => t.navDaily],
+    ['nav-dashboard', ({ t }) => t.navDashboard],
+    ['nav-settings', ({ t }) => t.navSettings],
+    ['txt-target-cal-display-label', ({ t }) => t.txtTargetCalDisplayUnit],
+    ['txt-tdee-unit', ({ t }) => t.txtTdeeUnit],
+    ['txt-cal-trend-title', ({ t }) => t.chartCalTrend],
+    ['txt-protein-trend-title', ({ t }) => t.chartProteinTrend],
+    ['btn-chart-7d', ({ t }) => t.chart7d],
+    ['btn-chart-30d', ({ t }) => t.chart30d],
+    ['txt-detail-title', ({ t }) => t.detailTitle],
+    ['btn-detail-close', ({ t }) => t.btnDetailClose],
+    ['txt-empty-eyebrow', ({ extra }) => extra.emptyStateEyebrow],
+    ['txt-empty-title', ({ extra }) => extra.emptyStateTitle],
+    ['txt-empty-copy', ({ extra }) => extra.emptyStateBody],
+    ['txt-ai-guide-eyebrow', ({ extra }) => extra.aiGuideEyebrow],
+    ['txt-ai-guide-title', ({ extra }) => extra.aiGuideTitle],
+    ['txt-ai-guide-copy', ({ extra }) => extra.aiGuideBody],
+    ['txt-ai-guide-tip-1', ({ extra }) => extra.aiGuideTip1],
+    ['txt-ai-guide-tip-2', ({ extra }) => extra.aiGuideTip2],
+    ['txt-ai-guide-tip-3', ({ extra }) => extra.aiGuideTip3]
+];
+
+const PLACEHOLDER_BINDINGS = [
+    ['manual-name', ({ t }) => t.phFoodName || 'Food Name (Required)'],
+    ['manual-cal', ({ t }) => t.phFoodCal || 'Calories (kcal)'],
+    ['ai-desc', ({ t }) => t.aiDescPlaceholder],
+    ['daily-weight-input', ({ t }) => t.weightInputPlaceholder],
+    ['ai-text-desc', ({ t }) => t.textAiPlaceholder],
+    ['manual-pro', ({ t }) => t.phPro],
+    ['manual-fat', ({ t }) => t.phFat],
+    ['manual-carb', ({ t }) => t.phCarb],
+    ['manual-sugar', ({ t }) => t.phSugar],
+    ['manual-sod', ({ t }) => t.phSod],
+    ['manual-sat', ({ t }) => t.phSat],
+    ['manual-trans', ({ t }) => t.phTrans],
+    ['manual-fiber', ({ t }) => t.phFiber || t.fiber || 'Fiber']
+];
+
+function applyTextBindings(bindings, context) {
+    bindings.forEach(([id, resolver]) => {
+        const el = document.getElementById(id);
+        const value = resolver(context);
+        if (el && value !== undefined) {
+            el.innerText = value;
+        }
+    });
+}
+
+function applyPlaceholderBindings(bindings, context) {
+    bindings.forEach(([id, resolver]) => {
+        const el = document.getElementById(id);
+        const value = resolver(context);
+        if (el && value) {
+            el.placeholder = value;
+        }
+    });
+}
+
 export function updateMealUI() {
+    const state = getAppState();
     const t = getTexts();
     const m = t.meals || {};
-    const mealPlan = getMealPlan(currentMealMode, m, targetCalories);
+    const mealPlan = getMealPlan(state.currentMealMode, m, state.targetCalories);
     const container = document.getElementById('meal-sections-container');
     const manualSelect = document.getElementById('manual-type');
     const modalBtns = document.getElementById('modal-meal-buttons');
@@ -71,6 +192,7 @@ export function updateMealUI() {
 }
 
 export function toggleTheme() {
+    const { curTheme } = getAppState();
     dispatchAppAction('SET_THEME', {
         theme: curTheme === 'light' ? 'dark' : 'light'
     });
@@ -78,9 +200,9 @@ export function toggleTheme() {
 
 export function setTheme(theme, options = {}) {
     const { persist = false } = options;
-    setCurTheme(theme);
     if (persist) {
-        persistTheme(theme);
+        dispatchAppAction('SET_THEME', { theme });
+        return;
     }
     document.documentElement.setAttribute('data-theme', theme);
     updateChartTheme(theme);
@@ -98,107 +220,15 @@ export function openLangModal() {
 }
 
 export function setLang(lang) {
-    const t = i18n[lang] || i18n['zh-TW'];
+    const t = getLocaleTranslations(lang);
     const extra = getExtraUiText(lang);
     const goalUi = getGoalUiText(lang);
+    const context = { t, extra, goalUi };
     document.title = extra.metaTitle || t.appTitle || 'Woof Cal';
     document.documentElement.lang = lang;
     document.documentElement.dir = extra.direction || 'ltr';
 
-    const mapping = {
-        'txt-date-label': t.dateLabel,
-        'txt-total-intake': t.totalIntake,
-        'txt-kcal-unit': 'kcal',
-        'txt-daily-summary-hint': extra.dailySummaryHint,
-        'lbl-pro': t.pro,
-        'lbl-fat': t.fat,
-        'lbl-carb': t.carb,
-        'lbl-sugar': t.sugar,
-        'lbl-sod': t.sod,
-        'lbl-sat': t.sat,
-        'lbl-trans': t.trans,
-        'lbl-fiber': t.fiber || 'Fiber',
-        'lbl-water': t.water,
-        'txt-chart-title': t.chartTitle,
-        'txt-ai-title': t.aiTitle,
-        'btn-take-photo': t.btnPhoto,
-        'txt-analyze-btn': t.btnAnalyze,
-        'txt-ai-loading': t.aiLoading,
-        'txt-record-title': t.txtRecordTitle || t.recordTitle,
-        'txt-manual-label': t.txtManualLabel || t.manualLabel,
-        'btn-add-record': t.btnAddRecord || t.btnAdd,
-        'btn-fav-save': t.btnFavSave,
-        'btn-fav-load': t.btnFavLoad,
-        'btn-fav-ai': t.btnFavAi,
-        'txt-settings-title': t.settingsTitle,
-        'lbl-gender': t.gender,
-        'opt-male': t.male,
-        'opt-female': t.female,
-        'lbl-age': t.age,
-        'lbl-height': t.height,
-        'lbl-weight': t.txtWeightSettingsTitle || t.weight,
-        'lbl-activity': t.activity,
-        'opt-act-1': t.act1,
-        'opt-act-2': t.act2,
-        'opt-act-3': t.act3,
-        'opt-act-4': t.act4,
-        'lbl-goal-type': goalUi.goalTypeLabel,
-        'opt-goal-lose': goalUi.goalTypes.lose,
-        'opt-goal-maintain': goalUi.goalTypes.maintain,
-        'opt-goal-gain': goalUi.goalTypes.gain,
-        'lbl-meal-mode': t.mealMode,
-        'opt-mode-4': t.mode4,
-        'opt-mode-3': t.mode3,
-        'opt-mode-2': t.mode2,
-        'opt-mode-1': t.mode1,
-        'btn-calc': t.btnCalc,
-        'txt-res-tdee': t.resTdee,
-        'txt-res-target': t.resTarget,
-        'txt-modal-title': t.modalTitle,
-        'txt-modal-ask': t.modalAsk,
-        'btn-cancel': t.btnCancel,
-        'txt-fav-title': t.favTitle,
-        'btn-fav-close': t.btnClose,
-        'txt-fav-meal-title': t.favTitle,
-        'txt-fav-meal-ask': t.favTitle,
-        'btn-fav-meal-close': t.btnCancel,
-        'menu-import-setting': t.menuImport,
-        'menu-export-setting': t.menuExport,
-        'menu-theme-setting': t.menuTheme,
-        'menu-lang-setting': t.menuLang,
-        'txt-lang-title': t.langTitle,
-        'btn-lang-cancel': t.langCancel,
-        'txt-weight-title': t.weightTitle,
-        'btn-save-weight': t.btnSaveWeight,
-        'txt-weight-chart-title': t.weightChartTitle,
-        'txt-text-ai-label': t.textAiLabel,
-        'txt-app-settings-title': t.appSettingsTitle,
-        'nav-daily': t.navDaily,
-        'nav-dashboard': t.navDashboard,
-        'nav-settings': t.navSettings,
-        'txt-target-cal-display-label': t.txtTargetCalDisplayUnit,
-        'txt-tdee-unit': t.txtTdeeUnit,
-        'txt-cal-trend-title': t.chartCalTrend,
-        'txt-protein-trend-title': t.chartProteinTrend,
-        'btn-chart-7d': t.chart7d,
-        'btn-chart-30d': t.chart30d,
-        'txt-detail-title': t.detailTitle,
-        'btn-detail-close': t.btnDetailClose,
-        'txt-empty-eyebrow': extra.emptyStateEyebrow,
-        'txt-empty-title': extra.emptyStateTitle,
-        'txt-empty-copy': extra.emptyStateBody,
-        'txt-ai-guide-eyebrow': extra.aiGuideEyebrow,
-        'txt-ai-guide-title': extra.aiGuideTitle,
-        'txt-ai-guide-copy': extra.aiGuideBody,
-        'txt-ai-guide-tip-1': extra.aiGuideTip1,
-        'txt-ai-guide-tip-2': extra.aiGuideTip2,
-        'txt-ai-guide-tip-3': extra.aiGuideTip3
-    };
-
-    Object.entries(mapping).forEach(([id, value]) => {
-        const el = document.getElementById(id);
-        if (el && value !== undefined) el.innerText = value;
-    });
+    applyTextBindings(TEXT_BINDINGS, context);
 
     const displayDateText = document.getElementById('display-date-text');
     const currentDateValue = document.getElementById('current-date')?.value;
@@ -226,25 +256,6 @@ export function setLang(lang) {
     const navAiBadge = document.querySelector('.nav-item.nav-ai .ai-badge');
     if (navAiBadge) navAiBadge.innerText = t.navAi || 'AI';
 
-    const placeholders = {
-        'manual-name': t.phFoodName || 'Food Name (Required)',
-        'manual-cal': t.phFoodCal || 'Calories (kcal)',
-        'ai-desc': t.aiDescPlaceholder,
-        'daily-weight-input': t.weightInputPlaceholder,
-        'ai-text-desc': t.textAiPlaceholder,
-        'manual-pro': t.phPro,
-        'manual-fat': t.phFat,
-        'manual-carb': t.phCarb,
-        'manual-sugar': t.phSugar,
-        'manual-sod': t.phSod,
-        'manual-sat': t.phSat,
-        'manual-trans': t.phTrans,
-        'manual-fiber': t.phFiber || t.fiber || 'Fiber'
-    };
-
-    Object.entries(placeholders).forEach(([id, value]) => {
-        const el = document.getElementById(id);
-        if (el && value) el.placeholder = value;
-    });
+    applyPlaceholderBindings(PLACEHOLDER_BINDINGS, context);
     updateMacroChartLanguage(t);
 }

@@ -1,19 +1,12 @@
-import {
-    curLang,
-    curTheme,
-    currentGoalType,
-    currentMealMode,
-    favoriteFoods,
-    foodItems,
-    getCalorieHistory,
-    loadWeightData,
-    loadProfile,
-    selectedDate,
-    tempAIResult,
-    tempAIResultSaved,
-    targetCalories
-} from '../data.js';
+import { getFoodCalorieHistory, loadFoodLog } from '../repositories/food-log-repository.js';
+import { loadFavoriteFoods } from '../repositories/favorites-repository.js';
+import { loadProfileRecord } from '../repositories/profile-repository.js';
+import { loadAppLanguage, loadAppTheme } from '../repositories/settings-repository.js';
+import { loadDailyUsage } from '../repositories/usage-repository.js';
+import { loadWeight } from '../repositories/weight-repository.js';
 import { summarizeNutrition } from '../domain/nutrition-domain.js';
+import { DAILY_LIMIT } from '../env.js';
+import { getLocalDateString } from '../utils.js';
 
 const listeners = new Set();
 
@@ -73,40 +66,132 @@ function cloneProfile(profile) {
     };
 }
 
-function buildAppState(overrides = {}) {
-    const profile = overrides.profile !== undefined
-        ? cloneProfile(overrides.profile)
-        : cloneProfile(loadProfile());
+function createDefaultAnalysisFlow(quotaExceeded = false) {
+    return {
+        status: 'idle',
+        source: 'none',
+        cooldownRemaining: 0,
+        quotaExceeded: Boolean(quotaExceeded),
+        isSoftError: false,
+        lastError: ''
+    };
+}
 
+function cloneAnalysisFlow(flow = {}, fallbackQuotaExceeded = false) {
+    const base = createDefaultAnalysisFlow(fallbackQuotaExceeded);
+    return {
+        status: String(flow?.status || base.status),
+        source: String(flow?.source || base.source),
+        cooldownRemaining: Math.max(0, Number(flow?.cooldownRemaining) || 0),
+        quotaExceeded: flow?.quotaExceeded !== undefined ? Boolean(flow.quotaExceeded) : base.quotaExceeded,
+        isSoftError: Boolean(flow?.isSoftError),
+        lastError: String(flow?.lastError || '')
+    };
+}
+
+function normalizeNumber(value, fallback = 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function buildInitialSource(overrides = {}) {
+    const selectedDate = String(overrides.selectedDate || getLocalDateString());
+    const profile = cloneProfile(overrides.profile !== undefined ? overrides.profile : loadProfileRecord());
+    const currentMealMode = String(overrides.currentMealMode || profile?.mealMode || '4');
+    const currentGoalType = String(overrides.currentGoalType || profile?.goalType || 'lose');
+    const usage = loadDailyUsage();
+    const quotaExceeded = usage.count >= DAILY_LIMIT;
+
+    return {
+        selectedDate,
+        curLang: String(overrides.curLang || loadAppLanguage()),
+        curTheme: String(overrides.curTheme || loadAppTheme()),
+        targetCalories: normalizeNumber(overrides.targetCalories, 2000),
+        currentMealMode,
+        currentGoalType,
+        loggedWeight: overrides.loggedWeight ?? loadWeight(selectedDate),
+        foodItems: cloneFoodEntries(overrides.foodItems !== undefined ? overrides.foodItems : loadFoodLog(selectedDate)),
+        favoriteFoods: cloneFoodEntries(overrides.favoriteFoods !== undefined ? overrides.favoriteFoods : loadFavoriteFoods()),
+        tempAIResult: cloneAiResult(overrides.tempAIResult),
+        tempAIResultSaved: Boolean(overrides.tempAIResultSaved),
+        analysisFlow: cloneAnalysisFlow(overrides.analysisFlow, quotaExceeded),
+        profile
+    };
+}
+
+function normalizeStateSource(source) {
+    const selectedDate = String(source?.selectedDate || getLocalDateString());
+    const profile = cloneProfile(source?.profile) || cloneProfile(loadProfileRecord());
+    const currentMealMode = String(source?.currentMealMode || profile?.mealMode || '4');
+    const currentGoalType = String(source?.currentGoalType || profile?.goalType || 'lose');
+    const usage = loadDailyUsage();
+    const quotaExceeded = usage.count >= DAILY_LIMIT;
+
+    return {
+        selectedDate,
+        curLang: String(source?.curLang || 'zh-TW'),
+        curTheme: String(source?.curTheme || 'light'),
+        targetCalories: normalizeNumber(source?.targetCalories, 2000),
+        currentMealMode,
+        currentGoalType,
+        loggedWeight: source?.loggedWeight ?? loadWeight(selectedDate),
+        foodItems: cloneFoodEntries(source?.foodItems),
+        favoriteFoods: cloneFoodEntries(source?.favoriteFoods),
+        tempAIResult: cloneAiResult(source?.tempAIResult),
+        tempAIResultSaved: Boolean(source?.tempAIResultSaved),
+        analysisFlow: cloneAnalysisFlow(source?.analysisFlow, quotaExceeded),
+        profile
+    };
+}
+
+function buildSnapshot(source) {
     return Object.freeze({
-        selectedDate: selectedDate || '',
-        curLang: curLang || 'zh-TW',
-        curTheme: curTheme || 'light',
-        targetCalories: Number(targetCalories) || 0,
-        currentMealMode: currentMealMode || profile?.mealMode || '4',
-        currentGoalType: currentGoalType || profile?.goalType || 'lose',
-        loggedWeight: loadWeightData(selectedDate),
-        foodItems: cloneFoodEntries(foodItems),
-        favoriteFoods: cloneFoodEntries(favoriteFoods),
-        tempAIResult: cloneAiResult(tempAIResult),
-        tempAIResultSaved: Boolean(tempAIResultSaved),
-        profile,
+        ...source,
+        foodItems: cloneFoodEntries(source.foodItems),
+        favoriteFoods: cloneFoodEntries(source.favoriteFoods),
+        tempAIResult: cloneAiResult(source.tempAIResult),
+        profile: cloneProfile(source.profile),
+        analysisFlow: cloneAnalysisFlow(source.analysisFlow),
         updatedAt: Date.now()
     });
 }
 
-let appState = buildAppState();
+let appStateSource = buildInitialSource();
+let appState = buildSnapshot(appStateSource);
+
+function emitState(previousState, meta = {}) {
+    listeners.forEach((listener) => listener(appState, previousState, meta));
+}
 
 export function initializeAppState(overrides = {}, meta = {}) {
-    appState = buildAppState(overrides);
-    listeners.forEach((listener) => listener(appState, null, meta));
+    const previousState = appState;
+    appStateSource = buildInitialSource(overrides);
+    appState = buildSnapshot(appStateSource);
+    emitState(previousState, meta);
     return appState;
 }
 
 export function refreshAppState(overrides = {}, meta = {}) {
     const previousState = appState;
-    appState = buildAppState(overrides);
-    listeners.forEach((listener) => listener(appState, previousState, meta));
+    const nextSource = {
+        ...appStateSource,
+        ...overrides
+    };
+
+    if (overrides.selectedDate !== undefined) {
+        const selectedDate = String(overrides.selectedDate || getLocalDateString());
+        nextSource.selectedDate = selectedDate;
+        if (overrides.foodItems === undefined) {
+            nextSource.foodItems = loadFoodLog(selectedDate);
+        }
+        if (overrides.loggedWeight === undefined) {
+            nextSource.loggedWeight = loadWeight(selectedDate);
+        }
+    }
+
+    appStateSource = normalizeStateSource(nextSource);
+    appState = buildSnapshot(appStateSource);
+    emitState(previousState, meta);
     return appState;
 }
 
@@ -137,7 +222,7 @@ export function createDailyViewModel(state = appState) {
         targetCalories: Number(resolvedState.targetCalories) || 0,
         profileWeight,
         waterTarget: Math.round((profileWeight || 60) * 35),
-        calorieHistory: getCalorieHistory(7),
+        calorieHistory: getFoodCalorieHistory(7),
         foodItems: resolvedState.foodItems,
         totals: totals.totals,
         mealTotals: totals.mealTotals

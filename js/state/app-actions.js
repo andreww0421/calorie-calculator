@@ -1,27 +1,11 @@
 import {
-    curLang,
-    curTheme,
-    favoriteFoods,
-    foodItems,
-    loadFoodData,
-    persistLang,
-    persistFavorites,
-    persistTheme,
-    saveProfile,
-    saveFoodData,
-    setCurLang,
-    setCurTheme,
-    setCurrentGoalType,
-    setCurrentMealMode,
-    setFoodItems,
-    setFavoriteFoods,
-    setSelectedDate,
-    setTargetCalories,
-    setTempAIResult,
-    setTempAIResultSaved,
-    tempAIResult
-} from '../data.js';
-import { refreshAppState } from './app-state.js';
+    loadFoodLog,
+    saveFoodLog
+} from '../repositories/food-log-repository.js';
+import { saveFavoriteFoods } from '../repositories/favorites-repository.js';
+import { saveProfileRecord } from '../repositories/profile-repository.js';
+import { saveAppLanguage, saveAppTheme } from '../repositories/settings-repository.js';
+import { getAppState, refreshAppState } from './app-state.js';
 
 function cloneEntry(entry = {}) {
     return {
@@ -75,22 +59,26 @@ function cloneProfile(profile = {}) {
 }
 
 export function dispatchAppAction(type, payload = {}) {
+    const state = getAppState();
+
     switch (type) {
     case 'SET_LANGUAGE': {
-        const lang = String(payload.lang || curLang || 'zh-TW');
-        setCurLang(lang);
-        persistLang(lang);
-        return refreshAppState({}, {
+        const lang = String(payload.lang || state.curLang || 'zh-TW');
+        saveAppLanguage(lang);
+        return refreshAppState({
+            curLang: lang
+        }, {
             reason: 'lang:set',
             lang
         });
     }
 
     case 'SET_THEME': {
-        const theme = String(payload.theme || curTheme || 'light');
-        setCurTheme(theme);
-        persistTheme(theme);
-        return refreshAppState({}, {
+        const theme = String(payload.theme || state.curTheme || 'light');
+        saveAppTheme(theme);
+        return refreshAppState({
+            curTheme: theme
+        }, {
             reason: 'theme:set',
             theme
         });
@@ -101,9 +89,11 @@ export function dispatchAppAction(type, payload = {}) {
         if (!date) {
             return refreshAppState({}, { reason: 'date:noop' });
         }
-        setSelectedDate(date);
-        loadFoodData(date);
-        return refreshAppState({}, {
+
+        return refreshAppState({
+            selectedDate: date,
+            foodItems: loadFoodLog(date)
+        }, {
             reason: 'date:set',
             date
         });
@@ -111,10 +101,11 @@ export function dispatchAppAction(type, payload = {}) {
 
     case 'ADD_FOOD_ITEM': {
         const entry = cloneEntry(payload.entry);
-        const nextItems = [...foodItems, entry];
-        setFoodItems(nextItems);
-        saveFoodData();
-        return refreshAppState({}, {
+        const nextItems = [...state.foodItems, entry];
+        saveFoodLog(state.selectedDate, nextItems);
+        return refreshAppState({
+            foodItems: nextItems
+        }, {
             reason: 'food:add',
             entryName: entry.name
         });
@@ -122,13 +113,15 @@ export function dispatchAppAction(type, payload = {}) {
 
     case 'DELETE_FOOD_ITEM': {
         const index = Number(payload.index);
-        if (!Number.isInteger(index) || index < 0 || index >= foodItems.length) {
+        if (!Number.isInteger(index) || index < 0 || index >= state.foodItems.length) {
             return refreshAppState({}, { reason: 'food:noop' });
         }
-        const nextItems = foodItems.filter((_, itemIndex) => itemIndex !== index);
-        setFoodItems(nextItems);
-        saveFoodData();
-        return refreshAppState({}, {
+
+        const nextItems = state.foodItems.filter((_, itemIndex) => itemIndex !== index);
+        saveFoodLog(state.selectedDate, nextItems);
+        return refreshAppState({
+            foodItems: nextItems
+        }, {
             reason: 'food:delete',
             index
         });
@@ -136,10 +129,11 @@ export function dispatchAppAction(type, payload = {}) {
 
     case 'ADD_FAVORITE': {
         const favorite = cloneFavorite(payload.favorite);
-        const nextFavorites = [...favoriteFoods, favorite];
-        setFavoriteFoods(nextFavorites);
-        persistFavorites();
-        return refreshAppState({}, {
+        const nextFavorites = [...state.favoriteFoods, favorite];
+        saveFavoriteFoods(nextFavorites);
+        return refreshAppState({
+            favoriteFoods: nextFavorites
+        }, {
             reason: 'favorite:add',
             favoriteName: favorite.name
         });
@@ -147,14 +141,15 @@ export function dispatchAppAction(type, payload = {}) {
 
     case 'DELETE_FAVORITE': {
         const index = Number(payload.index);
-        if (!Number.isInteger(index) || index < 0 || index >= favoriteFoods.length) {
+        if (!Number.isInteger(index) || index < 0 || index >= state.favoriteFoods.length) {
             return refreshAppState({}, { reason: 'favorite:noop' });
         }
 
-        const nextFavorites = favoriteFoods.filter((_, favoriteIndex) => favoriteIndex !== index);
-        setFavoriteFoods(nextFavorites);
-        persistFavorites();
-        return refreshAppState({}, {
+        const nextFavorites = state.favoriteFoods.filter((_, favoriteIndex) => favoriteIndex !== index);
+        saveFavoriteFoods(nextFavorites);
+        return refreshAppState({
+            favoriteFoods: nextFavorites
+        }, {
             reason: 'favorite:delete',
             index
         });
@@ -170,22 +165,29 @@ export function dispatchAppAction(type, payload = {}) {
                 healthScore: entry.healthScore
             }
             : null;
-        setTempAIResult(result);
-        if (payload.saved !== undefined) {
-            setTempAIResultSaved(Boolean(payload.saved));
-        }
-        return refreshAppState({}, {
+
+        return refreshAppState({
+            tempAIResult: result,
+            tempAIResultSaved: payload.saved !== undefined ? Boolean(payload.saved) : state.tempAIResultSaved,
+            analysisFlow: {
+                ...state.analysisFlow,
+                status: 'result',
+                isSoftError: false,
+                lastError: ''
+            }
+        }, {
             reason: 'ai-result:set',
             openModal: Boolean(payload.openModal)
         });
     }
 
     case 'SET_TEMP_AI_ITEMS': {
-        if (!tempAIResult) {
+        if (!state.tempAIResult) {
             return refreshAppState({}, { reason: 'ai-result:noop' });
         }
+
         const nextResult = {
-            ...tempAIResult,
+            ...state.tempAIResult,
             items: Array.isArray(payload.items)
                 ? payload.items.map((item) => ({
                     name: String(item?.name || ''),
@@ -193,38 +195,65 @@ export function dispatchAppAction(type, payload = {}) {
                 }))
                 : []
         };
-        setTempAIResult(nextResult);
-        setTempAIResultSaved(Boolean(payload.saved));
-        return refreshAppState({}, {
+
+        return refreshAppState({
+            tempAIResult: nextResult,
+            tempAIResultSaved: Boolean(payload.saved),
+            analysisFlow: {
+                ...state.analysisFlow,
+                status: payload.syncModal === false ? state.analysisFlow.status : 'editing',
+                lastError: '',
+                isSoftError: false
+            }
+        }, {
             reason: 'ai-result:update-items',
             syncModal: payload.syncModal !== false
         });
     }
 
-    case 'MARK_TEMP_AI_SAVED': {
-        setTempAIResultSaved(Boolean(payload.saved));
-        return refreshAppState({}, {
+    case 'MARK_TEMP_AI_SAVED':
+        return refreshAppState({
+            tempAIResultSaved: Boolean(payload.saved),
+            analysisFlow: {
+                ...state.analysisFlow,
+                status: 'saved'
+            }
+        }, {
             reason: 'ai-result:saved'
         });
-    }
 
-    case 'CLEAR_TEMP_AI_RESULT': {
-        setTempAIResult(null);
-        setTempAIResultSaved(false);
-        return refreshAppState({}, {
+    case 'CLEAR_TEMP_AI_RESULT':
+        return refreshAppState({
+            tempAIResult: null,
+            tempAIResultSaved: false
+        }, {
             reason: 'ai-result:clear'
+        });
+
+    case 'SET_ANALYSIS_FLOW': {
+        const nextFlow = {
+            ...state.analysisFlow,
+            ...(payload.flow || payload)
+        };
+        return refreshAppState({
+            analysisFlow: nextFlow
+        }, {
+            reason: payload.reason || 'analysis:state'
         });
     }
 
     case 'APPLY_PROFILE_PLAN': {
         const profile = cloneProfile(payload.profile);
-        setTargetCalories(Number(payload.targetCalories) || 0);
-        setCurrentMealMode(profile.mealMode || payload.mealMode || '4');
-        setCurrentGoalType(String(payload.goalType || profile.goalType || 'lose'));
         if (payload.persist !== false) {
-            saveProfile(profile);
+            saveProfileRecord(profile);
         }
-        return refreshAppState({ profile }, {
+
+        return refreshAppState({
+            profile,
+            targetCalories: Number(payload.targetCalories) || 0,
+            currentMealMode: profile.mealMode || payload.mealMode || '4',
+            currentGoalType: String(payload.goalType || profile.goalType || 'lose')
+        }, {
             reason: 'profile:apply'
         });
     }

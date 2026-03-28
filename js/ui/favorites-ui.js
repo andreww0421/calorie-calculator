@@ -1,5 +1,5 @@
-import { favoriteFoods } from '../data.js';
 import { dispatchAppAction } from '../state/app-actions.js';
+import { getAppState } from '../state/app-state.js';
 import { showEatingAnimation } from './charts-ui.js';
 import { createElement, clearElement } from './dom-ui.js';
 import {
@@ -51,6 +51,7 @@ export function openFavModal() {
     const list = document.getElementById('fav-list-container');
     if (!list) return;
 
+    const { favoriteFoods } = getAppState();
     const t = getTexts();
     clearElement(list);
 
@@ -117,6 +118,7 @@ export function openFavModal() {
 }
 
 export function openFavoriteMealModal(index) {
+    const { favoriteFoods } = getAppState();
     const item = favoriteFoods[index];
     const modal = document.getElementById('favorite-meal-modal');
     const nameEl = document.getElementById('fav-meal-food-name');
@@ -133,6 +135,7 @@ export function openFavoriteMealModal(index) {
 }
 
 export function confirmFavoriteMeal(type) {
+    const { favoriteFoods } = getAppState();
     const index = getPendingFavoriteIndex();
     if (index === null) return;
     const item = favoriteFoods[index];

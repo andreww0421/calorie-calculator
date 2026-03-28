@@ -13,20 +13,88 @@ import {
 import { buildAIErrorFeedback } from '../analysis-errors.js';
 import { closeModal, showToast } from '../ui.js';
 import { getTranslations, reportControllerError } from './controller-shared.js';
-import { loadUsageState, saveUsageState } from '../storage.js';
+import { loadDailyUsage, saveDailyUsage } from '../repositories/usage-repository.js';
 
-let isAnalyzing = false;
 const isDev = isDevMode();
+let cooldownTimer = null;
 
-function renderAnalyzeButtonLabel(button, label) {
-    if (!button) return;
-    button.replaceChildren(
-        document.createTextNode('2. '),
-        Object.assign(document.createElement('span'), {
-            id: 'txt-analyze-btn',
-            textContent: label
-        })
-    );
+function setAnalysisFlow(flow, reason = 'analysis:state') {
+    dispatchAppAction('SET_ANALYSIS_FLOW', { flow, reason });
+}
+
+function readAnalysisInputs() {
+    const input = document.getElementById('image-upload');
+    const file = input?.files?.[0] || null;
+    const textOnlyInput = document.getElementById('ai-text-desc');
+    const imageDescInput = document.getElementById('ai-desc');
+
+    return {
+        file,
+        textDesc: textOnlyInput ? textOnlyInput.value.trim() : '',
+        imageDesc: imageDescInput ? imageDescInput.value.trim() : ''
+    };
+}
+
+function resetAnalysisInputs() {
+    const imageUpload = document.getElementById('image-upload');
+    const imageDesc = document.getElementById('ai-desc');
+    const preview = document.getElementById('image-preview');
+    const textGroup = document.getElementById('ai-text-only-group');
+    const descGroup = document.getElementById('ai-desc-group');
+    const textInput = document.getElementById('ai-text-desc');
+
+    if (imageUpload) imageUpload.value = '';
+    if (imageDesc) imageDesc.value = '';
+    if (textInput) textInput.value = '';
+    if (descGroup) descGroup.style.display = 'none';
+    if (textGroup) textGroup.style.display = 'block';
+    clearPreviewImage(preview);
+}
+
+function getUsageState() {
+    return loadDailyUsage();
+}
+
+function incrementUsageCount() {
+    if (isDev) return;
+    const usage = getUsageState();
+    saveDailyUsage({ ...usage, count: usage.count + 1 });
+}
+
+function clearCooldownTimer() {
+    if (!cooldownTimer) return;
+    clearInterval(cooldownTimer);
+    cooldownTimer = null;
+}
+
+function startCooldown(seconds = 15) {
+    clearCooldownTimer();
+    setAnalysisFlow({
+        status: 'cooldown',
+        cooldownRemaining: seconds,
+        isSoftError: false,
+        lastError: ''
+    }, 'analysis:cooldown');
+
+    cooldownTimer = setInterval(() => {
+        const remaining = (getAppState().analysisFlow?.cooldownRemaining || 0) - 1;
+        if (remaining > 0) {
+            setAnalysisFlow({
+                status: 'cooldown',
+                cooldownRemaining: remaining
+            }, 'analysis:cooldown');
+            return;
+        }
+
+        clearCooldownTimer();
+        setAnalysisFlow({
+            status: 'idle',
+            cooldownRemaining: 0,
+            isSoftError: false,
+            lastError: ''
+        }, 'analysis:ready');
+        applyUsageLimitState();
+    }, 1000);
 }
 
 export function setupTurnstileHandlers() {
@@ -55,13 +123,33 @@ export function tryCloseAnalysisModal() {
     closeModal('analysis-modal');
 }
 
+export function syncAnalysisInputState() {
+    const state = getAppState();
+    const { file, textDesc, imageDesc } = readAnalysisInputs();
+    const hasContent = Boolean(file || textDesc || imageDesc);
+    const source = file ? 'image' : (textDesc || imageDesc ? 'text' : 'none');
+
+    if (['analyzing', 'recalculating', 'cooldown'].includes(state.analysisFlow?.status)) {
+        return;
+    }
+
+    setAnalysisFlow({
+        status: hasContent ? 'ready' : 'idle',
+        source,
+        lastError: hasContent ? state.analysisFlow?.lastError || '' : '',
+        isSoftError: false
+    }, 'analysis:input');
+}
+
 export function handleFileSelect(input) {
     const file = input?.files?.[0];
-    if (!file) return;
+    if (!file) {
+        syncAnalysisInputState();
+        return;
+    }
 
     const preview = document.getElementById('image-preview');
     showPreviewImage(file, preview);
-    document.getElementById('analyze-btn').style.display = 'inline-block';
 
     const textOnlyGroup = document.getElementById('ai-text-only-group');
     const descGroup = document.getElementById('ai-desc-group');
@@ -74,42 +162,26 @@ export function handleFileSelect(input) {
     if (textDescEl) textDescEl.value = '';
     if (textOnlyGroup) textOnlyGroup.style.display = 'none';
     if (descGroup) descGroup.style.display = 'block';
-    document.getElementById('ai-loading').style.display = 'none';
-}
 
-function getUsageState() {
-    return loadUsageState();
-}
-
-function incrementUsageCount() {
-    if (isDev) return;
-    const usage = getUsageState();
-    saveUsageState({ ...usage, count: usage.count + 1 });
+    setAnalysisFlow({
+        status: 'ready',
+        source: 'image',
+        lastError: '',
+        isSoftError: false
+    }, 'analysis:file-selected');
 }
 
 export function applyUsageLimitState(showLimitToast = false) {
-    if (isDev) return true;
+    const t = getTranslations();
+    if (isDev) {
+        setAnalysisFlow({ quotaExceeded: false }, 'analysis:quota');
+        return true;
+    }
 
     const usage = getUsageState();
     const isExhausted = usage.count >= DAILY_LIMIT;
-    const t = getTranslations();
-    const analyzeBtn = document.getElementById('analyze-btn');
-    const photoBtn = document.getElementById('btn-take-photo');
-    const imageUpload = document.getElementById('image-upload');
 
-    if (analyzeBtn && isExhausted) {
-        analyzeBtn.disabled = true;
-        analyzeBtn.style.opacity = '0.5';
-        analyzeBtn.style.cursor = 'not-allowed';
-        analyzeBtn.style.display = 'inline-block';
-        analyzeBtn.textContent = t.aiQuotaExceededButton || 'AI daily limit reached';
-    }
-    if (photoBtn) {
-        photoBtn.disabled = isExhausted;
-        photoBtn.style.opacity = isExhausted ? '0.5' : '';
-        photoBtn.style.cursor = isExhausted ? 'not-allowed' : '';
-    }
-    if (imageUpload) imageUpload.disabled = isExhausted;
+    setAnalysisFlow({ quotaExceeded: isExhausted }, 'analysis:quota');
 
     if (showLimitToast && isExhausted) {
         showToast(
@@ -121,115 +193,53 @@ export function applyUsageLimitState(showLimitToast = false) {
     return !isExhausted;
 }
 
-function lockUIForAnalysis() {
-    const analyzeBtn = document.getElementById('analyze-btn');
-    const photoBtn = document.getElementById('btn-take-photo');
-    const imageUpload = document.getElementById('image-upload');
-
-    if (analyzeBtn) {
-        analyzeBtn.disabled = true;
-        analyzeBtn.style.opacity = '0.6';
-        analyzeBtn.style.cursor = 'not-allowed';
-    }
-    if (photoBtn) {
-        photoBtn.disabled = true;
-        photoBtn.style.opacity = '0.6';
-        photoBtn.style.cursor = 'not-allowed';
-    }
-    if (imageUpload) imageUpload.disabled = true;
-}
-
-function unlockUIAfterCooldown() {
-    const analyzeBtn = document.getElementById('analyze-btn');
-    const photoBtn = document.getElementById('btn-take-photo');
-    const imageUpload = document.getElementById('image-upload');
-    const t = getTranslations();
-
-    isAnalyzing = false;
-
-    if (analyzeBtn) {
-        analyzeBtn.disabled = false;
-        analyzeBtn.style.opacity = '';
-        analyzeBtn.style.cursor = '';
-        analyzeBtn.style.display = 'inline-block';
-        renderAnalyzeButtonLabel(analyzeBtn, t.btnAnalyze || 'Analyze');
-        if (!applyUsageLimitState()) return;
-    }
-    if (photoBtn) {
-        photoBtn.disabled = false;
-        photoBtn.style.opacity = '';
-        photoBtn.style.cursor = '';
-    }
-    if (imageUpload) imageUpload.disabled = false;
-}
-
-function startCooldown() {
-    const button = document.getElementById('analyze-btn');
-    if (!button) return;
-
-    let remaining = 15;
-    button.style.display = 'inline-block';
-    button.disabled = true;
-    button.style.opacity = '0.6';
-    button.style.cursor = 'not-allowed';
-    button.textContent = `Cooldown (${remaining}s)`;
-
-    const timer = setInterval(() => {
-        remaining -= 1;
-        if (remaining > 0) {
-            button.textContent = `Cooldown (${remaining}s)`;
-        } else {
-            clearInterval(timer);
-            unlockUIAfterCooldown();
-        }
-    }, 1000);
+function buildAnalysisResultPayload(result) {
+    const normalized = normalizeAIAnalysisResult(result);
+    return {
+        name: normalized.foodName,
+        nutri: {
+            calories: normalized.calories,
+            protein: normalized.protein,
+            fat: normalized.fat,
+            carbohydrate: normalized.carbohydrate,
+            sugar: normalized.sugar,
+            sodium: normalized.sodium,
+            saturatedFat: normalized.saturatedFat,
+            transFat: normalized.transFat,
+            fiber: normalized.fiber
+        },
+        items: normalized.items,
+        healthScore: normalized.healthScore
+    };
 }
 
 export function startAnalysis() {
-    if (isAnalyzing) return;
+    const state = getAppState();
+    if (['analyzing', 'recalculating', 'cooldown'].includes(state.analysisFlow?.status)) return;
 
-    const input = document.getElementById('image-upload');
-    const file = input.files[0];
+    const { file, textDesc, imageDesc } = readAnalysisInputs();
     const t = getTranslations();
-    const textOnlyInput = document.getElementById('ai-text-desc');
-    const imageDescInput = document.getElementById('ai-desc');
-    const textDescVal = textOnlyInput ? textOnlyInput.value.trim() : '';
-    const imageDescVal = imageDescInput ? imageDescInput.value.trim() : '';
 
-    if (!file && !textDescVal) {
+    if (!file && !textDesc) {
         showToast(t.alertSelImgOrText || 'Please select an image or enter a description.', 'error');
         return;
     }
     if (!applyUsageLimitState(true)) return;
 
-    isAnalyzing = true;
-    lockUIForAnalysis();
-
-    document.getElementById('analyze-btn').style.display = 'none';
-    document.getElementById('ai-loading').style.display = 'block';
+    setAnalysisFlow({
+        status: 'analyzing',
+        source: file ? 'image' : 'text',
+        cooldownRemaining: 0,
+        isSoftError: false,
+        lastError: ''
+    }, 'analysis:start');
 
     let isSoftError = false;
     const handleResult = (result) => {
         if (!result) return;
-        const normalized = normalizeAIAnalysisResult(result);
         incrementUsageCount();
         dispatchAppAction('SET_TEMP_AI_RESULT', {
-            result: {
-                name: normalized.foodName,
-                nutri: {
-                    calories: normalized.calories,
-                    protein: normalized.protein,
-                    fat: normalized.fat,
-                    carbohydrate: normalized.carbohydrate,
-                    sugar: normalized.sugar,
-                    sodium: normalized.sodium,
-                    saturatedFat: normalized.saturatedFat,
-                    transFat: normalized.transFat,
-                    fiber: normalized.fiber
-                },
-                items: normalized.items,
-                healthScore: normalized.healthScore
-            },
+            result: buildAnalysisResultPayload(result),
             saved: false,
             openModal: true
         });
@@ -239,38 +249,33 @@ export function startAnalysis() {
         reportControllerError('Analysis Error', error);
         const feedback = buildAIErrorFeedback(error, t);
         isSoftError = feedback.isSoftError;
+        setAnalysisFlow({
+            status: feedback.isSoftError ? 'ready' : 'error',
+            isSoftError: feedback.isSoftError,
+            lastError: feedback.message
+        }, 'analysis:error');
         showToast(feedback.message, feedback.type);
     };
 
     const handleFinally = () => {
-        document.getElementById('ai-loading').style.display = 'none';
-
         if (isSoftError) {
-            unlockUIAfterCooldown();
+            applyUsageLimitState();
             return;
         }
 
-        document.getElementById('image-upload').value = '';
-        if (document.getElementById('ai-desc')) document.getElementById('ai-desc').value = '';
-        clearPreviewImage(document.getElementById('image-preview'));
-        document.getElementById('ai-desc-group').style.display = 'none';
-
-        const txtGroup = document.getElementById('ai-text-only-group');
-        if (txtGroup) txtGroup.style.display = 'block';
-        if (document.getElementById('ai-text-desc')) document.getElementById('ai-text-desc').value = '';
-
+        resetAnalysisInputs();
         startCooldown();
     };
 
     if (file) {
-        const finalDesc = imageDescVal + (textDescVal ? ` ${textDescVal}` : '');
+        const finalDesc = imageDesc + (textDesc ? ` ${textDesc}` : '');
         toBase64(file)
             .then((base64) => callCloudflareAI(base64, finalDesc, file.type || 'image/jpeg'))
             .then(handleResult)
             .catch(handleError)
             .finally(handleFinally);
     } else {
-        callCloudflareAIText(textDescVal)
+        callCloudflareAIText(textDesc)
             .then(handleResult)
             .catch(handleError)
             .finally(handleFinally);

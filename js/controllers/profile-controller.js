@@ -1,13 +1,12 @@
 import {
-    saveWeightData,
-    selectedDate,
-    importData,
-    saveProfile
-} from '../data.js';
+    importBackup
+} from '../repositories/backup-repository.js';
+import { saveProfileRecord } from '../repositories/profile-repository.js';
+import { saveWeight } from '../repositories/weight-repository.js';
 import { reloadApp } from '../platform.js';
 import { showToast } from '../ui.js';
 import { dispatchAppAction } from '../state/app-actions.js';
-import { refreshAppState } from '../state/app-state.js';
+import { getAppState, refreshAppState } from '../state/app-state.js';
 import { getTranslations, readProfileForm, reportControllerError } from './controller-shared.js';
 import { calculateProfilePlan } from '../domain/profile-domain.js';
 
@@ -17,7 +16,7 @@ export async function handleImportData(input) {
     if (!file) return;
 
     try {
-        await importData(file);
+        await importBackup(file);
         showToast(t.alertImportOk || 'Data restored successfully.', 'success');
         setTimeout(() => reloadApp(), 1500);
     } catch (error) {
@@ -64,15 +63,16 @@ export function changeDate() {
 export function saveCurrentWeight() {
     const weightValue = document.getElementById('daily-weight-input').value;
     const t = getTranslations();
+    const { selectedDate } = getAppState();
 
-    if (saveWeightData(selectedDate, weightValue)) {
+    if (saveWeight(selectedDate, weightValue)) {
         showToast(t.alertWeightSaved || 'Weight saved.', 'success');
         document.getElementById('weight').value = weightValue;
         const profile = readProfileForm();
         if (document.getElementById('goal-result')?.style.display === 'block') {
             calculateProfile(true);
         } else {
-            saveProfile(profile);
+            saveProfileRecord(profile);
             refreshAppState({ profile }, { reason: 'weight:save' });
         }
         return true;

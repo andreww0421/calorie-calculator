@@ -1,5 +1,5 @@
-import { i18n } from '../config.js';
 import { calculateProfilePlan } from '../domain/profile-domain.js';
+import { getLocaleTranslations } from '../locales/index.js';
 import { createDailyViewModel } from '../state/app-state.js';
 import { renderListAndStats } from './charts-ui.js';
 import { openFavModal } from './favorites-ui.js';
@@ -7,7 +7,7 @@ import { getDisplayDateLabel, getGoalUiText } from './locale-ui.js';
 import { renderProfileGoalResult } from './profile-ui.js';
 import { setLang, setTheme, updateMealUI } from './settings-ui.js';
 import { closeModal } from './shared-ui.js';
-import { showModal } from './analysis-ui.js';
+import { renderAnalysisModalState, syncAnalysisView } from './analysis-ui.js';
 
 function applyDateInputs(state) {
     const currentDateInput = document.getElementById('current-date');
@@ -43,7 +43,7 @@ function syncProfileGoalPresentation(state) {
 
     renderProfileGoalResult(
         plan,
-        i18n[state.curLang] || i18n['zh-TW'],
+        getLocaleTranslations(state.curLang),
         getGoalUiText(state.curLang)
     );
     return true;
@@ -73,7 +73,7 @@ function syncAnalysisModal(state, meta = {}) {
     }
 
     if (meta.openModal || modal.style.display === 'flex') {
-        showModal();
+        renderAnalysisModalState(state, meta);
     }
 }
 
@@ -108,6 +108,8 @@ export function syncAppStateUI(state, previousState, meta = {}) {
     if (langChanged) {
         setLang(state.curLang);
     }
+
+    syncAnalysisView(state);
 
     if (mealPlanChanged) {
         updateMealUI();
