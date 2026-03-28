@@ -5,7 +5,7 @@ const runtimeConfig =
 
 export const WORKER_URL =
     runtimeConfig.workerUrl ||
-    "https://nameless-meadow-cf7b.jtwen12345us.workers.dev/";
+    "https://woof-cal-worker.jtwen12345us.workers.dev/";
 
 export const TURNSTILE_WIDGET_SELECTOR =
     runtimeConfig.turnstileWidgetSelector ||

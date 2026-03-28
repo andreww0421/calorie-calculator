@@ -2,6 +2,11 @@
 
 Woof Cal is a browser-first diet tracking app focused on reducing meal logging friction. It combines AI-assisted food analysis, manual nutrition logging, daily summaries, weight tracking, multi-language UI, and goal-based calorie planning in a single static web app backed by a small Cloudflare Worker.
 
+## Live Links
+
+- Web App: [https://andreww0421.github.io/calorie-calculator/](https://andreww0421.github.io/calorie-calculator/)
+- Worker Endpoint: [https://woof-cal-worker.jtwen12345us.workers.dev](https://woof-cal-worker.jtwen12345us.workers.dev)
+
 ## What the App Does
 
 The app is built around one practical workflow:
