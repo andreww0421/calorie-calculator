@@ -11,6 +11,16 @@ export const TURNSTILE_WIDGET_SELECTOR =
     runtimeConfig.turnstileWidgetSelector ||
     '#turnstile-widget';
 
+export const TURNSTILE_SITE_KEY =
+    runtimeConfig.turnstileSiteKey ||
+    '0x4AAAAAACui521f7lQLB0Qw';
+
+export const TURNSTILE_ALLOWED_HOSTNAMES = Object.freeze(
+    Array.isArray(runtimeConfig.turnstileAllowedHostnames) && runtimeConfig.turnstileAllowedHostnames.length > 0
+        ? runtimeConfig.turnstileAllowedHostnames.map((hostname) => String(hostname || '').trim().toLowerCase()).filter(Boolean)
+        : ['andreww0421.github.io']
+);
+
 export const SERVICE_WORKER_PATH =
     runtimeConfig.serviceWorkerPath ||
     './sw.js';

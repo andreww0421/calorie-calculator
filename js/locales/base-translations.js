@@ -130,6 +130,8 @@ export const BASE_TRANSLATIONS = {
     aiQuotaExceededToast: 'Today\'s AI limit has been used up.',
     aiInvalidResponse: 'AI returned an incomplete nutrition result. Please try again with a clearer photo or description.',
     turnstilePending: 'Security verification is still loading. Please try again in a moment.',
+    turnstileUnavailable: 'Security verification is unavailable on this domain. Use the production site or add this hostname to Turnstile.',
+    turnstileSetupError: 'Security verification could not be initialized. Reload the page and try again.',
     meals: {
         breakfast: 'Breakfast',
         lunch: 'Lunch',

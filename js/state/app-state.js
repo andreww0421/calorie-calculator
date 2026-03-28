@@ -73,7 +73,9 @@ function createDefaultAnalysisFlow(quotaExceeded = false) {
         cooldownRemaining: 0,
         quotaExceeded: Boolean(quotaExceeded),
         isSoftError: false,
-        lastError: ''
+        lastError: '',
+        verificationUnavailable: false,
+        verificationMessage: ''
     };
 }
 
@@ -85,7 +87,9 @@ function cloneAnalysisFlow(flow = {}, fallbackQuotaExceeded = false) {
         cooldownRemaining: Math.max(0, Number(flow?.cooldownRemaining) || 0),
         quotaExceeded: flow?.quotaExceeded !== undefined ? Boolean(flow.quotaExceeded) : base.quotaExceeded,
         isSoftError: Boolean(flow?.isSoftError),
-        lastError: String(flow?.lastError || '')
+        lastError: String(flow?.lastError || ''),
+        verificationUnavailable: Boolean(flow?.verificationUnavailable),
+        verificationMessage: String(flow?.verificationMessage || '')
     };
 }
 

@@ -6,6 +6,9 @@ import { normalizeAIAnalysisResult } from '../domain/ai-analysis-domain.js';
 import { DAILY_LIMIT, isDevMode } from '../env.js';
 import {
     clearPreviewImage,
+    getTurnstileStatus,
+    initializeTurnstileWidget,
+    markTurnstileUnavailable,
     refreshTurnstile,
     registerTurnstileCallbacks,
     showPreviewImage
@@ -97,17 +100,57 @@ function startCooldown(seconds = 15) {
     }, 1000);
 }
 
+function getTurnstileUnavailableMessage(errorCode = '') {
+    const t = getTranslations();
+    const normalizedCode = String(errorCode || '').toUpperCase();
+
+    if (normalizedCode === '110200' || normalizedCode === 'TURNSTILE_UNSUPPORTED_DOMAIN') {
+        return t.turnstileUnavailable
+            || 'Security verification is unavailable on this domain. Use the production site or add this hostname to Turnstile.';
+    }
+
+    return t.turnstileSetupError
+        || 'Security verification could not be initialized. Reload the page and try again.';
+}
+
+function syncTurnstileAvailability(errorCode = '') {
+    const status = getTurnstileStatus();
+    const unavailableReason = errorCode || status.unavailableReason || status.lastErrorCode;
+
+    if (!status.supportedHost || unavailableReason) {
+        setAnalysisFlow({
+            verificationUnavailable: true,
+            verificationMessage: getTurnstileUnavailableMessage(unavailableReason)
+        }, 'analysis:turnstile-unavailable');
+        return;
+    }
+
+    setAnalysisFlow({
+        verificationUnavailable: false,
+        verificationMessage: ''
+    }, 'analysis:turnstile-ready');
+}
+
 export function setupTurnstileHandlers() {
     registerTurnstileCallbacks({
         onTimeout: () => {
-            console.warn('Turnstile token expired. Refreshing widget...');
+            console.warn('Turnstile token expired. Refreshing widget.');
             refreshTurnstile();
         },
-        onError: () => {
-            console.error('Turnstile failed to initialize. Refreshing widget...');
-            refreshTurnstile();
+        onError: (errorCode) => {
+            console.error(`Turnstile failed to initialize (${errorCode || 'unknown'}).`);
+            markTurnstileUnavailable(errorCode || 'TURNSTILE_UNAVAILABLE');
+            syncTurnstileAvailability(errorCode);
         }
     });
+
+    initializeTurnstileWidget()
+        .then(() => syncTurnstileAvailability())
+        .catch((error) => {
+            console.error('Turnstile bootstrap failed.', error);
+            markTurnstileUnavailable(error?.message || 'TURNSTILE_UNAVAILABLE');
+            syncTurnstileAvailability(error?.message);
+        });
 }
 
 export function tryCloseAnalysisModal() {

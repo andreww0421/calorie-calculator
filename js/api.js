@@ -2,14 +2,29 @@ import { WORKER_URL } from './env.js';
 import { getAppState } from './state/app-state.js';
 import {
     getTurnstileToken,
+    getTurnstileStatus,
+    initializeTurnstileWidget,
     refreshTurnstile,
     resetTurnstile
 } from './platform.js';
 import { extractAnalysisFromGeminiPayload } from './domain/ai-analysis-domain.js';
 
 async function postToWorker(payload, logLabel) {
+    await initializeTurnstileWidget();
+
     const turnstileToken = getTurnstileToken();
     if (!turnstileToken) {
+        const turnstileStatus = getTurnstileStatus();
+        const errorCode = String(turnstileStatus.lastErrorCode || turnstileStatus.unavailableReason || '');
+
+        if (errorCode === '110200' || errorCode === 'TURNSTILE_UNSUPPORTED_DOMAIN') {
+            throw new Error('TURNSTILE_UNSUPPORTED_DOMAIN');
+        }
+
+        if (errorCode) {
+            throw new Error('TURNSTILE_UNAVAILABLE');
+        }
+
         throw new Error("Turnstile_Pending");
     }
 

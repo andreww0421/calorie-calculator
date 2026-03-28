@@ -60,7 +60,6 @@
             border-radius: 20px;
         }
     </style>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 
@@ -246,7 +245,8 @@
                     <textarea id="ai-desc" rows="2" style="width:100%; padding:10px; border-radius:10px;" placeholder="📝 圖片補充說明..."></textarea>
                 </div>
                 
-                <div id="turnstile-widget" class="cf-turnstile" data-sitekey="0x4AAAAAACui521f7lQLB0Qw" data-size="invisible" data-timeout-callback="onTurnstileTimeout" data-error-callback="onTurnstileError"></div>
+                <div id="turnstile-widget" aria-hidden="true"></div>
+                <div id="turnstile-status-note" class="ai-status-note" hidden></div>
                 <button id="analyze-btn" class="btn-analyze" style="display:inline-block; margin-top:15px; width:100%;">✨ 2. <span id="txt-analyze-btn">送出分析 (圖片或文字)</span></button>
             </div>
             <div class="loading-spinner" id="ai-loading">🤖 <span id="txt-ai-loading">AI 正在分析...</span></div>

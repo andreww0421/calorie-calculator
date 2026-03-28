@@ -1,5 +1,6 @@
 import {
     WorkerContractError,
+    buildNutritionSystemPrompt,
     buildGeminiPayload,
     normalizeGeminiResponse,
     parseRetryDelaySeconds,
@@ -10,15 +11,6 @@ import {
 const ipCache = new Map();
 const COOLDOWN_TIME = 15 * 1000;
 const MODEL_NAME = 'gemini-2.5-flash';
-
-const PROMPT_MAP = {
-    'zh-TW': 'You are a nutritionist. Return JSON only with foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat, fiber, healthScore, items.',
-    'zh-CN': 'You are a nutritionist. Return JSON only with foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat, fiber, healthScore, items.',
-    en: 'You are a nutritionist. Return JSON only with foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat, fiber, healthScore, items.',
-    ja: 'You are a nutritionist. Return JSON only with foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat, fiber, healthScore, items.',
-    ko: 'You are a nutritionist. Return JSON only with foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat, fiber, healthScore, items.',
-    ar: 'You are a nutritionist. Return JSON only with foodName, calories, protein, fat, carbohydrate, sugar, sodium, saturatedFat, transFat, fiber, healthScore, items.'
-};
 
 function getAllowedOrigin(env) {
     return env.ALLOWED_ORIGIN || 'https://andreww0421.github.io';
@@ -246,7 +238,7 @@ export default {
                 }, 403);
             }
 
-            const systemPrompt = PROMPT_MAP[validatedBody.lang] || PROMPT_MAP['zh-TW'];
+            const systemPrompt = buildNutritionSystemPrompt(validatedBody.lang);
             const geminiPayload = buildGeminiPayload(validatedBody, systemPrompt);
             const googleUrl =
                 `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY.trim())}`;

@@ -38,6 +38,16 @@ export function buildAIErrorFeedback(error, translations = {}) {
         };
     }
 
+    if (errorText === 'TURNSTILE_UNSUPPORTED_DOMAIN' || errorText === 'TURNSTILE_UNAVAILABLE') {
+        return {
+            isSoftError: true,
+            type: 'error',
+            message: errorText === 'TURNSTILE_UNSUPPORTED_DOMAIN'
+                ? (translations.turnstileUnavailable || 'Security verification is unavailable on this domain. Use the production site or add this hostname to Turnstile.')
+                : (translations.turnstileSetupError || 'Security verification could not be initialized. Reload the page and try again.')
+        };
+    }
+
     const structuredError = parseStructuredAIError(errorText);
     const payload = structuredError?.error || structuredError || {};
     const structuredMessage = payload?.message || '';
@@ -79,6 +89,20 @@ export function buildAIErrorFeedback(error, translations = {}) {
     }
 
     if (
+        combinedErrorText.includes('110200') ||
+        combinedErrorText.includes('turnstile_unsupported_domain') ||
+        combinedErrorText.includes('turnstile_unavailable')
+    ) {
+        return {
+            isSoftError: true,
+            type: 'error',
+            message: combinedErrorText.includes('110200') || combinedErrorText.includes('turnstile_unsupported_domain')
+                ? (translations.turnstileUnavailable || 'Security verification is unavailable on this domain. Use the production site or add this hostname to Turnstile.')
+                : (translations.turnstileSetupError || 'Security verification could not be initialized. Reload the page and try again.')
+        };
+    }
+
+    if (
         combinedErrorText.includes('ai_invalid_payload') ||
         combinedErrorText.includes('ai_invalid_response')
     ) {
@@ -101,6 +125,14 @@ export function formatAIRequestError(error, translations = {}) {
 
     if (rawMessage === 'Turnstile_Pending') {
         return translations.turnstilePending || 'Security verification is in progress. Please try again in a moment.';
+    }
+
+    if (rawMessage === 'TURNSTILE_UNSUPPORTED_DOMAIN') {
+        return translations.turnstileUnavailable || 'Security verification is unavailable on this domain. Use the production site or add this hostname to Turnstile.';
+    }
+
+    if (rawMessage === 'TURNSTILE_UNAVAILABLE') {
+        return translations.turnstileSetupError || 'Security verification could not be initialized. Reload the page and try again.';
     }
 
     const parsed = parseStructuredAIError(rawMessage);

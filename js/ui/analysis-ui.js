@@ -132,11 +132,17 @@ export function syncAnalysisView(state = getAppState()) {
     const photoBtn = document.getElementById('btn-take-photo');
     const imageUpload = document.getElementById('image-upload');
     const loadingEl = document.getElementById('ai-loading');
+    const statusNote = document.getElementById('turnstile-status-note');
 
     if (loadingEl) {
         const loadingText = loadingEl.querySelector('#txt-ai-loading');
         if (loadingText) loadingText.textContent = t.aiLoading || 'AI is analyzing...';
         loadingEl.style.display = ['analyzing', 'recalculating'].includes(flow.status) ? 'block' : 'none';
+    }
+
+    if (statusNote) {
+        statusNote.textContent = flow.verificationUnavailable ? (flow.verificationMessage || t.turnstileUnavailable || '') : '';
+        statusNote.hidden = !flow.verificationUnavailable;
     }
 
     if (analyzeBtn) {

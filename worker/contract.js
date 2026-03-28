@@ -9,6 +9,14 @@ export const MAX_TURNSTILE_TOKEN_LENGTH = 4_096;
 
 const BASE64_PATTERN = /^[A-Za-z0-9+/=]+$/;
 const IMAGE_MIME_PATTERN = /^image\/[a-z0-9.+-]+$/i;
+const OUTPUT_LANGUAGE_LABELS = Object.freeze({
+    'zh-TW': 'Traditional Chinese',
+    'zh-CN': 'Simplified Chinese',
+    en: 'English',
+    ja: 'Japanese',
+    ko: 'Korean',
+    ar: 'Arabic'
+});
 
 export class WorkerContractError extends Error {
     constructor(code, message, status = 400, details = {}) {
@@ -22,6 +30,24 @@ export class WorkerContractError extends Error {
 
 function normalizeString(value) {
     return typeof value === 'string' ? value.trim() : '';
+}
+
+export function buildNutritionSystemPrompt(lang = 'zh-TW') {
+    const outputLanguage = OUTPUT_LANGUAGE_LABELS[lang] || OUTPUT_LANGUAGE_LABELS['zh-TW'];
+
+    return [
+        'You are a nutritionist and food estimation assistant.',
+        'Return valid JSON only. Do not use Markdown fences, comments, or extra explanation.',
+        'Estimate one combined meal result from the user input.',
+        'Required JSON shape:',
+        '{"foodName":"string","calories":number,"protein":number,"fat":number,"carbohydrate":number,"sugar":number,"sodium":number,"saturatedFat":number,"transFat":number,"fiber":number,"healthScore":number,"items":[{"name":"string","weight":"string"}]}',
+        `Use ${outputLanguage} for "foodName" and every "items[].name".`,
+        'If a brand or packaged product name is widely recognized, keep the official brand wording and translate only generic food terms when helpful.',
+        'Use short human-readable weight values with units such as "120 g", "1 serving", or "250 ml".',
+        'Use 0 instead of null for unknown numeric values.',
+        'healthScore must be a number from 1 to 10.',
+        'When the meal contains multiple ingredients or foods, list them in "items" and make the top-level nutrition totals match the full meal.'
+    ].join('\n');
 }
 
 export function parseRetryDelaySeconds(details) {
