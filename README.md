@@ -5,7 +5,6 @@ Woof Cal is a browser-first diet tracking app focused on reducing meal logging f
 ## Live Links
 
 - Web App: [https://andreww0421.github.io/calorie-calculator/](https://andreww0421.github.io/calorie-calculator/)
-- Worker Endpoint: [https://woof-cal-worker.jtwen12345us.workers.dev](https://woof-cal-worker.jtwen12345us.workers.dev)
 
 ## What the App Does
 
