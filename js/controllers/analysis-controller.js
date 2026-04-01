@@ -3,6 +3,7 @@ import { dispatchAppAction } from '../state/app-actions.js';
 import { getAppState } from '../state/app-state.js';
 import { callCloudflareAI, callCloudflareAIText } from '../api.js';
 import { normalizeAIAnalysisResult } from '../domain/ai-analysis-domain.js';
+import { cloneNutrition } from '../domain/nutrition-schema.js';
 import { DAILY_LIMIT, isDevMode } from '../env.js';
 import {
     clearPreviewImage,
@@ -17,6 +18,7 @@ import { buildAIErrorFeedback } from '../analysis-errors.js';
 import { closeModal, showToast } from '../ui.js';
 import { getTranslations, reportControllerError } from './controller-shared.js';
 import { loadDailyUsage, saveDailyUsage } from '../repositories/usage-repository.js';
+import { trackAiAnalysisFailed, trackAiAnalysisStarted } from '../analytics/product-events.js';
 
 const isDev = isDevMode();
 let cooldownTimer = null;
@@ -240,17 +242,7 @@ function buildAnalysisResultPayload(result) {
     const normalized = normalizeAIAnalysisResult(result);
     return {
         name: normalized.foodName,
-        nutri: {
-            calories: normalized.calories,
-            protein: normalized.protein,
-            fat: normalized.fat,
-            carbohydrate: normalized.carbohydrate,
-            sugar: normalized.sugar,
-            sodium: normalized.sodium,
-            saturatedFat: normalized.saturatedFat,
-            transFat: normalized.transFat,
-            fiber: normalized.fiber
-        },
+        nutri: cloneNutrition(normalized),
         items: normalized.items,
         healthScore: normalized.healthScore
     };
@@ -276,6 +268,12 @@ export function startAnalysis() {
         isSoftError: false,
         lastError: ''
     }, 'analysis:start');
+    trackAiAnalysisStarted({
+        source: file ? 'image' : 'text',
+        lang: state.curLang,
+        hasImage: Boolean(file),
+        hasText: Boolean(textDesc)
+    });
 
     let isSoftError = false;
     const handleResult = (result) => {
@@ -292,6 +290,12 @@ export function startAnalysis() {
         reportControllerError('Analysis Error', error);
         const feedback = buildAIErrorFeedback(error, t);
         isSoftError = feedback.isSoftError;
+        trackAiAnalysisFailed({
+            source: file ? 'image' : 'text',
+            lang: state.curLang,
+            error: error?.message || feedback.message,
+            isSoftError: feedback.isSoftError
+        });
         setAnalysisFlow({
             status: feedback.isSoftError ? 'ready' : 'error',
             isSoftError: feedback.isSoftError,

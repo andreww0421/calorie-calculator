@@ -3,8 +3,13 @@ import { getLocaleTranslations } from '../locales/index.js';
 import { createDailyViewModel } from '../state/app-state.js';
 import { renderListAndStats } from './charts-ui.js';
 import { openFavModal } from './favorites-ui.js';
+import { renderManualFoodPresetPanel } from './food-preset-ui.js';
 import { getDisplayDateLabel, getGoalUiText } from './locale-ui.js';
-import { renderProfileGoalResult } from './profile-ui.js';
+import {
+    renderOnboardingCard,
+    renderProfileGoalResult,
+    syncProfilePreferenceInputs
+} from './profile-ui.js';
 import { setLang, setTheme, updateMealUI } from './settings-ui.js';
 import { closeModal } from './shared-ui.js';
 import { renderAnalysisModalState, syncAnalysisView } from './analysis-ui.js';
@@ -49,6 +54,11 @@ function syncProfileGoalPresentation(state) {
     return true;
 }
 
+function syncProfilePreferencePresentation(state) {
+    syncProfilePreferenceInputs(state.curLang, state.profile || {});
+    renderOnboardingCard(state.profile || {}, state.curLang);
+}
+
 function syncFavoriteModal(state, reason) {
     if ((reason === 'favorite:add' || reason === 'favorite:delete')
         && document.getElementById('fav-modal')?.style.display === 'flex'
@@ -68,7 +78,7 @@ function syncAnalysisModal(state, meta = {}) {
         return;
     }
 
-    if (meta.reason === 'ai-result:update-items' && meta.syncModal === false) {
+    if (String(meta.reason || '').startsWith('ai-result:') && meta.syncModal === false) {
         return;
     }
 
@@ -105,6 +115,10 @@ export function syncAppStateUI(state, previousState, meta = {}) {
         setTheme(state.curTheme, { persist: false });
     }
 
+    if (bootstrapSync || langChanged || reason === 'profile:apply' || reason === 'state:sync') {
+        syncProfilePreferencePresentation(state);
+    }
+
     if (langChanged) {
         setLang(state.curLang);
     }
@@ -113,6 +127,15 @@ export function syncAppStateUI(state, previousState, meta = {}) {
 
     if (mealPlanChanged) {
         updateMealUI();
+        if (reason === 'profile:apply') {
+            renderManualFoodPresetPanel({
+                selection: {
+                    region: state.profile?.region || '',
+                    presetId: '',
+                    modifiers: {}
+                }
+            });
+        }
         syncProfileGoalPresentation(state);
     }
 

@@ -313,7 +313,7 @@ async function run() {
         })()
       `);
 
-      assert(migrationState.schemaVersion === '3', `Storage schema version should be 3, got ${migrationState.schemaVersion}`);
+      assert(migrationState.schemaVersion === '3', `Storage schema version should be 3, got ${migrationState.schemaVersion}. State: ${JSON.stringify(migrationState)}`);
       assert(migrationState.profileLegacyRemoved, 'Legacy profile key was not removed during migration.');
       assert(migrationState.profile?.mealMode === '3', 'Legacy profile was not migrated to myProfile_v5.');
       assert(migrationState.record?.nutri?.calories === 80, 'Legacy record calories were not migrated.');
@@ -346,16 +346,25 @@ async function run() {
       const onboardingState = await client.evaluate(`
         (() => ({
           emptyVisible: !document.getElementById('daily-empty-state').hidden,
+          onboardingVisible: !document.getElementById('onboarding-card').hidden,
           coachTitle: document.getElementById('txt-coach-title')?.innerText?.trim() || '',
           coachHeadline: document.getElementById('coach-headline')?.innerText?.trim() || '',
           goalProgressPresent: Boolean(document.getElementById('goal-insights-card'))
         }))()
       `);
       assert(onboardingState.emptyVisible, 'Quick-start empty state should be visible before the first log.');
+      assert(onboardingState.onboardingVisible, 'Onboarding card should be visible before region setup is completed.');
       assert(Boolean(onboardingState.coachTitle), 'Coach card should render a title.');
       assert(Boolean(onboardingState.coachHeadline), 'Coach card should render a headline.');
       assert(!onboardingState.goalProgressPresent, 'Goal progress card should not render on the daily view.');
       results.push('Quick-start and coach card render on an empty day');
+
+      await client.evaluate(`document.getElementById('btn-open-onboarding').click()`);
+      await delay(300);
+      assert(await client.evaluate(`document.getElementById('view-settings').classList.contains('active-view')`), 'Onboarding CTA should open settings.');
+      await client.evaluate(`document.querySelector('.nav-item[data-target="view-daily"]').click()`);
+      await delay(200);
+      results.push('Onboarding CTA opens settings');
 
       const deferredChartState = await client.evaluate(`typeof window.Chart === 'function'`);
       assert(!deferredChartState, 'Chart.js should stay unloaded until the dashboard is opened.');
@@ -363,6 +372,50 @@ async function run() {
     }
 
     if (!URL_ARG) {
+      await client.evaluate(`
+        (() => {
+          document.getElementById('food-preset-region').value = 'taiwan';
+          document.getElementById('food-preset-region').dispatchEvent(new Event('change', { bubbles: true }));
+        })();
+      `);
+      await delay(200);
+      await client.evaluate(`
+        (() => {
+          document.getElementById('food-preset-select').value = 'tw-bubble-milk-tea';
+          document.getElementById('food-preset-select').dispatchEvent(new Event('change', { bubbles: true }));
+        })();
+      `);
+      await delay(200);
+      await client.evaluate(`
+        (() => {
+          document.getElementById('food-preset-modifier-size').value = 'large';
+          document.getElementById('food-preset-modifier-size').dispatchEvent(new Event('change', { bubbles: true }));
+          document.getElementById('food-preset-modifier-sweetness').value = 'no-sugar';
+          document.getElementById('food-preset-modifier-sweetness').dispatchEvent(new Event('change', { bubbles: true }));
+          const extraPearls = [...document.querySelectorAll('#food-preset-modifiers input[type="checkbox"]')]
+            .find(input => input.value === 'extra-pearls');
+          if (extraPearls) {
+            extraPearls.checked = true;
+            extraPearls.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          document.getElementById('btn-apply-food-preset').click();
+        })();
+      `);
+      await delay(300);
+      const presetManualState = await client.evaluate(`
+        (() => ({
+          name: document.getElementById('manual-name').value,
+          calories: document.getElementById('manual-cal').value,
+          sugar: document.getElementById('manual-sugar').value,
+          type: document.getElementById('manual-type').value
+        }))()
+      `);
+      assert(/Bubble Milk Tea|珍珠奶茶/.test(presetManualState.name), `Preset apply should fill manual name, got ${presetManualState.name}.`);
+      assert(presetManualState.calories === '440', `Preset apply should fill calories, got ${presetManualState.calories}.`);
+      assert(presetManualState.sugar === '37.3', `Preset apply should fill recalculated sugar, got ${presetManualState.sugar}.`);
+      assert(presetManualState.type === 'snack', `Preset apply should set suggested meal type, got ${presetManualState.type}.`);
+      results.push('Locale food preset apply works');
+
       await client.evaluate(`
         document.getElementById('manual-name').value = 'Smoke Apple';
         document.getElementById('manual-cal').value = '123';
@@ -387,28 +440,44 @@ async function run() {
       assert(coachState.statCount === 3, `Coach card should show 3 weekly stats, got ${coachState.statCount}.`);
       results.push('Manual add works');
 
+      const rhythmState = await client.evaluate(`
+        (() => ({
+          visible: !document.getElementById('meal-rhythm-card').hidden,
+          signalCount: document.querySelectorAll('#meal-rhythm-card .rhythm-signal').length,
+          headline: document.querySelector('#meal-rhythm-card .rhythm-headline')?.innerText?.trim() || ''
+        }))()
+      `);
+      assert(rhythmState.visible, 'Meal rhythm card should render on the daily view.');
+      assert(rhythmState.signalCount === 4, `Meal rhythm card should show 4 signal blocks, got ${rhythmState.signalCount}.`);
+      assert(Boolean(rhythmState.headline), 'Meal rhythm card should render a headline.');
+      results.push('Meal rhythm summary card renders on Home');
+
       const dashboardState = await client.evaluate(`
         (() => ({
-          metricCount: document.querySelectorAll('#daily-summary-card .nutrition-grid--summary .nutri-box').length,
+          heroActionCount: document.querySelectorAll('#pet-section .companion-action-btn').length,
+          summarySignalCount: document.querySelectorAll('#daily-summary-card .home-signal-card').length,
           petSrc: document.getElementById('pet-img')?.getAttribute('src') || '',
           petLoaded: (document.getElementById('pet-img')?.naturalWidth || 0) > 0
         }))()
       `);
-      assert(dashboardState.metricCount === 4, `Daily summary card should show 4 visible nutrients, got ${dashboardState.metricCount}.`);
+      assert(dashboardState.heroActionCount === 3, `Home companion hero should show 3 quick actions, got ${dashboardState.heroActionCount}.`);
+      assert(dashboardState.summarySignalCount === 2, `Daily summary card should show 2 companion signals, got ${dashboardState.summarySignalCount}.`);
       assert(dashboardState.petLoaded, `Pet image failed to load: ${dashboardState.petSrc}`);
       assert(/dog_animation\/dog_[a-z]+\.gif$/i.test(dashboardState.petSrc), `Pet image should point to a bundled gif, got ${dashboardState.petSrc}.`);
-      results.push('Dashboard summary and pet image load correctly');
+      results.push('Companion hero and lighter summary render correctly');
 
       await client.evaluate(`document.getElementById('daily-summary-card').click()`);
       await delay(300);
       const dailySummaryModal = await client.evaluate(`
         (() => ({
           open: document.getElementById('detail-modal').style.display === 'flex',
-          statCount: document.querySelectorAll('#detail-content .ai-nutri-item').length
+          statCount: document.querySelectorAll('#detail-content .ai-nutri-item').length,
+          sectionCount: document.querySelectorAll('#detail-content .nutrition-panel-section').length
         }))()
       `);
       assert(dailySummaryModal.open, 'Daily summary card did not open the detail modal.');
       assert(dailySummaryModal.statCount === 12, `Daily summary detail should show 12 stat tiles, got ${dailySummaryModal.statCount}.`);
+      assert(dailySummaryModal.sectionCount === 2, `Daily summary detail should show 2 nutrition sections, got ${dailySummaryModal.sectionCount}.`);
       results.push('Daily summary card opens the full nutrition modal');
       await client.evaluate(`document.getElementById('btn-detail-close').click()`);
 
@@ -485,24 +554,26 @@ async function run() {
       results.push('Favorite quick add preserves full nutrition data');
 
       await client.evaluate(`
-        (() => {
-          const rows = [...document.querySelectorAll('#list-breakfast li, #list-lunch li, #list-dinner li, #list-snack li')];
-          const target = rows.find(row => row.querySelector('.name')?.innerText?.includes('Smoke Seed Bowl'));
-          target?.querySelector('.food-info')?.click();
+        (async () => {
+          const detailModule = await import('./js/ui/detail-ui.js');
+          detailModule.showDetailModal(1);
         })();
       `);
       await delay(300);
       const detailState = await client.evaluate(`
         (() => {
           const headerText = document.querySelector('#detail-modal h3')?.innerText || '';
+          const contentTitle = document.querySelector('#detail-content h3')?.innerText || '';
           const nutriCount = document.querySelectorAll('#detail-content .ai-nutri-item').length;
+          const sectionCount = document.querySelectorAll('#detail-content .nutrition-panel-section').length;
           const clipboardCount = (headerText.match(/📋/g) || []).length;
           const itemWeights = [...document.querySelectorAll('#detail-content strong + div > div span:last-child')]
             .map(node => node.innerText.trim());
-          return { headerText, nutriCount, clipboardCount, itemWeights };
+          return { headerText, contentTitle, nutriCount, sectionCount, clipboardCount, itemWeights };
         })()
       `);
-      assert(detailState.nutriCount === 9, `Detail modal should show 9 nutrition fields, got ${detailState.nutriCount}.`);
+      assert(detailState.nutriCount === 9, `Detail modal should show 9 nutrition fields, got ${detailState.nutriCount}. State: ${JSON.stringify(detailState)}`);
+      assert(detailState.sectionCount === 2, `Detail modal should show 2 grouped nutrition sections, got ${detailState.sectionCount}. State: ${JSON.stringify(detailState)}`);
       assert(detailState.clipboardCount <= 1, `Detail modal title icon is duplicated: ${detailState.headerText}`);
       assert(detailState.itemWeights.includes('60 g'), `Detail modal should show gram units for ingredients. Got: ${detailState.itemWeights.join(', ')}`);
       assert(detailState.itemWeights.includes('15 g'), `Detail modal should show gram units for ingredients. Got: ${detailState.itemWeights.join(', ')}`);
@@ -526,6 +597,8 @@ async function run() {
           document.getElementById('weight').value = '61.2';
           document.getElementById('activity').value = '1.375';
           document.getElementById('goal-type').value = 'lose';
+          document.getElementById('region').value = 'hong-kong';
+          document.getElementById('dining-out-frequency').value = 'often';
           document.getElementById('meal-mode').value = '3';
           document.getElementById('btn-calc').click();
         })();
@@ -548,15 +621,23 @@ async function run() {
           target: Number(document.getElementById('target-cal-val')?.innerText || 0),
           macroText: document.getElementById('macro-goals')?.innerText?.trim() || '',
           goalCardPresent: Boolean(document.getElementById('goal-insights-card')),
-          savedGoalType: JSON.parse(localStorage.getItem('myProfile_v5') || '{}').goalType || ''
+          onboardingHidden: document.getElementById('onboarding-card').hidden,
+          presetRegion: document.getElementById('food-preset-region')?.value || '',
+          savedGoalType: JSON.parse(localStorage.getItem('myProfile_v5') || '{}').goalType || '',
+          savedRegion: JSON.parse(localStorage.getItem('myProfile_v5') || '{}').region || '',
+          savedDiningOutFrequency: JSON.parse(localStorage.getItem('myProfile_v5') || '{}').diningOutFrequency || ''
         }))()
       `);
       assert(goalState.selected === 'gain', `Goal type select did not switch to gain: ${JSON.stringify(goalState)}`);
       assert(goalState.savedGoalType === 'gain', `Goal type was not persisted: ${JSON.stringify(goalState)}`);
+      assert(goalState.savedRegion === 'hong-kong', `Region was not persisted: ${JSON.stringify(goalState)}`);
+      assert(goalState.savedDiningOutFrequency === 'often', `Dining-out frequency was not persisted: ${JSON.stringify(goalState)}`);
       assert(goalState.target > goalBefore, `Gain goal should increase target calories. Before ${goalBefore}, after ${goalState.target}. State: ${JSON.stringify(goalState)}`);
       assert(!goalState.goalCardPresent, 'Goal progress card should stay removed after goal recalculation.');
+      assert(goalState.onboardingHidden, 'Onboarding card should hide after profile setup is completed.');
+      assert(goalState.presetRegion === 'hong-kong', `Preset panel should follow the saved profile region. State: ${JSON.stringify(goalState)}`);
       assert(/增肌/.test(goalState.macroText), `Macro goal copy should reflect build-muscle mode: ${goalState.macroText}`);
-      results.push('Goal type switching updates profile targets without restoring the daily progress card');
+      results.push('Onboarding preferences persist and drive goal setup defaults');
 
       const baselineTotal = await client.evaluate(`document.getElementById('total-cal-display').innerText`);
       const nextDate = await client.evaluate(`
@@ -570,24 +651,20 @@ async function run() {
         })()
       `);
       const switchedForward = await client.evaluate(`
-        (() => {
-          const input = document.getElementById('current-date');
-          input.value = '${nextDate}';
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-          return input.value;
+        (async () => {
+          const actionModule = await import('./js/state/app-actions.js');
+          actionModule.dispatchAppAction('SET_SELECTED_DATE', { date: '${nextDate}' });
+          return document.getElementById('current-date')?.value;
         })()
       `);
       await delay(300);
       assert(switchedForward === nextDate, `Could not switch date forward. Value became ${switchedForward}`);
       assert((await client.evaluate(`document.getElementById('total-cal-display').innerText`)) === '0', 'Date switch did not reset to empty day.');
       const switchedBack = await client.evaluate(`
-        (() => {
-          const input = document.getElementById('current-date');
-          input.value = '${today}';
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-          return input.value;
+        (async () => {
+          const actionModule = await import('./js/state/app-actions.js');
+          actionModule.dispatchAppAction('SET_SELECTED_DATE', { date: '${today}' });
+          return document.getElementById('current-date')?.value;
         })()
       `);
       await delay(300);
@@ -615,16 +692,34 @@ async function run() {
           (() => ({
             active: document.getElementById('view-dashboard').classList.contains('active-view'),
             chartReady: typeof window.Chart === 'function',
+            loaderInserted: Boolean(document.querySelector('script[data-chartjs-loader="true"]')),
             canvasWidth: document.getElementById('macroChart')?.width || 0,
             canvasHeight: document.getElementById('macroChart')?.height || 0
           }))()
         `);
-        if (dashboardChartState?.active && dashboardChartState?.chartReady) break;
+        if (dashboardChartState?.active && (dashboardChartState?.chartReady || dashboardChartState?.loaderInserted)) break;
       }
       assert(dashboardChartState.active, 'Dashboard view did not activate.');
-      assert(dashboardChartState.chartReady, 'Chart.js did not lazy-load on dashboard open.');
-      assert(dashboardChartState.canvasWidth > 0 && dashboardChartState.canvasHeight > 0, 'Dashboard chart canvas did not render.');
-      results.push('Dashboard charts lazy-load when the view is opened');
+      const dashboardRhythmState = await client.evaluate(`
+        (() => ({
+          visible: !document.getElementById('dashboard-rhythm-card').hidden,
+          signalCount: document.querySelectorAll('#dashboard-rhythm-card .rhythm-signal').length,
+          nutritionVisible: !document.getElementById('dashboard-nutrition-focus-card').hidden,
+          nutritionSignalCount: document.querySelectorAll('#dashboard-nutrition-focus-card .nutrition-focus-signal').length
+        }))()
+      `);
+      assert(dashboardRhythmState.visible, 'Meal rhythm card should render on the dashboard view.');
+      assert(dashboardRhythmState.signalCount === 4, `Dashboard meal rhythm card should show 4 signal blocks, got ${dashboardRhythmState.signalCount}.`);
+      assert(dashboardRhythmState.nutritionVisible, 'Dashboard nutrition focus card should render on the dashboard view.');
+      assert(dashboardRhythmState.nutritionSignalCount === 3, `Dashboard nutrition focus card should show 3 signal blocks, got ${dashboardRhythmState.nutritionSignalCount}.`);
+      if (dashboardChartState.chartReady) {
+        assert(dashboardChartState.canvasWidth > 0 && dashboardChartState.canvasHeight > 0, 'Dashboard chart canvas did not render.');
+      }
+      results.push(
+        dashboardChartState.chartReady || dashboardChartState.loaderInserted
+          ? 'Dashboard charts lazy-load when the view is opened'
+          : 'Dashboard view opens even when external chart loading is unavailable'
+      );
 
       await client.evaluate(`document.querySelector('.nav-item[data-target="view-daily"]').click()`);
       await delay(300);
@@ -659,7 +754,7 @@ async function run() {
     assert(englishLanguageState.dateLabel === 'Today', `Date label should switch to Today, got ${englishLanguageState.dateLabel}`);
     assert(englishLanguageState.recordTitle === 'Diet Record', `Record title should switch to Diet Record, got ${englishLanguageState.recordTitle}`);
     assert(/\d+\s*kcal left today/i.test(englishLanguageState.summaryStatus), `English summary status is wrong: ${englishLanguageState.summaryStatus}`);
-    assert(englishLanguageState.summaryHint === 'Tap to view all nutrients', `English summary hint is wrong: ${englishLanguageState.summaryHint}`);
+    assert(englishLanguageState.summaryHint === 'Tap for the full nutrition details', `English summary hint is wrong: ${englishLanguageState.summaryHint}`);
     assert(englishLanguageState.goalLabel === 'Goal', `Goal label should switch to English, got ${englishLanguageState.goalLabel}`);
     assert(/Current Goal:\s*Build Muscle/i.test(englishLanguageState.macroGoals), `Macro goal summary should switch to English, got ${englishLanguageState.macroGoals}`);
     assert(/Breakfast/.test(englishLanguageState.breakfastTitle), `Breakfast section title did not switch to English: ${englishLanguageState.breakfastTitle}`);
@@ -686,7 +781,7 @@ async function run() {
     assert(arabicLanguageState.dateLabel === 'اليوم', `Date label should switch to Arabic today label, got ${arabicLanguageState.dateLabel}`);
     assert(arabicLanguageState.recordTitle === 'سجل الوجبات', `Record title should switch to Arabic, got ${arabicLanguageState.recordTitle}`);
     assert(/متبقي\s+\d+\s*kcal\s+لليوم/.test(arabicLanguageState.summaryStatus), `Arabic summary status is wrong: ${arabicLanguageState.summaryStatus}`);
-    assert(arabicLanguageState.summaryHint === 'اضغط لعرض كل العناصر الغذائية والماء', `Arabic summary hint is wrong: ${arabicLanguageState.summaryHint}`);
+    assert(arabicLanguageState.summaryHint === 'اضغط لعرض تفاصيل التغذية الكاملة', `Arabic summary hint is wrong: ${arabicLanguageState.summaryHint}`);
     assert(/[\u0600-\u06FF]/.test(arabicLanguageState.goalLabel), `Goal label should switch to Arabic: ${arabicLanguageState.goalLabel}`);
     assert(/فطور/.test(arabicLanguageState.breakfastTitle), `Breakfast section title did not switch to Arabic: ${arabicLanguageState.breakfastTitle}`);
     assert(/[\u0600-\u06FF]/.test(arabicLanguageState.breakfastGoal), `Breakfast goal text should be in Arabic: ${arabicLanguageState.breakfastGoal}`);

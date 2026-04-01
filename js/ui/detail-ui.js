@@ -1,7 +1,7 @@
 import { getAppState } from '../state/app-state.js';
 import { createElement, clearElement } from './dom-ui.js';
 import { getTexts } from './shared-ui.js';
-import { createItemSummaryList, createNutritionGrid, createScoreBadge } from './modal-content-ui.js';
+import { createDetailedNutritionPanel, createItemSummaryList, createScoreBadge } from './modal-content-ui.js';
 
 export function showDetailModal(index) {
     const item = getAppState().foodItems[index];
@@ -35,7 +35,7 @@ export function renderDetailModal(item) {
         wrapper.appendChild(createScoreBadge(item.healthScore, t.healthScoreLabel || 'Health Score'));
     }
 
-    wrapper.appendChild(createNutritionGrid(nutri, t, { fallback: nd, caloriePrefix: 'Cal ' }));
+    wrapper.appendChild(createDetailedNutritionPanel(nutri, t, getAppState().curLang, { fallback: nd }));
 
     const section = createElement('div', { style: { marginTop: '15px' } }, [
         createElement('strong', { text: t.aiItemsLabel || 'Estimated Food Items' }),
@@ -79,7 +79,7 @@ export function showDailyNutritionSummary(summary) {
     });
 
     wrapper.appendChild(highlights);
-    wrapper.appendChild(createNutritionGrid(summary.nutri || {}, t, { fallback: nd, caloriePrefix: 'Cal ' }));
+    wrapper.appendChild(createDetailedNutritionPanel(summary.nutri || {}, t, getAppState().curLang, { fallback: nd }));
 
     content.appendChild(wrapper);
     document.getElementById('detail-modal').style.display = 'flex';

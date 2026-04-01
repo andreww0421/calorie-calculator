@@ -1,9 +1,23 @@
 import { createDailyViewModel, getAppState } from '../state/app-state.js';
+import {
+    createDashboardNutritionFocusViewModel,
+    createHomeCompanionViewModel,
+    createMealRhythmViewModel
+} from '../state/app-selectors.js';
+import { createPetViewModel } from '../state/pet-selectors.js';
+import { trackRhythmSummaryViewed } from '../analytics/product-events.js';
 import { createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions } from './shared-ui.js';
 import { executeTurnstile, initializeTurnstileWidget } from '../platform.js';
 import { showDetailModal } from './detail-ui.js';
-import { buildCoachContent, formatNutritionInline, getExtraUiText } from './locale-ui.js';
+import {
+    buildHomeCompanionContent,
+    buildCoachContent,
+    buildMealRhythmContent,
+    buildNutritionFocusContent,
+    formatNutritionInline,
+    getExtraUiText
+} from './locale-ui.js';
 import { buildDailyCoaching } from '../domain/nutrition-domain.js';
 import {
     dashboardChartRange,
@@ -98,6 +112,210 @@ function renderCoachCard(viewModel) {
     card.dataset.coachStatus = coach.status;
 }
 
+function renderMealRhythmCard(cardId, state = getAppState(), variant = 'home') {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+
+    const rhythm = createMealRhythmViewModel(state, { days: 7 });
+    const content = buildMealRhythmContent(rhythm, state.curLang, { variant });
+
+    card.hidden = false;
+    clearElement(card);
+    card.appendChild(createElement('div', {
+        className: 'rhythm-kicker',
+        text: content.title
+    }));
+    if (content.subtitle) {
+        card.appendChild(createElement('div', {
+            className: 'rhythm-summary',
+            text: content.subtitle
+        }));
+    }
+    card.appendChild(createElement('div', {
+        className: 'rhythm-headline',
+        text: content.headline
+    }));
+    card.appendChild(createElement('div', {
+        className: 'rhythm-summary',
+        text: content.summary
+    }));
+
+    const signalGrid = createElement('div', {
+        className: 'rhythm-signal-grid'
+    });
+
+    content.signals.forEach((signal) => {
+        signalGrid.appendChild(createElement('div', {
+            className: 'rhythm-signal'
+        }, [
+            createElement('div', {
+                className: 'rhythm-signal-label',
+                text: signal.label
+            }),
+            createElement('div', {
+                className: 'rhythm-signal-copy',
+                text: signal.text
+            })
+        ]));
+    });
+
+    card.appendChild(signalGrid);
+}
+
+function trackVisibleRhythmSummaryViews(state = getAppState()) {
+    const rhythm = createMealRhythmViewModel(state, { days: 7 });
+    const surfaces = [
+        ['home', document.getElementById('view-home')],
+        ['dashboard', document.getElementById('view-dashboard')]
+    ];
+
+    surfaces.forEach(([surface, element]) => {
+        if (!element?.classList.contains('active-view')) return;
+        trackRhythmSummaryViewed({
+            surface,
+            selectedDate: state.selectedDate,
+            headline: rhythm.headline,
+            signalCount: Array.isArray(rhythm.signals) ? rhythm.signals.length : 0
+        });
+    });
+}
+
+export function renderMealRhythmCards(state = getAppState()) {
+    renderMealRhythmCard('meal-rhythm-card', state, 'home');
+    renderMealRhythmCard('dashboard-rhythm-card', state, 'dashboard');
+    trackVisibleRhythmSummaryViews(state);
+}
+
+function renderDashboardNutritionFocusCard(state = getAppState()) {
+    const card = document.getElementById('dashboard-nutrition-focus-card');
+    if (!card) return;
+
+    const content = buildNutritionFocusContent(
+        createDashboardNutritionFocusViewModel(state, { days: 7 }),
+        state.curLang
+    );
+
+    card.hidden = false;
+    clearElement(card);
+    card.appendChild(createElement('div', {
+        className: 'nutrition-focus-kicker',
+        text: content.title
+    }));
+    card.appendChild(createElement('div', {
+        className: 'nutrition-focus-subtitle',
+        text: content.subtitle
+    }));
+    card.appendChild(createElement('div', {
+        className: 'nutrition-focus-headline',
+        text: content.headline
+    }));
+    card.appendChild(createElement('div', {
+        className: 'nutrition-focus-summary',
+        text: content.summary
+    }));
+
+    const signalGrid = createElement('div', {
+        className: 'nutrition-focus-grid'
+    });
+    content.signals.forEach((signal) => {
+        signalGrid.appendChild(createElement('div', {
+            className: 'nutrition-focus-signal'
+        }, [
+            createElement('div', {
+                className: 'nutrition-focus-label',
+                text: signal.label
+            }),
+            createElement('div', {
+                className: 'nutrition-focus-value',
+                text: signal.value
+            }),
+            createElement('div', {
+                className: 'nutrition-focus-detail',
+                text: signal.detail
+            })
+        ]));
+    });
+    card.appendChild(signalGrid);
+}
+
+function renderHomeCompanionCard(state = getAppState()) {
+    const viewModel = createHomeCompanionViewModel(state);
+    const content = buildHomeCompanionContent(viewModel, state.curLang);
+    const textTargets = [
+        ['home-companion-kicker', content.hero.eyebrow],
+        ['home-companion-title', content.hero.title],
+        ['home-companion-summary', content.hero.summary],
+        ['btn-home-ai-label', content.hero.actions.ai],
+        ['btn-home-manual-label', content.hero.actions.manual],
+        ['btn-home-favorites-label', content.hero.actions.favorites],
+        ['home-log-eyebrow', content.quickLog.eyebrow],
+        ['home-log-copy', content.quickLog.summary],
+        ['home-log-list-title', content.quickLog.mealListTitle],
+        ['txt-total-intake', content.overview.title],
+        ['txt-daily-summary-hint', content.overview.hint]
+    ];
+
+    textTargets.forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.innerText = value;
+        }
+    });
+
+    const statsEl = document.getElementById('home-companion-stats');
+    if (statsEl) {
+        clearElement(statsEl);
+        content.hero.stats.forEach((stat) => {
+            statsEl.appendChild(createElement('div', {
+                className: 'companion-stat-chip'
+            }, [
+                createElement('span', {
+                    className: 'companion-stat-label',
+                    text: stat.label
+                }),
+                createElement('span', {
+                    className: 'companion-stat-value',
+                    text: stat.value
+                })
+            ]));
+        });
+    }
+
+    const metaEl = document.getElementById('home-companion-meta');
+    if (metaEl) {
+        clearElement(metaEl);
+        content.hero.meta.forEach((item) => {
+            metaEl.appendChild(createElement('span', {
+                className: 'companion-meta-chip',
+                text: item
+            }));
+        });
+    }
+
+    const signalGrid = document.getElementById('home-summary-signals');
+    if (signalGrid) {
+        clearElement(signalGrid);
+        content.overview.signals.forEach((signal) => {
+            signalGrid.appendChild(createElement('div', {
+                className: 'home-signal-card'
+            }, [
+                createElement('div', {
+                    className: 'home-signal-label',
+                    text: signal.label
+                }),
+                createElement('div', {
+                    className: 'home-signal-value',
+                    text: signal.value
+                }),
+                createElement('div', {
+                    className: 'home-signal-copy',
+                    text: signal.detail
+                })
+            ]));
+        });
+    }
+}
+
 export function switchView(targetId) {
     document.querySelectorAll('.view-section').forEach((view) => {
         view.classList.remove('active-view');
@@ -115,6 +333,7 @@ export function switchView(targetId) {
     });
 
     if (targetId === 'view-dashboard') {
+        trackVisibleRhythmSummaryViews(getAppState());
         void ensureDashboardChartsReady();
         return;
     }
@@ -123,7 +342,10 @@ export function switchView(targetId) {
         void initializeTurnstileWidget().then(() => {
             executeTurnstile();
         });
+        return;
     }
+
+    trackVisibleRhythmSummaryViews(getAppState());
 }
 
 export function setChartRange(days) {
@@ -142,6 +364,7 @@ export function setChartRange(days) {
 export function renderListAndStats(viewModel = createDailyViewModel(getAppState())) {
     const t = getTexts();
     const extra = getExtraUiText(viewModel.lang);
+    const state = getAppState();
 
     ['breakfast', 'lunch', 'dinner', 'snack'].forEach((type) => {
         clearElement(document.getElementById(`list-${type}`));
@@ -215,9 +438,12 @@ export function renderListAndStats(viewModel = createDailyViewModel(getAppState(
     if (emptyState) emptyState.hidden = viewModel.foodItems.length > 0;
 
     renderCoachCard(viewModel);
+    renderMealRhythmCards(state);
+    renderDashboardNutritionFocusCard(state);
 
     updateCharts(viewModel.totals);
-    updatePetStatus(viewModel.totals, { targetCalories: viewModel.targetCalories });
+    updatePetStatus(createPetViewModel(state));
+    renderHomeCompanionCard(state);
     updateDailySummaryCard(viewModel.totals, viewModel.waterTarget, viewModel.targetCalories);
 }
 

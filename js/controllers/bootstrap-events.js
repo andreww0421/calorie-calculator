@@ -13,7 +13,13 @@ import { exportBackup } from '../repositories/backup-repository.js';
 import { dispatchAppAction } from '../state/app-actions.js';
 import { calculateProfile, changeDate, handleImportData, saveCurrentWeight } from './profile-controller.js';
 import { handleFileSelect, startAnalysis, syncAnalysisInputState, tryCloseAnalysisModal } from './analysis-controller.js';
-import { addManualFood, saveToFavorites, saveAIResultToFavorites } from './record-controller.js';
+import {
+    addManualFood,
+    applySelectedFoodPreset,
+    saveToFavorites,
+    saveAIResultToFavorites,
+    syncManualFoodPresetUI
+} from './record-controller.js';
 
 export function setupEventListeners() {
     document.getElementById('current-date').addEventListener('change', changeDate);
@@ -29,6 +35,37 @@ export function setupEventListeners() {
     document.getElementById('btn-add-record').addEventListener('click', addManualFood);
     document.getElementById('btn-fav-save-main').addEventListener('click', saveToFavorites);
     document.getElementById('btn-fav-load-main').addEventListener('click', () => openFavModal());
+    document.getElementById('btn-home-ai')?.addEventListener('click', () => {
+        switchView('view-ai');
+    });
+    document.getElementById('btn-home-manual')?.addEventListener('click', () => {
+        const input = document.getElementById('manual-name');
+        input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        input?.focus();
+    });
+    document.getElementById('btn-home-favorites')?.addEventListener('click', () => openFavModal());
+    document.getElementById('food-preset-panel')?.addEventListener('change', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (target.id === 'food-preset-region') {
+            syncManualFoodPresetUI({ region: target.value, resetPreset: true, resetModifiers: true });
+            return;
+        }
+        if (target.id === 'food-preset-select') {
+            syncManualFoodPresetUI({ presetId: target.value, resetModifiers: true });
+            return;
+        }
+        if (target.dataset.groupId) {
+            syncManualFoodPresetUI();
+        }
+    });
+    document.getElementById('food-preset-panel')?.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (target.id === 'btn-apply-food-preset') {
+            applySelectedFoodPreset();
+        }
+    });
     document.getElementById('meal-mode').addEventListener('change', () => calculateProfile());
     document.getElementById('goal-type')?.addEventListener('change', () => calculateProfile());
     document.getElementById('btn-calc').addEventListener('click', () => calculateProfile());
@@ -73,6 +110,17 @@ export function setupEventListeners() {
             }
         });
     }
+
+    document.getElementById('onboarding-card')?.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (target.id !== 'btn-open-onboarding') return;
+
+        switchView('view-settings');
+        requestAnimationFrame(() => {
+            document.getElementById('region')?.focus();
+        });
+    });
 
     const btnSaveWeight = document.getElementById('btn-save-weight');
     if (btnSaveWeight) btnSaveWeight.addEventListener('click', saveCurrentWeight);

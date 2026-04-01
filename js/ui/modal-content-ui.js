@@ -1,4 +1,6 @@
 import { createElement } from './dom-ui.js';
+import { buildNutritionDetailModel } from '../domain/nutrition-presentation-domain.js';
+import { getNutritionUiText } from './locale-ui.js';
 
 function createNutritionItem(value, label) {
     return createElement('div', { className: 'ai-nutri-item' }, [
@@ -11,6 +13,46 @@ export function formatDisplayWeight(weight, emptyText = '--') {
     const raw = String(weight ?? '').trim();
     if (!raw) return emptyText;
     return /^-?\d+(?:\.\d+)?$/.test(raw) ? `${raw} g` : raw;
+}
+
+function getNutritionFieldLabel(field, translations = {}) {
+    const labelMap = {
+        calories: translations.cal || 'Calories',
+        protein: translations.pro || 'Protein',
+        fat: translations.fat || 'Fat',
+        carbohydrate: translations.carb || 'Carb',
+        sugar: translations.sugar || 'Sugar',
+        sodium: translations.sod || 'Sodium',
+        saturatedFat: translations.sat || 'Saturated Fat',
+        transFat: translations.trans || 'Trans Fat',
+        fiber: translations.fiber || 'Fiber'
+    };
+
+    return labelMap[field] || field;
+}
+
+function formatNutritionMetricValue(metric, fallback = '--') {
+    if (!metric) return fallback;
+    const value = metric.value ?? 0;
+    const unit = metric.unit || '';
+    if (value === undefined || value === null || value === '') return fallback;
+    return `${value}${unit ? ` ${unit}` : ''}`;
+}
+
+function createNutritionMetricGrid(metrics, translations, {
+    fallback = '--',
+    itemClassName = ''
+} = {}) {
+    const grid = createElement('div', { className: 'ai-nutri-grid' });
+    metrics.forEach((metric) => {
+        const item = createNutritionItem(
+            formatNutritionMetricValue(metric, fallback),
+            getNutritionFieldLabel(metric.field, translations)
+        );
+        if (itemClassName) item.classList.add(itemClassName);
+        grid.appendChild(item);
+    });
+    return grid;
 }
 
 export function createNutritionGrid(nutri, translations, options = {}) {
@@ -33,6 +75,53 @@ export function createNutritionGrid(nutri, translations, options = {}) {
     });
 
     return grid;
+}
+
+export function createDetailedNutritionPanel(nutri, translations, lang, options = {}) {
+    const { fallback = '--' } = options;
+    const model = buildNutritionDetailModel(nutri);
+    const copy = getNutritionUiText(lang).detail;
+    const wrapper = createElement('div', { className: 'nutrition-panel' });
+
+    wrapper.appendChild(createElement('div', { className: 'nutrition-panel-header' }, [
+        createElement('div', {
+            className: 'nutrition-panel-title',
+            text: copy.overviewTitle
+        }),
+        createElement('div', {
+            className: 'nutrition-panel-copy',
+            text: copy.overviewSummary
+        })
+    ]));
+
+    const highlights = createNutritionMetricGrid(model.highlights, translations, {
+        fallback,
+        itemClassName: 'ai-nutri-item--primary'
+    });
+    highlights.classList.add('ai-nutri-grid--primary');
+    wrapper.appendChild(highlights);
+
+    model.sections.forEach((section) => {
+        const sectionCopy = copy.sections?.[section.id];
+        const sectionWrapper = createElement('section', {
+            className: 'nutrition-panel-section'
+        }, [
+            createElement('div', { className: 'nutrition-panel-section-head' }, [
+                createElement('div', {
+                    className: 'nutrition-panel-section-title',
+                    text: sectionCopy?.title || section.id
+                }),
+                createElement('div', {
+                    className: 'nutrition-panel-section-copy',
+                    text: sectionCopy?.summary || ''
+                })
+            ]),
+            createNutritionMetricGrid(section.items, translations, { fallback })
+        ]);
+        wrapper.appendChild(sectionWrapper);
+    });
+
+    return wrapper;
 }
 
 export function createItemSummaryList(items, emptyText = '--') {

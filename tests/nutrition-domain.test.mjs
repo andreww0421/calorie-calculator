@@ -10,6 +10,16 @@ import {
     getMealPlan,
     summarizeNutrition
 } from '../js/domain/nutrition-domain.js';
+import {
+    createFoodPresetManualDraft,
+    resolveFoodPreset
+} from '../js/domain/food-preset-domain.js';
+import { findFoodPresetById } from '../js/repositories/food-preset-repository.js';
+import {
+    createFoodPresetPickerViewModel,
+    getDefaultFoodPresetRegion,
+    listFoodPresetsByRegion
+} from '../js/state/food-preset-selectors.js';
 
 test('getMealPlan resolves meal ratios and suggested calories', () => {
     const meals = getMealPlan('3', {
@@ -124,4 +134,73 @@ test('buildGoalInsights tracks adherence and logging streaks', () => {
     assert.equal(insights.proteinTargetDays, 3);
     assert.equal(insights.currentStreak, 3);
     assert.equal(insights.bestStreak, 3);
+});
+
+test('food preset repository lookup exposes seeded Asia-first presets', () => {
+    const preset = findFoodPresetById('tw-bubble-milk-tea');
+
+    assert.equal(preset?.region, 'taiwan');
+    assert.equal(preset?.suggestedMealType, 'snack');
+    assert.ok(Array.isArray(preset?.modifierGroups));
+    assert.ok(preset.modifierGroups.some((group) => group.id === 'sweetness'));
+});
+
+test('food preset selectors default and filter presets by locale-aware region', () => {
+    assert.equal(getDefaultFoodPresetRegion('zh-TW'), 'taiwan');
+    assert.equal(getDefaultFoodPresetRegion('en'), 'singapore');
+
+    const taiwanPresets = listFoodPresetsByRegion('taiwan', 'zh-TW');
+    assert.ok(taiwanPresets.some((preset) => preset.label.includes('牛肉麵')));
+    assert.ok(taiwanPresets.every((preset) => preset.region === 'taiwan'));
+
+    const picker = createFoodPresetPickerViewModel({
+        lang: 'en',
+        region: 'hong-kong',
+        presetId: 'hk-milk-tea'
+    });
+
+    assert.equal(picker.selectedRegion, 'hong-kong');
+    assert.equal(picker.selectedPresetId, 'hk-milk-tea');
+    assert.ok(picker.presets.some((preset) => preset.label === 'Hong Kong Milk Tea'));
+
+    const profileRegionPicker = createFoodPresetPickerViewModel({
+        lang: 'en',
+        profileRegion: 'taiwan'
+    });
+    assert.equal(profileRegionPicker.selectedRegion, 'taiwan');
+});
+
+test('food preset modifier recalculation applies size sweetness and add-on deltas', () => {
+    const preset = findFoodPresetById('tw-bubble-milk-tea');
+    const resolved = resolveFoodPreset(preset, {
+        lang: 'en',
+        selectedModifiers: {
+            size: 'large',
+            sweetness: 'no-sugar',
+            addons: ['extra-pearls']
+        }
+    });
+
+    assert.equal(resolved.name, 'Bubble Milk Tea (Large, No sugar)');
+    assert.equal(resolved.nutrition.calories, 440);
+    assert.equal(resolved.nutrition.carbohydrate, 82);
+    assert.equal(resolved.nutrition.sugar, 37.3);
+    assert.ok(resolved.items.some((item) => item.name === 'Extra pearls'));
+});
+
+test('food preset manual draft keeps meal type and normalized nutrition fields', () => {
+    const preset = findFoodPresetById('sg-hainanese-chicken-rice');
+    const draft = createFoodPresetManualDraft(preset, {
+        lang: 'en',
+        selectedModifiers: {
+            portion: 'double-rice',
+            addons: ['braised-egg']
+        }
+    });
+
+    assert.equal(draft.type, 'lunch');
+    assert.equal(draft.name, 'Hainanese Chicken Rice (Extra rice)');
+    assert.equal(draft.nutri.calories, 786);
+    assert.equal(draft.nutri.protein, 43.2);
+    assert.equal(draft.nutri.sodium, 1309);
 });

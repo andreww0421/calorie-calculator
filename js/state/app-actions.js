@@ -6,22 +6,25 @@ import { saveFavoriteFoods } from '../repositories/favorites-repository.js';
 import { saveProfileRecord } from '../repositories/profile-repository.js';
 import { saveAppLanguage, saveAppTheme } from '../repositories/settings-repository.js';
 import { getAppState, refreshAppState } from './app-state.js';
+import { cloneNutrition } from '../domain/nutrition-schema.js';
+import { createOnboardingConfig } from '../domain/profile-domain.js';
+import {
+    appendAICorrectionHistory,
+    createAICorrectionEntry,
+    normalizeAIDraftItem,
+    normalizeTempAIResult
+} from '../domain/ai-analysis-domain.js';
+import {
+    trackAiResultCorrected,
+    trackFirstLogCompleted,
+    trackOnboardingCompleted
+} from '../analytics/product-events.js';
 
 function cloneEntry(entry = {}) {
     return {
         type: String(entry.type || 'snack'),
         name: String(entry.name || ''),
-        nutri: {
-            calories: Number(entry?.nutri?.calories) || 0,
-            protein: Number(entry?.nutri?.protein) || 0,
-            fat: Number(entry?.nutri?.fat) || 0,
-            carbohydrate: Number(entry?.nutri?.carbohydrate) || 0,
-            sugar: Number(entry?.nutri?.sugar) || 0,
-            sodium: Number(entry?.nutri?.sodium) || 0,
-            saturatedFat: Number(entry?.nutri?.saturatedFat) || 0,
-            transFat: Number(entry?.nutri?.transFat) || 0,
-            fiber: Number(entry?.nutri?.fiber) || 0
-        },
+        nutri: cloneNutrition(entry),
         items: Array.isArray(entry.items)
             ? entry.items.map((item) => ({
                 name: String(item?.name || ''),
@@ -54,8 +57,42 @@ function cloneProfile(profile = {}) {
         weight: String(profile.weight ?? ''),
         activity: String(profile.activity || '1.2'),
         mealMode: String(profile.mealMode || '4'),
-        goalType: String(profile.goalType || 'lose')
+        goalType: String(profile.goalType || 'lose'),
+        region: String(profile.region || '').trim(),
+        diningOutFrequency: String(profile.diningOutFrequency || 'sometimes').trim() || 'sometimes'
     };
+}
+
+function buildTempAiCorrectionState(state, {
+    result = state.tempAIResult,
+    saved = state.tempAIResultSaved,
+    syncModal = true,
+    reason = 'ai-result:update',
+    status = 'editing',
+    historyEntry = null,
+    preserveHistory = true,
+    preferredName = ''
+} = {}) {
+    const baseHistory = preserveHistory ? state.tempAIResult?.correctionHistory || [] : [];
+    const correctionHistory = appendAICorrectionHistory(baseHistory, historyEntry);
+    const nextResult = normalizeTempAIResult(result, {
+        correctionHistory,
+        preferredName
+    });
+
+    return refreshAppState({
+        tempAIResult: nextResult,
+        tempAIResultSaved: Boolean(saved),
+        analysisFlow: {
+            ...state.analysisFlow,
+            status,
+            lastError: '',
+            isSoftError: false
+        }
+    }, {
+        reason,
+        syncModal
+    });
 }
 
 export function dispatchAppAction(type, payload = {}) {
@@ -103,12 +140,17 @@ export function dispatchAppAction(type, payload = {}) {
         const entry = cloneEntry(payload.entry);
         const nextItems = [...state.foodItems, entry];
         saveFoodLog(state.selectedDate, nextItems);
-        return refreshAppState({
+        const nextState = refreshAppState({
             foodItems: nextItems
         }, {
             reason: 'food:add',
             entryName: entry.name
         });
+        trackFirstLogCompleted(entry, {
+            source: payload.source || 'manual',
+            selectedDate: state.selectedDate
+        });
+        return nextState;
     }
 
     case 'DELETE_FOOD_ITEM': {
@@ -156,17 +198,17 @@ export function dispatchAppAction(type, payload = {}) {
     }
 
     case 'SET_TEMP_AI_RESULT': {
-        const entry = cloneEntry(payload.result || {});
         const result = payload.result
-            ? {
-                name: entry.name,
-                nutri: entry.nutri,
-                items: entry.items,
-                healthScore: entry.healthScore
-            }
+            ? normalizeTempAIResult(payload.result, {
+                correctionHistory: appendAICorrectionHistory(
+                    payload.preserveHistory ? state.tempAIResult?.correctionHistory || [] : [],
+                    payload.historyEntry || null
+                ),
+                preferredName: payload.preferredName || ''
+            })
             : null;
 
-        return refreshAppState({
+        const nextState = refreshAppState({
             tempAIResult: result,
             tempAIResultSaved: payload.saved !== undefined ? Boolean(payload.saved) : state.tempAIResultSaved,
             analysisFlow: {
@@ -179,6 +221,15 @@ export function dispatchAppAction(type, payload = {}) {
             reason: 'ai-result:set',
             openModal: Boolean(payload.openModal)
         });
+        if (payload.historyEntry?.type === 'recalculate' && result) {
+            trackAiResultCorrected({
+                itemCount: result.items?.length || 0,
+                correctionCount: result.correctionHistory?.length || 0,
+                selectedDate: state.selectedDate,
+                source: 'items'
+            });
+        }
+        return nextState;
     }
 
     case 'SET_TEMP_AI_ITEMS': {
@@ -186,28 +237,60 @@ export function dispatchAppAction(type, payload = {}) {
             return refreshAppState({}, { reason: 'ai-result:noop' });
         }
 
-        const nextResult = {
-            ...state.tempAIResult,
-            items: Array.isArray(payload.items)
-                ? payload.items.map((item) => ({
-                    name: String(item?.name || ''),
-                    weight: String(item?.weight || '')
-                }))
-                : []
-        };
+        const nextItems = Array.isArray(payload.items)
+            ? payload.items.map(normalizeAIDraftItem)
+            : [];
 
-        return refreshAppState({
-            tempAIResult: nextResult,
-            tempAIResultSaved: Boolean(payload.saved),
-            analysisFlow: {
-                ...state.analysisFlow,
-                status: payload.syncModal === false ? state.analysisFlow.status : 'editing',
-                lastError: '',
-                isSoftError: false
-            }
-        }, {
+        return buildTempAiCorrectionState(state, {
+            result: {
+                ...state.tempAIResult,
+                items: nextItems
+            },
+            saved: payload.saved,
+            syncModal: payload.syncModal !== false,
             reason: 'ai-result:update-items',
-            syncModal: payload.syncModal !== false
+            historyEntry: payload.historyEntry || null,
+            preserveHistory: true
+        });
+    }
+
+    case 'UPDATE_TEMP_AI_ITEM': {
+        if (!state.tempAIResult) {
+            return refreshAppState({}, { reason: 'ai-result:noop' });
+        }
+
+        const index = Number(payload.index);
+        if (!Number.isInteger(index) || index < 0 || index >= state.tempAIResult.items.length) {
+            return refreshAppState({}, { reason: 'ai-result:noop' });
+        }
+
+        const currentItem = state.tempAIResult.items[index] || { name: '', weight: '' };
+        const nextItem = normalizeAIDraftItem({
+            ...currentItem,
+            ...(payload.patch || {})
+        });
+
+        const previousValue = payload.field ? currentItem?.[payload.field] ?? '' : '';
+        const nextValue = payload.field ? nextItem?.[payload.field] ?? '' : '';
+        const nextItems = state.tempAIResult.items.map((item, itemIndex) => (itemIndex === index ? nextItem : item));
+
+        return buildTempAiCorrectionState(state, {
+            result: {
+                ...state.tempAIResult,
+                items: nextItems
+            },
+            saved: payload.saved,
+            syncModal: payload.syncModal !== false,
+            reason: 'ai-result:update-item',
+            historyEntry: payload.trackHistory && previousValue !== nextValue
+                ? createAICorrectionEntry('item:update', {
+                    itemIndex: index,
+                    field: payload.field || '',
+                    previousValue,
+                    nextValue
+                })
+                : null,
+            preserveHistory: true
         });
     }
 
@@ -244,11 +327,13 @@ export function dispatchAppAction(type, payload = {}) {
 
     case 'APPLY_PROFILE_PLAN': {
         const profile = cloneProfile(payload.profile);
+        const wasComplete = createOnboardingConfig(state.profile || {}, state.curLang).isComplete;
+        const nextOnboarding = createOnboardingConfig(profile, state.curLang);
         if (payload.persist !== false) {
             saveProfileRecord(profile);
         }
 
-        return refreshAppState({
+        const nextState = refreshAppState({
             profile,
             targetCalories: Number(payload.targetCalories) || 0,
             currentMealMode: profile.mealMode || payload.mealMode || '4',
@@ -256,6 +341,10 @@ export function dispatchAppAction(type, payload = {}) {
         }, {
             reason: 'profile:apply'
         });
+        if (!wasComplete && nextOnboarding.isComplete) {
+            trackOnboardingCompleted(profile);
+        }
+        return nextState;
     }
 
     default:

@@ -4,7 +4,9 @@ import { loadProfileRecord } from '../repositories/profile-repository.js';
 import { loadAppLanguage, loadAppTheme } from '../repositories/settings-repository.js';
 import { loadDailyUsage } from '../repositories/usage-repository.js';
 import { loadWeight } from '../repositories/weight-repository.js';
+import { normalizeTempAIResult } from '../domain/ai-analysis-domain.js';
 import { summarizeNutrition } from '../domain/nutrition-domain.js';
+import { cloneNutrition } from '../domain/nutrition-schema.js';
 import { DAILY_LIMIT } from '../env.js';
 import { getLocalDateString } from '../utils.js';
 
@@ -19,17 +21,7 @@ function cloneItems(items = []) {
 }
 
 function cloneNutri(nutri = {}) {
-    return {
-        calories: Number(nutri?.calories) || 0,
-        protein: Number(nutri?.protein) || 0,
-        fat: Number(nutri?.fat) || 0,
-        carbohydrate: Number(nutri?.carbohydrate) || 0,
-        sugar: Number(nutri?.sugar) || 0,
-        sodium: Number(nutri?.sodium) || 0,
-        saturatedFat: Number(nutri?.saturatedFat) || 0,
-        transFat: Number(nutri?.transFat) || 0,
-        fiber: Number(nutri?.fiber) || 0
-    };
+    return cloneNutrition(nutri);
 }
 
 function cloneFoodEntries(entries = []) {
@@ -37,20 +29,14 @@ function cloneFoodEntries(entries = []) {
     return entries.map((entry) => ({
         type: String(entry?.type || 'snack'),
         name: String(entry?.name || ''),
-        nutri: cloneNutri(entry?.nutri),
+        nutri: cloneNutri(entry),
         items: cloneItems(entry?.items),
         healthScore: Number(entry?.healthScore) || 0
     }));
 }
 
 function cloneAiResult(result) {
-    if (!result || typeof result !== 'object') return null;
-    return {
-        name: String(result.name || ''),
-        nutri: cloneNutri(result.nutri),
-        items: cloneItems(result.items),
-        healthScore: Number(result.healthScore) || 0
-    };
+    return normalizeTempAIResult(result);
 }
 
 function cloneProfile(profile) {
@@ -62,7 +48,9 @@ function cloneProfile(profile) {
         weight: String(profile.weight ?? ''),
         activity: String(profile.activity || '1.2'),
         mealMode: String(profile.mealMode || '4'),
-        goalType: String(profile.goalType || 'lose')
+        goalType: String(profile.goalType || 'lose'),
+        region: String(profile.region || '').trim(),
+        diningOutFrequency: String(profile.diningOutFrequency || 'sometimes').trim() || 'sometimes'
     };
 }
 

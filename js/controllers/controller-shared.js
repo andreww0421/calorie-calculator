@@ -22,7 +22,9 @@ export function readProfileForm() {
         weight: document.getElementById('weight').value,
         activity: document.getElementById('activity').value,
         mealMode: document.getElementById('meal-mode').value,
-        goalType: document.getElementById('goal-type')?.value || 'lose'
+        goalType: document.getElementById('goal-type')?.value || 'lose',
+        region: document.getElementById('region')?.value || '',
+        diningOutFrequency: document.getElementById('dining-out-frequency')?.value || 'sometimes'
     };
 }
 
@@ -36,6 +38,12 @@ export function applyProfileToForm(profile) {
     if (profile.mealMode) document.getElementById('meal-mode').value = profile.mealMode;
     if (profile.goalType && document.getElementById('goal-type')) {
         document.getElementById('goal-type').value = profile.goalType;
+    }
+    if (document.getElementById('region')) {
+        document.getElementById('region').value = profile.region || '';
+    }
+    if (document.getElementById('dining-out-frequency')) {
+        document.getElementById('dining-out-frequency').value = profile.diningOutFrequency || 'sometimes';
     }
     return true;
 }

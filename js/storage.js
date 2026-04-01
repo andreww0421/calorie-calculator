@@ -1,28 +1,36 @@
 import { APP_SCHEMA_VERSION, STORAGE_SCHEMA_KEY, USAGE_KEY } from './env.js';
 import { getLocalDateString, safeParseJSON } from './utils.js';
+import { hasMeaningfulNutrition, normalizeNutrition } from './domain/nutrition-schema.js';
+import { createIndexedDbStorageAdapterScaffold } from './storage/indexeddb-storage-adapter.js';
+import { createLocalStorageAdapter } from './storage/local-storage-adapter.js';
+import { assertStorageAdapter, listStorageKeys } from './storage/storage-adapter.js';
+
+const defaultStorageAdapter = createLocalStorageAdapter();
+let activeStorageAdapter = defaultStorageAdapter;
 
 function isPlainObject(value) {
     return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+function getStorage() {
+    return activeStorageAdapter;
+}
+
+function getStoredValue(key) {
+    return getStorage().getItem(key);
+}
+
+function setStoredValue(key, value) {
+    getStorage().setItem(key, value);
+}
+
+function removeStoredValue(key) {
+    getStorage().removeItem(key);
+}
+
 function toNumber(value) {
     const numeric = Number(value);
     return Number.isFinite(numeric) ? numeric : 0;
-}
-
-function normalizeNutrition(source = {}) {
-    const nutri = isPlainObject(source.nutri) ? source.nutri : source;
-    return {
-        calories: toNumber(nutri.calories ?? source.calories ?? source.cal ?? 0),
-        protein: toNumber(nutri.protein ?? source.protein ?? 0),
-        fat: toNumber(nutri.fat ?? source.fat ?? 0),
-        carbohydrate: toNumber(nutri.carbohydrate ?? source.carbohydrate ?? source.carb ?? 0),
-        sugar: toNumber(nutri.sugar ?? source.sugar ?? 0),
-        sodium: toNumber(nutri.sodium ?? source.sodium ?? source.sod ?? 0),
-        saturatedFat: toNumber(nutri.saturatedFat ?? source.saturatedFat ?? source.sat ?? 0),
-        transFat: toNumber(nutri.transFat ?? source.transFat ?? source.trans ?? 0),
-        fiber: toNumber(nutri.fiber ?? source.fiber ?? 0)
-    };
 }
 
 function normalizeItems(items) {
@@ -34,10 +42,6 @@ function normalizeItems(items) {
             weight: String(item.weight ?? '').trim()
         }))
         .filter((item) => item.name || item.weight);
-}
-
-function hasMeaningfulNutrition(nutri) {
-    return Object.values(nutri).some((value) => Number(value) !== 0);
 }
 
 function normalizeRecordEntry(entry) {
@@ -81,7 +85,9 @@ function normalizeProfile(profile) {
         weight: String(profile.weight ?? ''),
         activity: String(profile.activity || '1.2'),
         mealMode: String(profile.mealMode || '4'),
-        goalType: String(profile.goalType || 'lose')
+        goalType: String(profile.goalType || 'lose'),
+        region: String(profile.region || '').trim(),
+        diningOutFrequency: String(profile.diningOutFrequency || 'sometimes').trim() || 'sometimes'
     };
 }
 
@@ -91,70 +97,90 @@ function normalizeArray(entries, normalizer) {
 }
 
 function readNormalizedArray(key, normalizer) {
-    const parsed = safeParseJSON(localStorage.getItem(key), []);
+    const parsed = safeParseJSON(getStoredValue(key), []);
     const normalized = normalizeArray(parsed, normalizer);
     if (JSON.stringify(parsed) !== JSON.stringify(normalized)) {
-        localStorage.setItem(key, JSON.stringify(normalized));
+        setStoredValue(key, JSON.stringify(normalized));
     }
     return normalized;
 }
 
 function normalizeWeightKey(key) {
-    const stored = localStorage.getItem(key);
+    const stored = getStoredValue(key);
     const weight = parseFloat(stored);
     if (!Number.isFinite(weight) || weight <= 0) {
-        localStorage.removeItem(key);
+        removeStoredValue(key);
         return Boolean(stored);
     }
     const normalized = String(weight);
     if (stored !== normalized) {
-        localStorage.setItem(key, normalized);
+        setStoredValue(key, normalized);
         return true;
     }
     return false;
 }
 
 function migrateLegacyProfileKey() {
-    const current = normalizeProfile(safeParseJSON(localStorage.getItem('myProfile_v5'), null));
+    const current = normalizeProfile(safeParseJSON(getStoredValue('myProfile_v5'), null));
     if (current) {
-        localStorage.setItem('myProfile_v5', JSON.stringify(current));
+        setStoredValue('myProfile_v5', JSON.stringify(current));
         return false;
     }
 
     let migrated = false;
-    for (let i = 0; i < localStorage.length; i += 1) {
-        const key = localStorage.key(i);
+    const keys = listStorageKeys(getStorage());
+    for (const key of keys) {
         if (!key || !key.startsWith('myProfile') || key === 'myProfile_v5') continue;
-        const legacyProfile = normalizeProfile(safeParseJSON(localStorage.getItem(key), null));
+        const legacyProfile = normalizeProfile(safeParseJSON(getStoredValue(key), null));
         if (legacyProfile && !migrated) {
-            localStorage.setItem('myProfile_v5', JSON.stringify(legacyProfile));
+            setStoredValue('myProfile_v5', JSON.stringify(legacyProfile));
             migrated = true;
         }
-        localStorage.removeItem(key);
-        i -= 1;
+        removeStoredValue(key);
     }
     return migrated;
 }
 
+// Storage schema versioning stays keyed exactly as before so future
+// adapter migrations can preserve the same app-facing compatibility path.
+export function setStorageAdapter(adapter) {
+    activeStorageAdapter = assertStorageAdapter(adapter);
+    return activeStorageAdapter;
+}
+
+export function resetStorageAdapter() {
+    activeStorageAdapter = defaultStorageAdapter;
+    return activeStorageAdapter;
+}
+
+export function getStorageAdapter() {
+    return activeStorageAdapter;
+}
+
+export function getFutureStorageScaffold() {
+    return createIndexedDbStorageAdapterScaffold({
+        version: APP_SCHEMA_VERSION
+    });
+}
+
 export function initializeStorage() {
-    const previousSchema = Number(localStorage.getItem(STORAGE_SCHEMA_KEY)) || 0;
+    const previousSchema = Number(getStoredValue(STORAGE_SCHEMA_KEY)) || 0;
     let migrated = previousSchema !== APP_SCHEMA_VERSION;
 
     migrated = migrateLegacyProfileKey() || migrated;
 
     const favoriteKeys = ['myFavorites'];
     favoriteKeys.forEach((key) => {
-        const before = localStorage.getItem(key);
+        const before = getStoredValue(key);
         const after = JSON.stringify(readNormalizedArray(key, normalizeFavoriteEntry));
         migrated = migrated || before !== after;
     });
 
-    for (let i = 0; i < localStorage.length; i += 1) {
-        const key = localStorage.key(i);
+    for (const key of listStorageKeys(getStorage())) {
         if (!key) continue;
 
         if (key.startsWith('record_')) {
-            const before = localStorage.getItem(key);
+            const before = getStoredValue(key);
             const after = JSON.stringify(readNormalizedArray(key, normalizeRecordEntry));
             migrated = migrated || before !== after;
         }
@@ -164,12 +190,12 @@ export function initializeStorage() {
         }
     }
 
-    const profile = normalizeProfile(safeParseJSON(localStorage.getItem('myProfile_v5'), null));
+    const profile = normalizeProfile(safeParseJSON(getStoredValue('myProfile_v5'), null));
     if (profile) {
-        localStorage.setItem('myProfile_v5', JSON.stringify(profile));
+        setStoredValue('myProfile_v5', JSON.stringify(profile));
     }
 
-    localStorage.setItem(STORAGE_SCHEMA_KEY, String(APP_SCHEMA_VERSION));
+    setStoredValue(STORAGE_SCHEMA_KEY, String(APP_SCHEMA_VERSION));
     return { migrated, schemaVersion: APP_SCHEMA_VERSION };
 }
 
@@ -178,22 +204,22 @@ export function loadFavorites() {
 }
 
 export function saveFavorites(favorites) {
-    localStorage.setItem(
+    setStoredValue(
         'myFavorites',
         JSON.stringify(normalizeArray(favorites, normalizeFavoriteEntry))
     );
 }
 
 export function loadSetting(key, fallbackValue) {
-    return localStorage.getItem(key) || fallbackValue;
+    return getStoredValue(key) || fallbackValue;
 }
 
 export function saveSetting(key, value) {
-    localStorage.setItem(key, value);
+    setStoredValue(key, value);
 }
 
 export function saveFoodData(date, items) {
-    localStorage.setItem(
+    setStoredValue(
         `record_${date}`,
         JSON.stringify(normalizeArray(items, normalizeRecordEntry))
     );
@@ -206,12 +232,12 @@ export function loadFoodData(date) {
 export function saveWeightData(date, weightValue) {
     const weight = parseFloat(weightValue);
     if (!Number.isFinite(weight) || weight <= 0) return false;
-    localStorage.setItem(`weight_${date}`, String(weight));
+    setStoredValue(`weight_${date}`, String(weight));
     return true;
 }
 
 export function loadWeightData(date) {
-    const stored = localStorage.getItem(`weight_${date}`);
+    const stored = getStoredValue(`weight_${date}`);
     if (!stored) return null;
     const weight = parseFloat(stored);
     return Number.isFinite(weight) && weight > 0 ? weight : null;
@@ -235,14 +261,14 @@ export function getWeightHistory(days = 30) {
 export function saveProfile(profile) {
     const normalized = normalizeProfile(profile);
     if (!normalized) return false;
-    localStorage.setItem('myProfile_v5', JSON.stringify(normalized));
+    setStoredValue('myProfile_v5', JSON.stringify(normalized));
     return true;
 }
 
 export function loadProfile() {
-    const profile = normalizeProfile(safeParseJSON(localStorage.getItem('myProfile_v5'), null));
+    const profile = normalizeProfile(safeParseJSON(getStoredValue('myProfile_v5'), null));
     if (!profile) return null;
-    localStorage.setItem('myProfile_v5', JSON.stringify(profile));
+    setStoredValue('myProfile_v5', JSON.stringify(profile));
     return profile;
 }
 
@@ -251,8 +277,7 @@ export function exportData() {
         [STORAGE_SCHEMA_KEY]: String(APP_SCHEMA_VERSION)
     };
 
-    for (let i = 0; i < localStorage.length; i += 1) {
-        const key = localStorage.key(i);
+    for (const key of listStorageKeys(getStorage())) {
         if (
             key &&
             (
@@ -264,7 +289,7 @@ export function exportData() {
                 key === 'appTheme'
             )
         ) {
-            data[key] = localStorage.getItem(key);
+            data[key] = getStoredValue(key);
         }
     }
 
@@ -307,7 +332,7 @@ export async function importData(file) {
 
     for (const key of allowedKeys) {
         if (typeof data[key] === 'string') {
-            localStorage.setItem(key, data[key]);
+            setStoredValue(key, data[key]);
         }
     }
 
@@ -349,9 +374,27 @@ export function getProteinHistory(days = 7) {
     return history;
 }
 
+export function getFoodLogHistory(days = 7) {
+    const history = [];
+    const today = new Date();
+
+    for (let i = days - 1; i >= 0; i -= 1) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        const dateStr = getLocalDateString(d);
+        history.push({
+            date: dateStr,
+            label: dateStr.slice(5),
+            items: loadFoodData(dateStr)
+        });
+    }
+
+    return history;
+}
+
 export function loadUsageState() {
     const today = getLocalDateString();
-    const usage = safeParseJSON(localStorage.getItem(USAGE_KEY), {});
+    const usage = safeParseJSON(getStoredValue(USAGE_KEY), {});
     if (usage?.date !== today) {
         return { date: today, count: 0 };
     }
@@ -367,6 +410,6 @@ export function saveUsageState(usage) {
         date: usage?.date || getLocalDateString(),
         count: Number(usage?.count) || 0
     };
-    localStorage.setItem(USAGE_KEY, JSON.stringify(normalized));
+    setStoredValue(USAGE_KEY, JSON.stringify(normalized));
     return normalized;
 }

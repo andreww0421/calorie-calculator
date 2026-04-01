@@ -3,6 +3,7 @@ import { dispatchAppAction } from '../state/app-actions.js';
 import { getAppState } from '../state/app-state.js';
 import { createButton, createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions, toggleFabMenu } from './shared-ui.js';
+import { renderManualFoodPresetPanel } from './food-preset-ui.js';
 import { updateChartTheme, updateMacroChartLanguage } from './charts-ui.js';
 import { confirmFavoriteMeal } from './favorites-ui.js';
 import { getDisplayDateLabel, getExtraUiText, getGoalUiText } from './locale-ui.js';
@@ -189,6 +190,8 @@ export function updateMealUI() {
             confirmFavoriteMeal(type);
         }, { className: `meal-btn ${type}` }));
     });
+
+    renderManualFoodPresetPanel();
 }
 
 export function toggleTheme() {

@@ -78,6 +78,51 @@ const zhTWUiCopy = {
         weeklyAverage: (value) => `平均 ${value} kcal`,
         weeklyDays: (days) => `${days} 天有完成紀錄`,
         weeklyBest: (day, cal) => `${day} 最高 ${cal} kcal`
+    },
+    rhythm: {
+        title: '近 7 天飲食節奏',
+        subtitle: '用簡單方式看這一週的飲食一致性。',
+        dashboardSubtitle: '從最近 7 天記錄看出你的飲食節奏。',
+        labels: {
+            breakfast: '早餐',
+            dinner: '晚餐',
+            protein: '蛋白質',
+            hydration: '飲水'
+        },
+        headlines: {
+            start_logging: '先記下幾餐，這張卡才會開始看見你的節奏',
+            building_consistency: '這週已經開始出現可追蹤的節奏',
+            steady_week: '這週的飲食節奏看起來算穩定',
+            breakfast_anchor: '早餐是這週最值得先固定下來的環節',
+            dinner_balance: '這週晚餐承擔了比較多熱量',
+            protein_rhythm: '蛋白質節奏還有點忽高忽低'
+        },
+        summaries: {
+            start_logging: '跨幾天先記下幾餐，系統就能開始幫你整理一週的節奏。',
+            building_consistency: '目前已經看得到一些規律，再多幾天穩定記錄會更清楚。',
+            steady_week: '你的餐次與營養節奏開始有一致性，整天更容易維持穩定。',
+            breakfast_anchor: '如果想讓整天更穩，先把早餐節奏固定下來通常最有感。',
+            dinner_balance: '這週晚餐吃得比較重，若其中一兩天稍微清爽一些，整體節奏會更平衡。',
+            protein_rhythm: '蛋白質的落點還不太平均，若有固定的蛋白質主角會更穩。'
+        },
+        breakfast: {
+            steady: (signal) => `近 7 天有 ${signal.breakfastDays}/${signal.loggedDays} 天有早餐，節奏相對穩定。`,
+            building: (signal) => `近 7 天有 ${signal.breakfastDays}/${signal.loggedDays} 天有早餐，正在建立規律。`,
+            irregular: (signal) => `近 7 天只有 ${signal.breakfastDays}/${signal.loggedDays} 天有早餐，還有空間更固定。`
+        },
+        dinner: {
+            light: () => '這週晚餐整體偏輕，白天分配得不錯。',
+            balanced: (signal) => `晚餐平均約占全天 ${signal.averageDinnerShare}% 熱量，算是中間帶。`,
+            heavy: (signal) => `近 7 天有 ${signal.heavyDays}/${signal.loggedDays} 天晚餐偏重。`
+        },
+        protein: {
+            steady: (signal) => `蛋白質平均約 ${signal.averageProtein}g，整體節奏算穩。`,
+            building: (signal) => `近 7 天有 ${signal.targetDays}/${signal.loggedDays} 天接近蛋白質目標。`,
+            inconsistent: (signal) => `蛋白質高低落差比較大，目前只有 ${signal.targetDays}/${signal.loggedDays} 天接近目標。`
+        },
+        hydration: {
+            placeholder: '飲水節奏會在開啟喝水記錄後出現在這裡。'
+        }
     }
 };
 

@@ -142,7 +142,14 @@ const locale = {
         meal1: '第一餐',
         meal2: '第二餐',
         mealBig: '唯一大餐'
-    }
+    },
+    presetPanelTitle: '外食常用預設',
+    presetPanelHint: '先套用地區餐點，再依實際份量微調手動欄位。',
+    presetRegionLabel: '地區',
+    presetFoodLabel: '餐點預設',
+    presetApplyButton: '套用到手動輸入',
+    presetAppliedToast: '已套用餐點預設。',
+    presetSelectPrompt: '請先選擇一個餐點預設。'
 };
 
 export default locale;

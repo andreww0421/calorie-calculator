@@ -245,6 +245,51 @@ export const uiCopyCatalog = {
             weeklyAverage: (value) => `${value} kcal avg`,
             weeklyDays: (days) => `${days} logged days`,
             weeklyBest: (day, cal) => `${day} peak ${cal} kcal`
+        },
+        rhythm: {
+            title: '7-Day Meal Rhythm',
+            subtitle: 'A simple read on how this week is flowing.',
+            dashboardSubtitle: 'Consistency signals from the last 7 logged days.',
+            labels: {
+                breakfast: 'Breakfast',
+                dinner: 'Dinner',
+                protein: 'Protein',
+                hydration: 'Hydration'
+            },
+            headlines: {
+                start_logging: 'Your weekly rhythm starts with a few logged meals',
+                building_consistency: 'You are starting to build a repeatable week',
+                steady_week: 'Your meal rhythm looks fairly steady this week',
+                breakfast_anchor: 'Breakfast is the clearest place to anchor the week',
+                dinner_balance: 'Dinner is carrying a big share of the week right now',
+                protein_rhythm: 'Protein rhythm is still moving around day to day'
+            },
+            summaries: {
+                start_logging: 'Log a few meals across the week and this card will start surfacing your routine.',
+                building_consistency: 'A few patterns are already visible. Two or three steadier days will make the picture clearer.',
+                steady_week: 'Your meals are showing a repeatable rhythm, which makes the rest of the day easier to pace.',
+                breakfast_anchor: 'Breakfast is the easiest place to add consistency if you want the day to feel more settled.',
+                dinner_balance: 'Dinner is doing a lot of the work this week. A lighter evening once or twice could smooth the rhythm.',
+                protein_rhythm: 'Protein intake is landing unevenly across the week. A more repeatable protein anchor would help.'
+            },
+            breakfast: {
+                steady: (signal) => `Logged on ${signal.breakfastDays}/${signal.loggedDays} days with a fairly repeatable start.`,
+                building: (signal) => `Breakfast showed up on ${signal.breakfastDays}/${signal.loggedDays} logged days.`,
+                irregular: (signal) => `Breakfast only appeared on ${signal.breakfastDays}/${signal.loggedDays} logged days so far.`
+            },
+            dinner: {
+                light: () => 'Dinner is staying on the lighter side this week.',
+                balanced: (signal) => `Dinner is averaging about ${signal.averageDinnerShare}% of daily calories.`,
+                heavy: (signal) => `Dinner ran heaviest on ${signal.heavyDays}/${signal.loggedDays} logged days.`
+            },
+            protein: {
+                steady: (signal) => `Protein looks fairly steady, averaging ${signal.averageProtein}g a day.`,
+                building: (signal) => `${signal.targetDays}/${signal.loggedDays} days landed near your protein pace.`,
+                inconsistent: (signal) => `Protein is landing unevenly, with only ${signal.targetDays}/${signal.loggedDays} stronger days.`
+            },
+            hydration: {
+                placeholder: 'Hydration rhythm will show up here once water logging is enabled.'
+            }
         }
     },
     ja: {

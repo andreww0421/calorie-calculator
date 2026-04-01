@@ -132,6 +132,13 @@ export const BASE_TRANSLATIONS = {
     turnstilePending: 'Security verification is still loading. Please try again in a moment.',
     turnstileUnavailable: 'Security verification is unavailable on this domain. Use the production site or add this hostname to Turnstile.',
     turnstileSetupError: 'Security verification could not be initialized. Reload the page and try again.',
+    presetPanelTitle: 'Dining-out presets',
+    presetPanelHint: 'Pick a regional preset, then fine-tune the manual fields if the dish differs.',
+    presetRegionLabel: 'Region',
+    presetFoodLabel: 'Preset meal',
+    presetApplyButton: 'Apply preset to manual entry',
+    presetAppliedToast: 'Preset applied to manual entry.',
+    presetSelectPrompt: 'Select a preset meal first.',
     meals: {
         breakfast: 'Breakfast',
         lunch: 'Lunch',

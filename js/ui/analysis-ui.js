@@ -2,7 +2,11 @@ import { recalculateFromItems } from '../api.js';
 import { dispatchAppAction } from '../state/app-actions.js';
 import { getAppState } from '../state/app-state.js';
 import { formatAIRequestError } from '../analysis-errors.js';
-import { normalizeAIAnalysisResult } from '../domain/ai-analysis-domain.js';
+import {
+    createAICorrectionEntry,
+    normalizeAIAnalysisResult
+} from '../domain/ai-analysis-domain.js';
+import { cloneNutrition } from '../domain/nutrition-schema.js';
 import { createButton, createElement, clearElement } from './dom-ui.js';
 import { getTexts, showToast } from './shared-ui.js';
 import { createNutritionGrid, createScoreBadge } from './modal-content-ui.js';
@@ -31,22 +35,43 @@ function collectAIItemsFromDOM() {
     return items;
 }
 
+function syncAIItemDraft(index, field, value) {
+    setAnalysisActionVisibility(false);
+    dispatchAppAction('UPDATE_TEMP_AI_ITEM', {
+        index,
+        field,
+        patch: { [field]: value },
+        saved: false,
+        syncModal: false
+    });
+}
+
 function createAIItemEditorRow(item, index) {
     const row = createElement('div', {
         className: 'ai-item-row',
         dataset: { idx: index }
     });
 
-    row.appendChild(createElement('input', {
+    const nameInput = createElement('input', {
         className: 'ai-item-name',
         attrs: { type: 'text', value: item?.name || '' },
         style: { flex: '2' }
-    }));
-    row.appendChild(createElement('input', {
+    });
+    nameInput.addEventListener('input', (event) => {
+        syncAIItemDraft(index, 'name', event.currentTarget?.value || '');
+    });
+
+    const weightInput = createElement('input', {
         className: 'ai-item-weight',
         attrs: { type: 'text', value: item?.weight || '' },
         style: { flex: '1' }
-    }));
+    });
+    weightInput.addEventListener('input', (event) => {
+        syncAIItemDraft(index, 'weight', event.currentTarget?.value || '');
+    });
+
+    row.appendChild(nameInput);
+    row.appendChild(weightInput);
     row.appendChild(createButton('X', () => removeAIItem(index), {
         className: 'btn-delete',
         style: { flex: '0' }
@@ -186,12 +211,13 @@ export function renderAnalysisModalState(state = getAppState(), meta = {}) {
     }
 
     const isRecalculating = state.analysisFlow?.status === 'recalculating';
+    const hasPendingCorrections = state.analysisFlow?.status === 'editing';
     if (isRecalculating) {
         setAnalysisActionVisibility(false);
         renderAnalysisLoading(content, getTexts().aiLoading || 'AI is analyzing...');
     } else {
         renderAnalysisResult(content, state.tempAIResult);
-        setAnalysisActionVisibility(true);
+        setAnalysisActionVisibility(!hasPendingCorrections);
     }
 
     if (meta.openModal || modal.style.display === 'flex') {
@@ -208,14 +234,28 @@ export function addAIItem() {
     if (!tempAIResult) return;
     const nextItems = collectAIItemsFromDOM();
     nextItems.push({ name: '', weight: '' });
-    dispatchAppAction('SET_TEMP_AI_ITEMS', { items: nextItems, saved: false });
+    dispatchAppAction('SET_TEMP_AI_ITEMS', {
+        items: nextItems,
+        saved: false,
+        historyEntry: createAICorrectionEntry('item:add', {
+            itemIndex: nextItems.length - 1
+        })
+    });
 }
 
 export function removeAIItem(index) {
-    const { tempAIResult } = getAppState();
-    if (!tempAIResult?.items) return;
-    const nextItems = tempAIResult.items.filter((_, idx) => idx !== index);
-    dispatchAppAction('SET_TEMP_AI_ITEMS', { items: nextItems, saved: false });
+    const currentItems = collectAIItemsFromDOM();
+    const removedItem = currentItems[index];
+    const nextItems = currentItems.filter((_, idx) => idx !== index);
+    dispatchAppAction('SET_TEMP_AI_ITEMS', {
+        items: nextItems,
+        saved: false,
+        historyEntry: createAICorrectionEntry('item:delete', {
+            itemIndex: index,
+            itemName: removedItem?.name || '',
+            weight: removedItem?.weight || ''
+        })
+    });
 }
 
 export async function recalculateAI() {
@@ -255,21 +295,15 @@ export async function recalculateAI() {
             dispatchAppAction('SET_TEMP_AI_RESULT', {
                 result: {
                     name: normalized.foodName,
-                    nutri: {
-                        calories: normalized.calories,
-                        protein: normalized.protein,
-                        fat: normalized.fat,
-                        carbohydrate: normalized.carbohydrate,
-                        sugar: normalized.sugar,
-                        sodium: normalized.sodium,
-                        saturatedFat: normalized.saturatedFat,
-                        transFat: normalized.transFat,
-                        fiber: normalized.fiber
-                    },
+                    nutri: cloneNutrition(normalized),
                     items: normalized.items.length > 0 ? normalized.items : items,
                     healthScore: normalized.healthScore
                 },
-                saved: false
+                saved: false,
+                preserveHistory: true,
+                historyEntry: createAICorrectionEntry('recalculate', {
+                    itemCount: items.length
+                })
             });
         }
     } catch (error) {

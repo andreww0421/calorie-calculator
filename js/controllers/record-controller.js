@@ -1,22 +1,17 @@
 import { dispatchAppAction } from '../state/app-actions.js';
 import { getAppState } from '../state/app-state.js';
+import { cloneNutrition } from '../domain/nutrition-schema.js';
 import { closeModal, showEatingAnimation, showToast } from '../ui.js';
 import { getTranslations } from './controller-shared.js';
+import { createFoodPresetManualDraft } from '../domain/food-preset-domain.js';
+import { findFoodPresetById } from '../repositories/food-preset-repository.js';
+import {
+    applyFoodPresetToManualForm,
+    readManualFoodPresetSelection,
+    renderManualFoodPresetPanel
+} from '../ui/food-preset-ui.js';
 
-function normalizeNutri(source = {}) {
-    const nutri = source.nutri || source || {};
-    return {
-        calories: Number(nutri.calories ?? source.cal ?? 0) || 0,
-        protein: Number(nutri.protein) || 0,
-        fat: Number(nutri.fat) || 0,
-        carbohydrate: Number(nutri.carbohydrate) || 0,
-        sugar: Number(nutri.sugar) || 0,
-        sodium: Number(nutri.sodium) || 0,
-        saturatedFat: Number(nutri.saturatedFat) || 0,
-        transFat: Number(nutri.transFat) || 0,
-        fiber: Number(nutri.fiber) || 0
-    };
-}
+let manualPresetDraft = null;
 
 function cloneFoodItems(items) {
     if (!Array.isArray(items)) return [];
@@ -26,8 +21,8 @@ function cloneFoodItems(items) {
     }));
 }
 
-function appendFoodItem(entry) {
-    dispatchAppAction('ADD_FOOD_ITEM', { entry });
+function appendFoodItem(entry, source = 'manual') {
+    dispatchAppAction('ADD_FOOD_ITEM', { entry, source });
     showEatingAnimation?.();
 }
 
@@ -46,6 +41,21 @@ function clearManualInputs() {
     ].forEach((id) => {
         const input = document.getElementById(id);
         if (input) input.value = '';
+    });
+    manualPresetDraft = null;
+}
+
+function readManualNutrition() {
+    return cloneNutrition({
+        calories: parseFloat(document.getElementById('manual-cal').value) || 0,
+        protein: parseFloat(document.getElementById('manual-pro').value) || 0,
+        fat: parseFloat(document.getElementById('manual-fat').value) || 0,
+        carbohydrate: parseFloat(document.getElementById('manual-carb').value) || 0,
+        sugar: parseFloat(document.getElementById('manual-sugar').value) || 0,
+        sodium: parseFloat(document.getElementById('manual-sod').value) || 0,
+        saturatedFat: parseFloat(document.getElementById('manual-sat').value) || 0,
+        transFat: parseFloat(document.getElementById('manual-trans').value) || 0,
+        fiber: parseFloat(document.getElementById('manual-fiber').value) || 0
     });
 }
 
@@ -70,7 +80,7 @@ export function addRecordToFav(index) {
     dispatchAppAction('ADD_FAVORITE', {
         favorite: {
             name: item.name,
-            nutri: normalizeNutri(item),
+            nutri: cloneNutrition(item),
             items: cloneFoodItems(item.items),
             healthScore: item.healthScore || 0
         }
@@ -85,10 +95,10 @@ export function confirmAddFood(type) {
     appendFoodItem({
         type,
         name: tempAIResult.name,
-        nutri: normalizeNutri(tempAIResult),
+        nutri: cloneNutrition(tempAIResult),
         items: cloneFoodItems(tempAIResult.items),
         healthScore: tempAIResult.healthScore || 0
-    });
+    }, 'ai');
     dispatchAppAction('MARK_TEMP_AI_SAVED', { saved: true });
     closeModal('analysis-modal');
 }
@@ -107,21 +117,43 @@ export function addManualFood() {
     appendFoodItem({
         type,
         name,
-        nutri: {
-            calories: cal,
-            protein: parseFloat(document.getElementById('manual-pro').value) || 0,
-            fat: parseFloat(document.getElementById('manual-fat').value) || 0,
-            carbohydrate: parseFloat(document.getElementById('manual-carb').value) || 0,
-            sugar: parseFloat(document.getElementById('manual-sugar').value) || 0,
-            sodium: parseFloat(document.getElementById('manual-sod').value) || 0,
-            saturatedFat: parseFloat(document.getElementById('manual-sat').value) || 0,
-            transFat: parseFloat(document.getElementById('manual-trans').value) || 0,
-            fiber: parseFloat(document.getElementById('manual-fiber').value) || 0
-        },
-        items: [],
+        nutri: readManualNutrition(),
+        items: cloneFoodItems(manualPresetDraft?.items),
         healthScore: 0
-    });
+    }, manualPresetDraft ? 'preset' : 'manual');
     clearManualInputs();
+}
+
+export function syncManualFoodPresetUI(options = {}) {
+    const current = readManualFoodPresetSelection();
+    const nextSelection = {
+        region: options.region ?? current.region,
+        presetId: options.resetPreset ? '' : (options.presetId ?? current.presetId),
+        modifiers: options.resetModifiers ? {} : (options.modifiers ?? current.modifiers)
+    };
+
+    return renderManualFoodPresetPanel({ selection: nextSelection });
+}
+
+export function applySelectedFoodPreset() {
+    const t = getTranslations();
+    const state = getAppState();
+    const { presetId, modifiers } = readManualFoodPresetSelection();
+    const preset = findFoodPresetById(presetId);
+
+    if (!preset) {
+        showToast(t.presetSelectPrompt || 'Select a preset meal first.', 'error');
+        return;
+    }
+
+    const draft = createFoodPresetManualDraft(preset, {
+        lang: state.curLang,
+        selectedModifiers: modifiers
+    });
+
+    manualPresetDraft = draft;
+    applyFoodPresetToManualForm(draft);
+    showToast(t.presetAppliedToast || 'Preset applied to manual entry.', 'success');
 }
 
 export function saveToFavorites() {
@@ -141,18 +173,8 @@ export function saveToFavorites() {
     dispatchAppAction('ADD_FAVORITE', {
         favorite: {
             name,
-            nutri: {
-                calories: cal,
-                protein: parseFloat(document.getElementById('manual-pro').value) || 0,
-                fat: parseFloat(document.getElementById('manual-fat').value) || 0,
-                carbohydrate: parseFloat(document.getElementById('manual-carb').value) || 0,
-                sugar: parseFloat(document.getElementById('manual-sugar').value) || 0,
-                sodium: parseFloat(document.getElementById('manual-sod').value) || 0,
-                saturatedFat: parseFloat(document.getElementById('manual-sat').value) || 0,
-                transFat: parseFloat(document.getElementById('manual-trans').value) || 0,
-                fiber: parseFloat(document.getElementById('manual-fiber').value) || 0
-            },
-            items: [],
+            nutri: readManualNutrition(),
+            items: cloneFoodItems(manualPresetDraft?.items),
             healthScore: 0
         },
     });
@@ -172,7 +194,7 @@ export function saveAIResultToFavorites() {
     dispatchAppAction('ADD_FAVORITE', {
         favorite: {
             name: tempAIResult.name,
-            nutri: normalizeNutri(tempAIResult),
+            nutri: cloneNutrition(tempAIResult),
             items: cloneFoodItems(tempAIResult.items),
             healthScore: tempAIResult.healthScore || 0
         }

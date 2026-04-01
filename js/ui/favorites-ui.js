@@ -1,5 +1,6 @@
 import { dispatchAppAction } from '../state/app-actions.js';
 import { getAppState } from '../state/app-state.js';
+import { cloneNutrition } from '../domain/nutrition-schema.js';
 import { showEatingAnimation } from './charts-ui.js';
 import { createElement, clearElement } from './dom-ui.js';
 import {
@@ -26,17 +27,7 @@ function cloneFavoriteEntry(item, type) {
     return {
         type,
         name: item?.name || '',
-        nutri: {
-            calories: Number(item?.nutri?.calories || item?.cal || 0) || 0,
-            protein: Number(item?.nutri?.protein || 0) || 0,
-            fat: Number(item?.nutri?.fat || 0) || 0,
-            carbohydrate: Number(item?.nutri?.carbohydrate || 0) || 0,
-            sugar: Number(item?.nutri?.sugar || 0) || 0,
-            sodium: Number(item?.nutri?.sodium || 0) || 0,
-            saturatedFat: Number(item?.nutri?.saturatedFat || 0) || 0,
-            transFat: Number(item?.nutri?.transFat || 0) || 0,
-            fiber: Number(item?.nutri?.fiber || 0) || 0
-        },
+        nutri: cloneNutrition(item),
         items: Array.isArray(item?.items)
             ? item.items.map((food) => ({
                 name: String(food?.name || ''),

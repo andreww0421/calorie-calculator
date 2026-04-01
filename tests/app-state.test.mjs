@@ -62,3 +62,70 @@ test('createDailyViewModel derives totals, water target, and profile goal contex
     assert.equal(viewModel.mealTotals.breakfast, 320);
     assert.equal(viewModel.mealTotals.lunch, 540);
 });
+
+test('app state snapshots clone nutrition data and preserve backward-compatible fields', async () => {
+    const { initializeAppState, getAppState } = await loadAppStateModule();
+    const source = {
+        selectedDate: '2026-03-29',
+        foodItems: [
+            {
+                type: 'breakfast',
+                name: 'Legacy Shake',
+                cal: 210,
+                nutri: {
+                    protein: 24,
+                    fat: 3,
+                    carb: 18,
+                    sugar: 7,
+                    sod: 190,
+                    sat: 1.2,
+                    trans: 0,
+                    fiber: 2
+                }
+            }
+        ],
+        tempAIResult: {
+            name: 'AI Bowl',
+            nutri: {
+                calories: 480,
+                protein: 30,
+                fat: 14,
+                carbohydrate: 52,
+                fiber: 8
+            },
+            correctionHistory: [{
+                type: 'item:add',
+                timestamp: '2026-03-31T00:00:00.000Z',
+                itemIndex: 0
+            }]
+        },
+        profile: {
+            gender: 'female',
+            age: '31',
+            height: '165',
+            weight: '61.2',
+            activity: '1.375',
+            mealMode: '3',
+            goalType: 'gain',
+            region: 'hong-kong',
+            diningOutFrequency: 'often'
+        }
+    };
+
+    initializeAppState(source);
+    source.foodItems[0].nutri.protein = 0;
+    source.tempAIResult.nutri.fiber = 0;
+    source.tempAIResult.correctionHistory[0].type = 'mutated';
+    source.profile.region = 'taiwan';
+
+    const state = getAppState();
+    assert.equal(state.foodItems[0].nutri.calories, 210);
+    assert.equal(state.foodItems[0].nutri.protein, 24);
+    assert.equal(state.foodItems[0].nutri.carbohydrate, 18);
+    assert.equal(state.foodItems[0].nutri.sodium, 190);
+    assert.equal(state.foodItems[0].nutri.saturatedFat, 1.2);
+    assert.equal(state.tempAIResult.nutri.fiber, 8);
+    assert.equal(state.tempAIResult.correctionHistory[0].type, 'item:add');
+    assert.equal(state.profile.region, 'hong-kong');
+    assert.equal(state.profile.diningOutFrequency, 'often');
+});

@@ -1,3 +1,6 @@
+import { getLocaleTranslations } from '../locales/index.js';
+import { getHomeUiCopy, hasHomeUiCopy } from '../locales/home-ui-copy.js';
+import { getNutritionUiCopy } from '../locales/nutrition-ui-copy.js';
 import { uiCopyCatalog } from '../locales/ui-copy.js';
 import { getAppState } from '../state/app-state.js';
 import { getLocalDateString } from '../utils.js';
@@ -14,9 +17,109 @@ export function getGoalUiText(lang = getAppState().curLang) {
     return getCopySection('goal', lang);
 }
 
+export function getMealRhythmUiText(lang = getAppState().curLang) {
+    return getCopySection('rhythm', lang);
+}
+
+export function getNutritionUiText(lang = getAppState().curLang) {
+    return getNutritionUiCopy(lang);
+}
+
 export function getGoalSummaryText(goalType = 'lose', lang = getAppState().curLang) {
     const goalUi = getGoalUiText(lang);
     return goalUi.goalTypes?.[goalType] || goalUi.goalTypes?.lose || uiCopyCatalog.en.goal.goalTypes.lose;
+}
+
+export function buildHomeCompanionContent(viewModel, lang = getAppState().curLang) {
+    const copy = getHomeUiCopy(lang);
+    const t = getLocaleTranslations(lang);
+    const extra = getExtraUiText(lang);
+    const localizedHomeCopy = hasHomeUiCopy(lang);
+    const hasMeals = (viewModel?.mealCoverage?.loggedMeals || 0) > 0;
+    const nextMealLabel = t.meals?.[viewModel?.mealCoverage?.nextMealTitleKey || ''] || '';
+    const heroSummary = hasMeals
+        ? copy.heroSummaryActive
+        : (viewModel?.featuredPresetName
+            ? copy.heroSummaryPreset(viewModel.presetRegionLabel, viewModel.featuredPresetName)
+            : (viewModel?.presetRegionLabel
+                ? copy.heroSummaryRegion(viewModel.presetRegionLabel, viewModel.presetCount)
+                : copy.heroSummaryBase));
+    const proteinValue = Number(viewModel?.proteinCurrent || 0).toFixed(1).replace(/\.0$/, '');
+    const proteinSignalDetail = viewModel?.proteinRemaining > 0
+        ? copy.signalProteinToGoal(viewModel.proteinRemaining)
+        : copy.signalProteinOnTrack;
+
+    return {
+        hero: {
+            eyebrow: hasMeals ? copy.heroEyebrowActive : copy.heroEyebrowEmpty,
+            title: hasMeals
+                ? copy.heroTitleActive(viewModel.mealCoverage || { loggedMeals: 0, plannedMeals: 0 })
+                : copy.heroTitleEmpty,
+            summary: heroSummary,
+            stats: [
+                {
+                    label: copy.statLabels.streak,
+                    value: copy.formatDayCount(viewModel?.pet?.progress?.streak || 0)
+                },
+                {
+                    label: copy.statLabels.meals,
+                    value: copy.formatMealCoverage(
+                        viewModel?.mealCoverage?.loggedMeals || 0,
+                        viewModel?.mealCoverage?.plannedMeals || 0
+                    )
+                },
+                {
+                    label: copy.statLabels.protein,
+                    value: copy.formatProteinPace(proteinValue, viewModel?.proteinTarget || 0)
+                }
+            ],
+            meta: [
+                getGoalSummaryText(viewModel?.goalType || 'lose', lang),
+                viewModel?.presetRegionLabel || '',
+                nextMealLabel || ''
+            ].filter(Boolean),
+            actions: {
+                ai: t.aiTitle || 'AI Analysis',
+                manual: t.btnAddRecord || t.btnAdd || 'Quick add',
+                favorites: t.btnFavLoad || 'Common foods'
+            }
+        },
+        quickLog: {
+            eyebrow: copy.quickLogEyebrow,
+            summary: hasMeals ? copy.quickLogCopyActive : copy.quickLogCopyEmpty,
+            mealListTitle: copy.mealListTitle
+        },
+        overview: {
+            title: copy.overviewTitle,
+            hint: localizedHomeCopy ? copy.overviewHint : extra.dailySummaryHint,
+            signals: [
+                {
+                    label: copy.signals.protein,
+                    value: `${proteinValue}g`,
+                    detail: proteinSignalDetail
+                },
+                {
+                    label: copy.signals.meals,
+                    value: copy.formatMealCoverage(
+                        viewModel?.mealCoverage?.loggedMeals || 0,
+                        viewModel?.mealCoverage?.plannedMeals || 0
+                    ),
+                    detail: hasMeals
+                        ? copy.signalMealsActive(
+                            viewModel?.mealCoverage?.loggedMeals || 0,
+                            viewModel?.mealCoverage?.plannedMeals || 0,
+                            nextMealLabel
+                        )
+                        : copy.signalMealsEmpty
+                }
+            ]
+        }
+    };
+}
+
+function resolveRhythmSignalText(signalCopy = {}, signal = {}) {
+    const template = signalCopy?.[signal?.status] || signalCopy?.building || signalCopy?.placeholder || '';
+    return typeof template === 'function' ? template(signal) : template;
 }
 
 export function buildGoalInsightsContent(insights, lang = getAppState().curLang) {
@@ -35,6 +138,71 @@ export function buildGoalInsightsContent(insights, lang = getAppState().curLang)
             { label: copy.statCalories, value: copy.formatWindowCount(insights?.calorieTargetDays || 0, windowSize) },
             { label: copy.statProtein, value: copy.formatWindowCount(insights?.proteinTargetDays || 0, windowSize) }
         ]
+    };
+}
+
+export function buildMealRhythmContent(insights, lang = getAppState().curLang, { variant = 'home' } = {}) {
+    const copy = getMealRhythmUiText(lang);
+    const focus = insights?.focus || 'start_logging';
+    const summaryTemplate = copy.summaries?.[focus] || copy.summaries?.steady_week || '';
+    const subtitle = variant === 'dashboard'
+        ? (copy.dashboardSubtitle || copy.subtitle)
+        : copy.subtitle;
+
+    return {
+        title: copy.title,
+        subtitle,
+        headline: copy.headlines?.[focus] || copy.headlines?.steady_week || '',
+        summary: typeof summaryTemplate === 'function' ? summaryTemplate(insights || {}) : summaryTemplate,
+        signals: [
+            {
+                key: 'breakfast',
+                label: copy.labels?.breakfast || 'Breakfast',
+                text: resolveRhythmSignalText(copy.breakfast, insights?.breakfast || {})
+            },
+            {
+                key: 'dinner',
+                label: copy.labels?.dinner || 'Dinner',
+                text: resolveRhythmSignalText(copy.dinner, insights?.dinner || {})
+            },
+            {
+                key: 'protein',
+                label: copy.labels?.protein || 'Protein',
+                text: resolveRhythmSignalText(copy.protein, insights?.protein || {})
+            },
+            {
+                key: 'hydration',
+                label: copy.labels?.hydration || 'Hydration',
+                text: resolveRhythmSignalText(copy.hydration, insights?.hydration || {})
+            }
+        ]
+    };
+}
+
+export function buildNutritionFocusContent(viewModel, lang = getAppState().curLang) {
+    const copy = getNutritionUiText(lang).trend;
+    const focusKey = viewModel?.focusKey || 'balanced';
+    const headline = copy.headlines?.[focusKey] || copy.headlines?.balanced || '';
+    const summaryTemplate = copy.summaries?.[focusKey] || copy.summaries?.balanced || '';
+    const summary = typeof summaryTemplate === 'function'
+        ? summaryTemplate(viewModel?.loggedDays || 7)
+        : summaryTemplate;
+
+    return {
+        title: copy.title,
+        subtitle: copy.subtitle,
+        headline,
+        summary,
+        signals: (viewModel?.signals || []).map((signal) => ({
+            key: signal.key,
+            label: copy.signalLabels?.[signal.key] || signal.key,
+            value: copy.signalValue?.[signal.key]
+                ? copy.signalValue[signal.key](signal)
+                : String(signal.current ?? '--'),
+            detail: copy.signalDetails?.[signal.key]
+                ? copy.signalDetails[signal.key](signal)
+                : ''
+        }))
     };
 }
 
