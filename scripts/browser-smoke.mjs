@@ -372,13 +372,15 @@ async function run() {
     }
 
     if (!URL_ARG) {
-      await client.evaluate(`
-        (() => {
-          document.getElementById('food-preset-region').value = 'taiwan';
-          document.getElementById('food-preset-region').dispatchEvent(new Event('change', { bubbles: true }));
-        })();
+      const homeQuickState = await client.evaluate(`
+        (() => ({
+          regionVisible: Boolean(document.getElementById('food-preset-region')),
+          advancedOpen: Boolean(document.getElementById('manual-entry-details')?.open)
+        }))()
       `);
-      await delay(200);
+      assert(!homeQuickState.regionVisible, 'Home should not expose the preset region selector.');
+      assert(!homeQuickState.advancedOpen, 'Advanced manual entry should stay collapsed by default.');
+
       await client.evaluate(`
         (() => {
           document.getElementById('food-preset-select').value = 'tw-bubble-milk-tea';
@@ -398,23 +400,35 @@ async function run() {
             extraPearls.checked = true;
             extraPearls.dispatchEvent(new Event('change', { bubbles: true }));
           }
-          document.getElementById('btn-apply-food-preset').click();
+          document.getElementById('btn-quick-add-food-preset').click();
         })();
       `);
       await delay(300);
-      const presetManualState = await client.evaluate(`
+      const presetQuickAddState = await client.evaluate(`
         (() => ({
-          name: document.getElementById('manual-name').value,
-          calories: document.getElementById('manual-cal').value,
-          sugar: document.getElementById('manual-sugar').value,
-          type: document.getElementById('manual-type').value
+          totalCalories: document.getElementById('total-cal-display').innerText,
+          sugar: document.getElementById('sum-sugar').innerText,
+          mealSections: [...document.querySelectorAll('#meal-sections-container .meal-section')].map((section) => ({
+            title: section.querySelector('.meal-title')?.innerText?.trim() || '',
+            text: section.querySelector('.meal-list')?.innerText || ''
+          }))
         }))()
       `);
-      assert(/Bubble Milk Tea|珍珠奶茶/.test(presetManualState.name), `Preset apply should fill manual name, got ${presetManualState.name}.`);
-      assert(presetManualState.calories === '440', `Preset apply should fill calories, got ${presetManualState.calories}.`);
-      assert(presetManualState.sugar === '37.3', `Preset apply should fill recalculated sugar, got ${presetManualState.sugar}.`);
-      assert(presetManualState.type === 'snack', `Preset apply should set suggested meal type, got ${presetManualState.type}.`);
-      results.push('Locale food preset apply works');
+      const presetSection = presetQuickAddState.mealSections.find((section) => /Bubble Milk Tea|珍珠奶茶/.test(section.text)) || null;
+      assert(presetQuickAddState.totalCalories === '440', `Preset quick add should update total calories, got ${presetQuickAddState.totalCalories}.`);
+      assert(presetQuickAddState.sugar === '37.3', `Preset quick add should update sugar total, got ${presetQuickAddState.sugar}.`);
+      assert(Boolean(presetSection), `Preset quick add should render the selected food. State: ${JSON.stringify(presetQuickAddState)}`);
+      assert(/Snack|點心|榛炲績/i.test(presetSection.title), `Preset quick add should land in the snack section, got ${presetSection?.title}.`);
+      results.push('Common food quick add works without region chooser');
+
+      await client.evaluate(`
+        (() => {
+          const details = document.getElementById('manual-entry-details');
+          details.open = true;
+          document.getElementById('manual-name').focus();
+        })();
+      `);
+      await delay(150);
 
       await client.evaluate(`
         document.getElementById('manual-name').value = 'Smoke Apple';
@@ -426,7 +440,7 @@ async function run() {
         document.getElementById('btn-add-record').click();
       `);
       await delay(400);
-      assert((await client.evaluate(`document.getElementById('total-cal-display').innerText`)) === '123', 'Manual add did not update total calories.');
+      assert((await client.evaluate(`document.getElementById('total-cal-display').innerText`)) === '563', 'Manual add should stack on top of the quick-added common food.');
       assert((await client.evaluate(`document.getElementById('sum-fiber').innerText`)) === '4.2', 'Manual fiber did not update dashboard total.');
       const coachState = await client.evaluate(`
         (() => ({
@@ -555,8 +569,10 @@ async function run() {
 
       await client.evaluate(`
         (async () => {
+          const records = JSON.parse(localStorage.getItem('record_${today}') || '[]');
+          const targetIndex = records.findIndex(item => item.name === 'Smoke Seed Bowl');
           const detailModule = await import('./js/ui/detail-ui.js');
-          detailModule.showDetailModal(1);
+          detailModule.showDetailModal(targetIndex >= 0 ? targetIndex : 0);
         })();
       `);
       await delay(300);
@@ -567,16 +583,15 @@ async function run() {
           const nutriCount = document.querySelectorAll('#detail-content .ai-nutri-item').length;
           const sectionCount = document.querySelectorAll('#detail-content .nutrition-panel-section').length;
           const clipboardCount = (headerText.match(/📋/g) || []).length;
-          const itemWeights = [...document.querySelectorAll('#detail-content strong + div > div span:last-child')]
-            .map(node => node.innerText.trim());
-          return { headerText, contentTitle, nutriCount, sectionCount, clipboardCount, itemWeights };
+          const contentText = document.getElementById('detail-content')?.innerText || '';
+          return { headerText, contentTitle, nutriCount, sectionCount, clipboardCount, contentText };
         })()
       `);
       assert(detailState.nutriCount === 9, `Detail modal should show 9 nutrition fields, got ${detailState.nutriCount}. State: ${JSON.stringify(detailState)}`);
       assert(detailState.sectionCount === 2, `Detail modal should show 2 grouped nutrition sections, got ${detailState.sectionCount}. State: ${JSON.stringify(detailState)}`);
       assert(detailState.clipboardCount <= 1, `Detail modal title icon is duplicated: ${detailState.headerText}`);
-      assert(detailState.itemWeights.includes('60 g'), `Detail modal should show gram units for ingredients. Got: ${detailState.itemWeights.join(', ')}`);
-      assert(detailState.itemWeights.includes('15 g'), `Detail modal should show gram units for ingredients. Got: ${detailState.itemWeights.join(', ')}`);
+      assert(/60 g/.test(detailState.contentText), `Detail modal should show gram units for ingredients. Got: ${detailState.contentText}`);
+      assert(/15 g/.test(detailState.contentText), `Detail modal should show gram units for ingredients. Got: ${detailState.contentText}`);
       results.push('Detail modal shows full nutrition info without duplicate icon');
       await client.evaluate(`document.getElementById('btn-detail-close').click()`);
       await client.evaluate(`document.getElementById('btn-fav-close').click()`);
@@ -622,7 +637,8 @@ async function run() {
           macroText: document.getElementById('macro-goals')?.innerText?.trim() || '',
           goalCardPresent: Boolean(document.getElementById('goal-insights-card')),
           onboardingHidden: document.getElementById('onboarding-card').hidden,
-          presetRegion: document.getElementById('food-preset-region')?.value || '',
+          presetRegion: document.getElementById('food-preset-panel')?.dataset?.selectedRegion || '',
+          themeLabel: document.getElementById('btn-toggle-theme-setting')?.innerText?.trim() || '',
           savedGoalType: JSON.parse(localStorage.getItem('myProfile_v5') || '{}').goalType || '',
           savedRegion: JSON.parse(localStorage.getItem('myProfile_v5') || '{}').region || '',
           savedDiningOutFrequency: JSON.parse(localStorage.getItem('myProfile_v5') || '{}').diningOutFrequency || ''
@@ -637,6 +653,7 @@ async function run() {
       assert(goalState.onboardingHidden, 'Onboarding card should hide after profile setup is completed.');
       assert(goalState.presetRegion === 'hong-kong', `Preset panel should follow the saved profile region. State: ${JSON.stringify(goalState)}`);
       assert(/增肌/.test(goalState.macroText), `Macro goal copy should reflect build-muscle mode: ${goalState.macroText}`);
+      assert(!/[馃裸保]/.test(goalState.themeLabel), `Settings row should not include garbled prefix text: ${goalState.themeLabel}`);
       results.push('Onboarding preferences persist and drive goal setup defaults');
 
       const baselineTotal = await client.evaluate(`document.getElementById('total-cal-display').innerText`);

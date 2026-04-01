@@ -129,6 +129,8 @@ export function syncAppStateUI(state, previousState, meta = {}) {
         updateMealUI();
         if (reason === 'profile:apply') {
             renderManualFoodPresetPanel({
+                surface: 'home',
+                actionMode: 'quick-add',
                 selection: {
                     region: state.profile?.region || '',
                     presetId: '',

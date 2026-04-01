@@ -16,6 +16,7 @@ import { handleFileSelect, startAnalysis, syncAnalysisInputState, tryCloseAnalys
 import {
     addManualFood,
     applySelectedFoodPreset,
+    quickAddSelectedFoodPreset,
     saveToFavorites,
     saveAIResultToFavorites,
     syncManualFoodPresetUI
@@ -39,9 +40,9 @@ export function setupEventListeners() {
         switchView('view-ai');
     });
     document.getElementById('btn-home-manual')?.addEventListener('click', () => {
-        const input = document.getElementById('manual-name');
-        input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        input?.focus();
+        const presetSelect = document.getElementById('food-preset-select');
+        presetSelect?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        presetSelect?.focus();
     });
     document.getElementById('btn-home-favorites')?.addEventListener('click', () => openFavModal());
     document.getElementById('food-preset-panel')?.addEventListener('change', (event) => {
@@ -62,8 +63,17 @@ export function setupEventListeners() {
     document.getElementById('food-preset-panel')?.addEventListener('click', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
-        if (target.id === 'btn-apply-food-preset') {
+        if (target.id === 'btn-quick-add-food-preset') {
+            quickAddSelectedFoodPreset();
+            return;
+        }
+        if (target.id === 'btn-preset-advanced-fill') {
             applySelectedFoodPreset();
+            const details = document.getElementById('manual-entry-details');
+            if (details instanceof HTMLDetailsElement) {
+                details.open = true;
+            }
+            document.getElementById('manual-name')?.focus();
         }
     });
     document.getElementById('meal-mode').addEventListener('change', () => calculateProfile());

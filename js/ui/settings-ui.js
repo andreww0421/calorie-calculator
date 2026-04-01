@@ -191,7 +191,10 @@ export function updateMealUI() {
         }, { className: `meal-btn ${type}` }));
     });
 
-    renderManualFoodPresetPanel();
+    renderManualFoodPresetPanel({
+        surface: 'home',
+        actionMode: 'quick-add'
+    });
 }
 
 export function toggleTheme() {

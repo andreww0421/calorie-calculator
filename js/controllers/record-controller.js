@@ -132,7 +132,11 @@ export function syncManualFoodPresetUI(options = {}) {
         modifiers: options.resetModifiers ? {} : (options.modifiers ?? current.modifiers)
     };
 
-    return renderManualFoodPresetPanel({ selection: nextSelection });
+    return renderManualFoodPresetPanel({
+        selection: nextSelection,
+        surface: 'home',
+        actionMode: 'quick-add'
+    });
 }
 
 export function applySelectedFoodPreset() {
@@ -153,6 +157,34 @@ export function applySelectedFoodPreset() {
 
     manualPresetDraft = draft;
     applyFoodPresetToManualForm(draft);
+    showToast(t.presetAppliedToast || 'Preset applied to manual entry.', 'success');
+}
+
+export function quickAddSelectedFoodPreset() {
+    const t = getTranslations();
+    const state = getAppState();
+    const { presetId, modifiers } = readManualFoodPresetSelection();
+    const preset = findFoodPresetById(presetId);
+
+    if (!preset) {
+        showToast(t.presetSelectPrompt || 'Select a preset meal first.', 'error');
+        return;
+    }
+
+    const draft = createFoodPresetManualDraft(preset, {
+        lang: state.curLang,
+        selectedModifiers: modifiers
+    });
+
+    manualPresetDraft = draft;
+    appendFoodItem({
+        type: draft.type || preset.suggestedMealType || 'snack',
+        name: draft.name,
+        nutri: cloneNutrition(draft.nutri),
+        items: cloneFoodItems(draft.items),
+        healthScore: 0
+    }, 'preset');
+    clearManualInputs();
     showToast(t.presetAppliedToast || 'Preset applied to manual entry.', 'success');
 }
 

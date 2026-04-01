@@ -2,6 +2,7 @@ import { getAppState } from '../state/app-state.js';
 import { createFoodPresetPickerViewModel } from '../state/food-preset-selectors.js';
 import { createButton, createElement, clearElement } from './dom-ui.js';
 import { getTexts } from './shared-ui.js';
+import { getHomeUiCopy } from '../locales/home-ui-copy.js';
 
 function renderModifierControl(group) {
     const field = createElement('div', {
@@ -53,7 +54,10 @@ function renderModifierControl(group) {
 }
 
 export function readManualFoodPresetSelection() {
-    const region = document.getElementById('food-preset-region')?.value || '';
+    const container = document.getElementById('food-preset-panel');
+    const region = document.getElementById('food-preset-region')?.value
+        || container?.dataset.selectedRegion
+        || '';
     const presetId = document.getElementById('food-preset-select')?.value || '';
     const modifiers = {};
 
@@ -120,6 +124,10 @@ export function applyFoodPresetToManualForm(draft) {
 export function renderManualFoodPresetPanel(options = {}) {
     const state = getAppState();
     const t = getTexts();
+    const homeCopy = getHomeUiCopy(state.curLang);
+    const surface = options.surface || 'home';
+    const actionMode = options.actionMode || (surface === 'home' ? 'quick-add' : 'manual-fill');
+    const showRegionSelect = options.showRegionSelect ?? (surface !== 'home');
     const selection = options.selection || readManualFoodPresetSelection();
     const viewModel = createFoodPresetPickerViewModel({
         lang: state.curLang,
@@ -133,29 +141,25 @@ export function renderManualFoodPresetPanel(options = {}) {
     if (!container) return viewModel;
 
     clearElement(container);
+    container.dataset.selectedRegion = viewModel.selectedRegion || '';
+    container.dataset.surface = surface;
+    container.dataset.actionMode = actionMode;
+    container.classList.toggle('food-preset-panel--simple', surface === 'home');
 
     container.appendChild(createElement('div', { className: 'food-preset-header' }, [
         createElement('div', {
             className: 'food-preset-title',
-            text: t.presetPanelTitle || 'Dining-out presets'
+            text: surface === 'home'
+                ? (homeCopy.commonFoodsTitle || t.presetPanelTitle || 'Common foods')
+                : (t.presetPanelTitle || 'Dining-out presets')
         }),
         createElement('div', {
             className: 'food-preset-hint',
-            text: t.presetPanelHint || 'Use a local preset, then fine-tune the manual nutrition fields if needed.'
+            text: surface === 'home'
+                ? (homeCopy.commonFoodsHint || t.presetPanelHint || 'Choose a familiar food and add it quickly.')
+                : (t.presetPanelHint || 'Use a local preset, then fine-tune the manual nutrition fields if needed.')
         })
     ]));
-
-    const regionSelect = createElement('select', {
-        attrs: { id: 'food-preset-region' }
-    });
-    viewModel.regions.forEach((region) => {
-        const option = createElement('option', {
-            text: region.label,
-            attrs: { value: region.id }
-        });
-        if (region.id === viewModel.selectedRegion) option.selected = true;
-        regionSelect.appendChild(option);
-    });
 
     const presetSelect = createElement('select', {
         attrs: { id: 'food-preset-select' }
@@ -169,22 +173,59 @@ export function renderManualFoodPresetPanel(options = {}) {
         presetSelect.appendChild(option);
     });
 
-    container.appendChild(createElement('div', { className: 'food-preset-grid' }, [
-        createElement('label', { className: 'food-preset-field' }, [
+    const fieldChildren = [];
+
+    if (showRegionSelect) {
+        const regionSelect = createElement('select', {
+            attrs: { id: 'food-preset-region' }
+        });
+        viewModel.regions.forEach((region) => {
+            const option = createElement('option', {
+                text: region.label,
+                attrs: { value: region.id }
+            });
+            if (region.id === viewModel.selectedRegion) option.selected = true;
+            regionSelect.appendChild(option);
+        });
+
+        fieldChildren.push(createElement('label', { className: 'food-preset-field' }, [
             createElement('span', {
                 className: 'food-preset-label',
                 text: t.presetRegionLabel || 'Region'
             }),
             regionSelect
-        ]),
-        createElement('label', { className: 'food-preset-field' }, [
+        ]));
+    }
+
+    fieldChildren.push(createElement('label', { className: 'food-preset-field' }, [
             createElement('span', {
                 className: 'food-preset-label',
-                text: t.presetFoodLabel || 'Preset meal'
+                text: surface === 'home'
+                    ? (homeCopy.heroActionCommonFoods || t.presetFoodLabel || 'Common foods')
+                    : (t.presetFoodLabel || 'Preset meal')
             }),
             presetSelect
-        ])
     ]));
+
+    container.appendChild(createElement('div', {
+        className: `food-preset-grid${showRegionSelect ? '' : ' food-preset-grid--single'}`
+    }, fieldChildren));
+
+    if (!showRegionSelect && viewModel.selectedRegion) {
+        container.appendChild(createElement('div', { className: 'food-preset-meta' }, [
+            createElement('span', {
+                className: 'food-preset-region-chip',
+                text: viewModel.regions.find((entry) => entry.id === viewModel.selectedRegion)?.label || viewModel.selectedRegion
+            }),
+            createElement('span', {
+                className: 'food-preset-meta-copy',
+                attrs: { id: 'food-preset-meta-copy' },
+                text: homeCopy.commonFoodsMeta?.(
+                    viewModel.regions.find((entry) => entry.id === viewModel.selectedRegion)?.label || viewModel.selectedRegion
+                ) || ''
+            })
+        ]));
+    }
 
     const modifiers = createElement('div', {
         attrs: { id: 'food-preset-modifiers' },
@@ -207,13 +248,32 @@ export function renderManualFoodPresetPanel(options = {}) {
         ]));
     }
 
-    container.appendChild(createButton(t.presetApplyButton || 'Apply preset to manual entry', null, {
+    const buttonId = actionMode === 'quick-add' ? 'btn-quick-add-food-preset' : 'btn-apply-food-preset';
+    const buttonLabel = actionMode === 'quick-add'
+        ? (homeCopy.commonFoodsButton || 'Add this food to today')
+        : (t.presetApplyButton || 'Apply preset to manual entry');
+
+    container.appendChild(createButton(buttonLabel, null, {
         attrs: {
-            id: 'btn-apply-food-preset',
+            id: buttonId,
             type: 'button'
         },
         className: 'btn-preset-apply'
     }));
+
+    if (surface === 'home') {
+        container.appendChild(createButton(
+            homeCopy.commonFoodsAdvancedButton || t.presetApplyButton || 'Use this in advanced manual entry',
+            null,
+            {
+                attrs: {
+                    id: 'btn-preset-advanced-fill',
+                    type: 'button'
+                },
+                className: 'food-preset-secondary-btn'
+            }
+        ));
+    }
 
     return viewModel;
 }

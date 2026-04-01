@@ -174,6 +174,26 @@ body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); c
     display: grid;
     gap: 14px;
 }
+.home-log-quick-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.home-log-quick-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.home-log-quick-title {
+    font-size: 0.98em;
+    font-weight: 700;
+    color: var(--text-color);
+}
+.home-log-quick-hint {
+    font-size: 0.88em;
+    line-height: 1.5;
+    color: var(--nav-text);
+}
 .home-log-intro h3 {
     margin: 8px 0 0;
 }
@@ -188,6 +208,41 @@ body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); c
     border-radius: 18px;
     background: rgba(46, 204, 113, 0.06);
     border: 1px solid rgba(46, 204, 113, 0.12);
+}
+.manual-entry-details {
+    border: 1px solid var(--input-border);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.74);
+    overflow: hidden;
+}
+.manual-entry-summary {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    cursor: pointer;
+}
+.manual-entry-summary::-webkit-details-marker {
+    display: none;
+}
+.manual-entry-title {
+    font-size: 0.94em;
+    font-weight: 700;
+    color: var(--text-color);
+}
+.manual-entry-copy {
+    font-size: 0.85em;
+    line-height: 1.45;
+    color: var(--nav-text);
+}
+.manual-entry-details[open] .manual-entry-summary {
+    border-bottom: 1px solid var(--input-border);
+    background: rgba(46, 204, 113, 0.05);
+}
+.manual-entry-details .home-log-form {
+    margin-top: 0;
+    padding: 14px 16px 16px;
 }
 .home-log-divider {
     border-top: 1px dashed rgba(149, 165, 166, 0.55);
@@ -629,6 +684,9 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
     border-radius: 12px;
     background: rgba(46, 204, 113, 0.06);
 }
+.food-preset-panel--simple {
+    margin: 0;
+}
 
 .food-preset-header {
     display: flex;
@@ -652,6 +710,9 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+}
+.food-preset-grid--single {
+    grid-template-columns: minmax(0, 1fr);
 }
 
 .food-preset-field,
@@ -696,6 +757,27 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
     font-size: 0.82em;
     opacity: 0.82;
 }
+.food-preset-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 2px 0 6px;
+    font-size: 0.84em;
+    color: var(--nav-text);
+}
+.food-preset-region-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--primary-dark);
+    font-weight: 700;
+}
+.food-preset-meta-copy {
+    opacity: 0.86;
+}
 
 .btn-preset-apply {
     width: 100%;
@@ -705,6 +787,17 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
     background: rgba(46, 204, 113, 0.92);
     color: #fff;
     font-weight: 700;
+}
+.food-preset-secondary-btn {
+    width: auto;
+    margin-top: 4px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--primary-dark);
+    font-size: 0.85em;
+    font-weight: 700;
+    text-align: left;
 }
 
 .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
@@ -740,6 +833,10 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
 [dir="rtl"] .companion-action-row,
 [dir="rtl"] .home-signal-grid {
     direction: rtl;
+}
+
+[dir="rtl"] .food-preset-meta {
+    flex-direction: row-reverse;
 }
 
 [dir="rtl"] .ai-guide-list {

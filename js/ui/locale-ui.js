@@ -75,19 +75,26 @@ export function buildHomeCompanionContent(viewModel, lang = getAppState().curLan
             ],
             meta: [
                 getGoalSummaryText(viewModel?.goalType || 'lose', lang),
-                viewModel?.presetRegionLabel || '',
                 nextMealLabel || ''
             ].filter(Boolean),
             actions: {
                 ai: t.aiTitle || 'AI Analysis',
-                manual: t.btnAddRecord || t.btnAdd || 'Quick add',
+                manual: copy.heroActionCommonFoods || t.btnAddRecord || t.btnAdd || 'Quick add',
                 favorites: t.btnFavLoad || 'Common foods'
             }
         },
         quickLog: {
             eyebrow: copy.quickLogEyebrow,
             summary: hasMeals ? copy.quickLogCopyActive : copy.quickLogCopyEmpty,
-            mealListTitle: copy.mealListTitle
+            mealListTitle: copy.mealListTitle,
+            commonFoodsTitle: copy.commonFoodsTitle || 'Common foods quick select',
+            commonFoodsHint: copy.commonFoodsHint || 'Choose a familiar food and keep Home light.',
+            commonFoodsMeta: viewModel?.presetRegionLabel
+                ? (copy.commonFoodsMeta?.(viewModel.presetRegionLabel) || viewModel.presetRegionLabel)
+                : '',
+            commonFoodsButton: copy.commonFoodsButton || t.presetApplyButton || 'Add this food to today',
+            manualAdvancedTitle: copy.manualAdvancedTitle || t.manualLabel || 'Advanced manual entry',
+            manualAdvancedHint: copy.manualAdvancedHint || 'Open only when you need to type a custom food or edit nutrition by hand.'
         },
         overview: {
             title: copy.overviewTitle,

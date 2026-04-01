@@ -250,6 +250,10 @@ function renderHomeCompanionCard(state = getAppState()) {
         ['btn-home-favorites-label', content.hero.actions.favorites],
         ['home-log-eyebrow', content.quickLog.eyebrow],
         ['home-log-copy', content.quickLog.summary],
+        ['home-common-food-title', content.quickLog.commonFoodsTitle],
+        ['home-common-food-hint', content.quickLog.commonFoodsHint],
+        ['txt-manual-toggle', content.quickLog.manualAdvancedTitle],
+        ['txt-manual-toggle-copy', content.quickLog.manualAdvancedHint],
         ['home-log-list-title', content.quickLog.mealListTitle],
         ['txt-total-intake', content.overview.title],
         ['txt-daily-summary-hint', content.overview.hint]
@@ -290,6 +294,11 @@ function renderHomeCompanionCard(state = getAppState()) {
                 text: item
             }));
         });
+    }
+
+    const presetMeta = document.getElementById('food-preset-meta-copy');
+    if (presetMeta) {
+        presetMeta.innerText = content.quickLog.commonFoodsMeta || '';
     }
 
     const signalGrid = document.getElementById('home-summary-signals');
