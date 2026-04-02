@@ -93,82 +93,18 @@
             <div class="companion-stat-row" id="home-companion-stats"></div>
             <div class="companion-meta-row" id="home-companion-meta"></div>
             <div class="companion-action-row">
-                <button type="button" class="companion-action-btn" id="btn-home-ai">
+                <button type="button" class="companion-action-btn companion-action-btn--primary" id="btn-home-log-hub">
+                    <span id="btn-home-log-hub-label"></span>
+                </button>
+                <button type="button" class="companion-action-btn companion-action-btn--secondary" id="btn-home-ai">
                     <span id="btn-home-ai-label"></span>
                 </button>
-                <button type="button" class="companion-action-btn" id="btn-home-manual">
-                    <span id="btn-home-manual-label"></span>
-                </button>
-                <button type="button" class="companion-action-btn" id="btn-home-favorites">
+                <button type="button" class="companion-action-btn companion-action-btn--secondary" id="btn-home-favorites">
                     <span id="btn-home-favorites-label"></span>
                 </button>
             </div>
         </div>
         <div id="onboarding-card" hidden></div>
-
-        <div class="date-control">
-            <label id="txt-date-label">📆 日期：</label>
-            <input type="date" id="current-date">
-        </div>
-
-        <div class="card home-log-card">
-            <div class="home-log-intro">
-                <div class="quick-start-eyebrow" id="home-log-eyebrow"></div>
-                <h3>🍔 <span id="display-date-text">今日</span> <span id="txt-record-title">飲食記錄</span></h3>
-                <div class="home-log-copy" id="home-log-copy"></div>
-            </div>
-            <div class="home-log-quick-shell">
-                <div class="home-log-quick-head">
-                    <div class="home-log-quick-title" id="home-common-food-title">常用外食快速加入</div>
-                    <div class="home-log-quick-hint" id="home-common-food-hint">先用常見餐點快速記一筆，細部調整留到次要輸入。</div>
-                </div>
-                <div id="food-preset-panel" class="food-preset-panel"></div>
-            </div>
-            <details class="manual-entry-details" id="manual-entry-details">
-                <summary class="manual-entry-summary">
-                    <span class="manual-entry-title" id="txt-manual-toggle">進階手動輸入</span>
-                    <span class="manual-entry-copy" id="txt-manual-toggle-copy">需要自訂熱量或營養細節時再展開。</span>
-                </summary>
-                <div class="home-log-form">
-                    <label id="txt-manual-label">手動輸入</label>
-                    <div class="manual-grid">
-                        <input type="text" id="manual-name" placeholder="食物名稱 (必填)">
-                        <input type="number" id="manual-cal" placeholder="熱量 kcal (必填)">
-                    </div>
-
-                    <div class="small-input-group">
-                        <input type="number" id="manual-pro" placeholder="蛋白質">
-                        <input type="number" id="manual-fat" placeholder="脂肪">
-                        <input type="number" id="manual-carb" placeholder="碳水">
-                        <input type="number" id="manual-sugar" placeholder="糖">
-                    </div>
-                    <div class="small-input-group">
-                        <input type="number" id="manual-sod" placeholder="鈉 (mg)">
-                        <input type="number" id="manual-sat" placeholder="飽和脂肪">
-                        <input type="number" id="manual-trans" placeholder="反式脂肪">
-                        <input type="number" id="manual-fiber" placeholder="膳食纖維">
-                    </div>
-                    <div class="manual-select-row">
-                        <select id="manual-type"></select>
-                    </div>
-
-                    <button id="btn-add-record" style="background-color: #95a5a6;">➕ 加入記錄</button>
-                    <div class="fav-controls">
-                        <button class="btn-fav-save" id="btn-fav-save-main">⭐ <span id="btn-fav-save">加入最愛</span></button>
-                        <button class="btn-fav-load" id="btn-fav-load-main">📂 <span id="btn-fav-load">選擇常吃食物</span></button>
-                    </div>
-                </div>
-            </details>
-            <div class="home-log-divider"></div>
-            <div class="home-log-list-title" id="home-log-list-title"></div>
-            <div id="meal-sections-container"></div>
-        </div>
-
-        <div class="quick-start-card" id="daily-empty-state">
-            <div class="quick-start-eyebrow" id="txt-empty-eyebrow">新手開始</div>
-            <div class="quick-start-title" id="txt-empty-title">記下今天的第一餐</div>
-            <div class="quick-start-copy" id="txt-empty-copy">你可以先拍照交給 AI，或用手動輸入快速建立第一筆飲食記錄。</div>
-        </div>
 
         <div class="dashboard-header" id="daily-summary-card" role="button" tabindex="0" aria-haspopup="dialog">
             <div class="dashboard-hero">
@@ -203,8 +139,29 @@
             </div>
         </div>
 
+        <div class="card today-meals-card" id="today-meals-card">
+            <div class="today-meals-header">
+                <div class="today-meals-copy">
+                    <div class="today-meals-kicker" id="txt-today-meals-kicker">Today’s diary</div>
+                    <div class="today-meals-title" id="txt-today-meals-title">今天餐次</div>
+                    <div class="today-meals-hint" id="txt-today-meals-copy">把今天吃過的內容整理在這裡，直接看出哪一餐還沒記。</div>
+                </div>
+                <button type="button" class="today-meals-date-btn" id="btn-change-log-date">
+                    <span id="display-date-text">Today</span>
+                </button>
+                <input type="date" id="current-date" class="today-meals-date-input" aria-label="Select date">
+            </div>
+            <div id="meal-sections-container" class="meal-sections-container meal-sections-container--home"></div>
+        </div>
+
         <div class="card rhythm-card" id="meal-rhythm-card" hidden></div>
 
+    </div>
+    
+    <!-- ==================== DASHBOARD VIEW ==================== -->
+    <div id="view-dashboard" class="view-section hidden">
+        <div class="card rhythm-card rhythm-card--dashboard" id="dashboard-rhythm-card" hidden></div>
+        <div class="card nutrition-focus-card" id="dashboard-nutrition-focus-card" hidden></div>
         <div class="coach-card card" id="daily-coach-card">
             <div class="coach-header">
                 <div class="quick-start-eyebrow" id="txt-coach-title">今日教練建議</div>
@@ -218,21 +175,6 @@
             </div>
         </div>
 
-        <!-- Weight log card -->
-        <div class="card weight-card">
-            <h3 id="txt-weight-title">⚖️ 體重記錄</h3>
-            <div style="display:flex; gap:10px;">
-                <input type="number" id="daily-weight-input" placeholder="今日體重 (kg)" step="0.1">
-                <button id="btn-save-weight" style="width:auto; padding:0 20px;">儲存</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- ==================== DASHBOARD VIEW ==================== -->
-    <div id="view-dashboard" class="view-section hidden">
-        <div class="card rhythm-card rhythm-card--dashboard" id="dashboard-rhythm-card" hidden></div>
-        <div class="card nutrition-focus-card" id="dashboard-nutrition-focus-card" hidden></div>
-
         <div class="card">
             <h3 id="txt-chart-title">Nutrition Analysis</h3>
             <div class="chart-grid">
@@ -245,6 +187,13 @@
         <div class="card">
             <h3 id="txt-weight-chart-title">📱 體重趨勢 (近 30 天)</h3>
             <div class="chart-container" style="height:200px;"><canvas id="weightChart"></canvas></div>
+        </div>
+        <div class="card weight-card">
+            <h3 id="txt-weight-title">⚖️ 體重記錄</h3>
+            <div style="display:flex; gap:10px;">
+                <input type="number" id="daily-weight-input" placeholder="今日體重 (kg)" step="0.1">
+                <button id="btn-save-weight" style="width:auto; padding:0 20px;">儲存</button>
+            </div>
         </div>
 
         <!-- Phase 4: 鐔遍噺 & 铔嬬櫧璩定鍕㈠湒 -->
@@ -304,7 +253,7 @@
     <!-- ==================== SETTINGS VIEW ==================== -->
     <div id="view-settings" class="view-section hidden">
         <div class="card">
-            <h3 id="txt-settings-title">鈿欙笍 鍊嬩汉鏁告摎瑷畾</h3>
+            <h3 id="txt-settings-title">⚙️ 個人資料設定</h3>
             <!-- 鏀圭偤娓呭柈寮忓～瀵?椤ず -->
             <div class="settings-list">
                 <div class="settings-item">
@@ -315,16 +264,16 @@
                     </select>
                 </div>
                 <div class="settings-item">
-                    <label id="lbl-age">骞撮健</label>
+                    <label id="lbl-age">年齡</label>
                     <input type="number" id="age" placeholder="25" class="settings-input">
                 </div>
                 <div class="settings-item">
-                    <label id="lbl-height">韬珮 (cm)</label>
+                    <label id="lbl-height">身高 (cm)</label>
                     <input type="number" id="height" placeholder="170" class="settings-input">
                 </div>
                 <!-- 绉婚櫎浜嗗師鏈洿鎺ヤ慨鏀瑰€嬩汉楂旈噸鐨勬瑒浣嶏紝鏀硅畵绯荤当椤ず user 鏈€杩戠殑楂旈噸 (浣嗛€欒！閭勬槸鐣欒憲鍋氶爯瑷紝鎴栬€呯敤浣滃熀婧? -->
                 <div class="settings-item">
-                    <label id="lbl-weight">鐩/鍩烘簴楂旈噸 (kg)</label>
+                    <label id="lbl-weight">目標/基準體重 (kg)</label>
                     <input type="number" id="weight" placeholder="60" class="settings-input">
                 </div>
                 <div class="settings-item">
@@ -373,7 +322,7 @@
         </div>
 
         <div class="card app-settings">
-             <h3 id="txt-app-settings-title">馃敡 鎳夌敤绋嬪紡瑷畾</h3>
+             <h3 id="txt-app-settings-title">App 設定</h3>
              <div class="settings-list">
                  <div class="settings-item clickable" id="btn-toggle-theme-setting">
                      <span id="menu-theme-setting">外觀設定</span>
@@ -466,7 +415,83 @@
         <button id="btn-fav-meal-close" style="margin-top: 15px; background: #95a5a6;">取消</button>
     </div>
 </div>
+<div class="modal-overlay" id="home-log-modal" style="display:none;">
+    <div class="modal modal--sheet">
+        <div class="modal-sheet-header">
+            <div>
+                <h3 id="txt-home-log-modal-title">記錄今天飲食</h3>
+                <p class="modal-sheet-copy" id="txt-home-log-modal-copy">選一個入口開始記錄，不把編輯表單直接放在首頁。</p>
+            </div>
+            <button type="button" class="modal-close-btn" id="btn-home-log-close" aria-label="Close">×</button>
+        </div>
+        <div class="home-log-launcher">
+            <button type="button" class="home-log-launcher-card" id="btn-home-log-common">
+                <span class="home-log-launcher-title" id="btn-home-log-common-label">常見餐點</span>
+                <span class="home-log-launcher-copy" id="txt-home-log-common-copy">從常見外食開始，份量與加料放在下一層處理。</span>
+            </button>
+            <button type="button" class="home-log-launcher-card" id="btn-home-log-favorites">
+                <span class="home-log-launcher-title" id="btn-home-log-favorites-label">常吃食物</span>
+                <span class="home-log-launcher-copy" id="txt-home-log-favorites-copy">從收藏裡挑一筆，最快回到今天的餐次裡。</span>
+            </button>
+            <button type="button" class="home-log-launcher-card" id="btn-home-log-manual">
+                <span class="home-log-launcher-title" id="btn-home-log-manual-label">手動輸入</span>
+                <span class="home-log-launcher-copy" id="txt-home-log-manual-copy">真的需要自訂食物或營養時，再打開完整輸入。</span>
+            </button>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" id="food-preset-modal" style="display:none;">
+    <div class="modal modal--sheet">
+        <div class="modal-sheet-header">
+            <div>
+                <h3 id="txt-food-preset-modal-title">🍜 常用外食</h3>
+                <p class="modal-sheet-copy" id="txt-food-preset-modal-copy">先挑一個常見外食，再用簡單選項快速加入今天。</p>
+            </div>
+            <button type="button" class="modal-close-btn" id="btn-food-preset-close" aria-label="Close">×</button>
+        </div>
+        <div id="food-preset-panel" class="food-preset-panel"></div>
+    </div>
+</div>
+<div class="modal-overlay" id="manual-entry-modal" style="display:none;">
+    <div class="modal modal--sheet modal--wide">
+        <div class="modal-sheet-header">
+            <div>
+                <h3 id="txt-manual-modal-title">手動輸入</h3>
+                <p class="modal-sheet-copy" id="txt-manual-modal-copy">需要自訂食物或手動調整營養時，再到這裡輸入。</p>
+            </div>
+            <button type="button" class="modal-close-btn" id="btn-manual-entry-close" aria-label="Close">×</button>
+        </div>
+        <div class="home-log-form home-log-form--modal">
+            <label id="txt-manual-label">手動輸入</label>
+            <div class="manual-grid">
+                <input type="text" id="manual-name" placeholder="食物名稱 (必填)">
+                <input type="number" id="manual-cal" placeholder="熱量 kcal (必填)">
+            </div>
 
+            <div class="small-input-group">
+                <input type="number" id="manual-pro" placeholder="蛋白質">
+                <input type="number" id="manual-fat" placeholder="脂肪">
+                <input type="number" id="manual-carb" placeholder="碳水">
+                <input type="number" id="manual-sugar" placeholder="糖">
+            </div>
+            <div class="small-input-group">
+                <input type="number" id="manual-sod" placeholder="鈉 (mg)">
+                <input type="number" id="manual-sat" placeholder="飽和脂肪">
+                <input type="number" id="manual-trans" placeholder="反式脂肪">
+                <input type="number" id="manual-fiber" placeholder="膳食纖維">
+            </div>
+            <div class="manual-select-row">
+                <select id="manual-type"></select>
+            </div>
+
+            <button id="btn-add-record" style="background-color: #95a5a6;">➕ 加入記錄</button>
+            <div class="fav-controls">
+                <button class="btn-fav-save" id="btn-fav-save-main">⭐ <span id="btn-fav-save">加入最愛</span></button>
+                <button class="btn-fav-load" id="btn-fav-load-main">📂 <span id="btn-fav-load">選擇常吃食物</span></button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Original FAB menu removed -> Moved to settings -->
 
 <script type="module" src="js/app.js"></script>

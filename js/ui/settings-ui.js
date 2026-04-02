@@ -152,7 +152,9 @@ export function updateMealUI() {
     clearElement(favoriteMealBtns);
 
     mealPlan.forEach(({ type, title, suggestedCalories }) => {
-        const titleWrap = createElement('div');
+        const titleWrap = createElement('div', {
+            className: 'meal-title-wrap'
+        });
         titleWrap.appendChild(createElement('span', {
             className: 'meal-title',
             text: title
@@ -192,8 +194,11 @@ export function updateMealUI() {
     });
 
     renderManualFoodPresetPanel({
-        surface: 'home',
-        actionMode: 'quick-add'
+        surface: 'modal',
+        actionMode: 'quick-add',
+        showRegionSelect: false,
+        showSecondaryAction: true,
+        showRegionMeta: false
     });
 }
 

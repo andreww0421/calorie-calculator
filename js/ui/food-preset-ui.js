@@ -1,5 +1,8 @@
 import { getAppState } from '../state/app-state.js';
-import { createFoodPresetPickerViewModel } from '../state/food-preset-selectors.js';
+import {
+    createFoodPresetPickerViewModel,
+    createHomeFoodPresetQuickViewModel
+} from '../state/food-preset-selectors.js';
 import { createButton, createElement, clearElement } from './dom-ui.js';
 import { getTexts } from './shared-ui.js';
 import { getHomeUiCopy } from '../locales/home-ui-copy.js';
@@ -121,6 +124,43 @@ export function applyFoodPresetToManualForm(draft) {
     }
 }
 
+export function renderHomeCommonFoodStrip(options = {}) {
+    const state = getAppState();
+    const lang = options.lang || state.curLang || 'en';
+    const limit = options.limit ?? 4;
+    const viewModel = createHomeFoodPresetQuickViewModel({
+        lang,
+        profileRegion: state.profile?.region || '',
+        limit
+    });
+    const container = document.getElementById(options.containerId || 'home-common-food-strip');
+    if (!container) return viewModel;
+
+    clearElement(container);
+    container.dataset.selectedRegion = viewModel.selectedRegion || '';
+
+    viewModel.presets.forEach((preset) => {
+        container.appendChild(createElement('button', {
+            className: 'common-food-shortcut',
+            attrs: {
+                type: 'button',
+                'data-preset-quick-id': preset.id
+            }
+        }, [
+            createElement('span', {
+                className: 'common-food-shortcut-label',
+                text: preset.label
+            }),
+            createElement('span', {
+                className: 'common-food-shortcut-meta',
+                text: `${preset.calories} kcal`
+            })
+        ]));
+    });
+
+    return viewModel;
+}
+
 export function renderManualFoodPresetPanel(options = {}) {
     const state = getAppState();
     const t = getTexts();
@@ -128,6 +168,8 @@ export function renderManualFoodPresetPanel(options = {}) {
     const surface = options.surface || 'home';
     const actionMode = options.actionMode || (surface === 'home' ? 'quick-add' : 'manual-fill');
     const showRegionSelect = options.showRegionSelect ?? (surface !== 'home');
+    const showSecondaryAction = options.showSecondaryAction ?? (surface === 'home');
+    const showRegionMeta = options.showRegionMeta ?? false;
     const selection = options.selection || readManualFoodPresetSelection();
     const viewModel = createFoodPresetPickerViewModel({
         lang: state.curLang,
@@ -137,14 +179,14 @@ export function renderManualFoodPresetPanel(options = {}) {
         selectedModifiers: options.modifiers ?? selection.modifiers
     });
 
-    const container = document.getElementById('food-preset-panel');
+    const container = document.getElementById(options.containerId || 'food-preset-panel');
     if (!container) return viewModel;
 
     clearElement(container);
     container.dataset.selectedRegion = viewModel.selectedRegion || '';
     container.dataset.surface = surface;
     container.dataset.actionMode = actionMode;
-    container.classList.toggle('food-preset-panel--simple', surface === 'home');
+    container.classList.toggle('food-preset-panel--simple', Boolean(options.compact));
 
     container.appendChild(createElement('div', { className: 'food-preset-header' }, [
         createElement('div', {
@@ -211,7 +253,7 @@ export function renderManualFoodPresetPanel(options = {}) {
         className: `food-preset-grid${showRegionSelect ? '' : ' food-preset-grid--single'}`
     }, fieldChildren));
 
-    if (!showRegionSelect && viewModel.selectedRegion) {
+    if (!showRegionSelect && showRegionMeta && viewModel.selectedRegion) {
         container.appendChild(createElement('div', { className: 'food-preset-meta' }, [
             createElement('span', {
                 className: 'food-preset-region-chip',
@@ -261,7 +303,7 @@ export function renderManualFoodPresetPanel(options = {}) {
         className: 'btn-preset-apply'
     }));
 
-    if (surface === 'home') {
+    if (showSecondaryAction) {
         container.appendChild(createButton(
             homeCopy.commonFoodsAdvancedButton || t.presetApplyButton || 'Use this in advanced manual entry',
             null,

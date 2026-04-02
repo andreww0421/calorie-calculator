@@ -1,7 +1,7 @@
 import { dispatchAppAction } from '../state/app-actions.js';
 import { getAppState } from '../state/app-state.js';
 import { cloneNutrition } from '../domain/nutrition-schema.js';
-import { closeModal, showEatingAnimation, showToast } from '../ui.js';
+import { closeModal, openModal, showEatingAnimation, showToast } from '../ui.js';
 import { getTranslations } from './controller-shared.js';
 import { createFoodPresetManualDraft } from '../domain/food-preset-domain.js';
 import { findFoodPresetById } from '../repositories/food-preset-repository.js';
@@ -122,6 +122,7 @@ export function addManualFood() {
         healthScore: 0
     }, manualPresetDraft ? 'preset' : 'manual');
     clearManualInputs();
+    closeModal('manual-entry-modal');
 }
 
 export function syncManualFoodPresetUI(options = {}) {
@@ -134,8 +135,10 @@ export function syncManualFoodPresetUI(options = {}) {
 
     return renderManualFoodPresetPanel({
         selection: nextSelection,
-        surface: 'home',
-        actionMode: 'quick-add'
+        surface: 'modal',
+        actionMode: 'quick-add',
+        showRegionSelect: false,
+        showSecondaryAction: true
     });
 }
 
@@ -185,7 +188,14 @@ export function quickAddSelectedFoodPreset() {
         healthScore: 0
     }, 'preset');
     clearManualInputs();
+    closeModal('food-preset-modal');
     showToast(t.presetAppliedToast || 'Preset applied to manual entry.', 'success');
+}
+
+export function openManualEntryModal() {
+    closeModal('home-log-modal');
+    openModal('manual-entry-modal');
+    document.getElementById('manual-name')?.focus();
 }
 
 export function saveToFavorites() {

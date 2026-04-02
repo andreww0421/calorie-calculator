@@ -138,14 +138,19 @@ test('buildHomeCompanionContent returns warm home hierarchy copy', async () => {
 
     assert.match(content.hero.title, /2\/4/i);
     assert.match(content.hero.actions.ai, /AI Analysis/i);
-    assert.match(content.hero.actions.manual, /Common foods/i);
+    assert.match(content.hero.actions.log, /Add a meal/i);
+    assert.match(content.hero.actions.favorites, /Favorites/i);
     assert.equal(content.hero.stats.length, 3);
     assert.equal(content.hero.meta.length, 2);
     assert.equal(content.overview.signals.length, 2);
     assert.match(content.overview.signals[0].detail, /50g to today/i);
-    assert.match(content.quickLog.commonFoodsTitle, /Common foods/i);
-    assert.match(content.quickLog.commonFoodsButton, /Add this food/i);
-    assert.match(content.quickLog.manualAdvancedTitle, /Advanced manual/i);
+    assert.match(content.logHub.title, /Log/i);
+    assert.match(content.logHub.commonFoodsButton, /Common foods/i);
+    assert.match(content.logHub.commonFoodsCopy, /familiar/i);
+    assert.match(content.logHub.favoritesButton, /Favorites/i);
+    assert.match(content.logHub.manualButton, /Manual/i);
+    assert.match(content.logHub.manualModalTitle, /Manual meal entry/i);
+    assert.match(content.logHub.todayMealsTitle, /Today's meals/i);
 });
 
 test('getDisplayDateLabel localizes today and falls back when date is missing', async () => {

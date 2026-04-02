@@ -39,11 +39,7 @@ export function buildHomeCompanionContent(viewModel, lang = getAppState().curLan
     const nextMealLabel = t.meals?.[viewModel?.mealCoverage?.nextMealTitleKey || ''] || '';
     const heroSummary = hasMeals
         ? copy.heroSummaryActive
-        : (viewModel?.featuredPresetName
-            ? copy.heroSummaryPreset(viewModel.presetRegionLabel, viewModel.featuredPresetName)
-            : (viewModel?.presetRegionLabel
-                ? copy.heroSummaryRegion(viewModel.presetRegionLabel, viewModel.presetCount)
-                : copy.heroSummaryBase));
+        : (copy.heroSummaryBase || '');
     const proteinValue = Number(viewModel?.proteinCurrent || 0).toFixed(1).replace(/\.0$/, '');
     const proteinSignalDetail = viewModel?.proteinRemaining > 0
         ? copy.signalProteinToGoal(viewModel.proteinRemaining)
@@ -78,23 +74,27 @@ export function buildHomeCompanionContent(viewModel, lang = getAppState().curLan
                 nextMealLabel || ''
             ].filter(Boolean),
             actions: {
+                log: copy.heroActionLog || t.btnAddRecord || t.btnAdd || 'Log meal',
                 ai: t.aiTitle || 'AI Analysis',
-                manual: copy.heroActionCommonFoods || t.btnAddRecord || t.btnAdd || 'Quick add',
-                favorites: t.btnFavLoad || 'Common foods'
+                favorites: copy.heroActionFavorites || t.btnFavLoad || 'Favorites'
             }
         },
-        quickLog: {
-            eyebrow: copy.quickLogEyebrow,
-            summary: hasMeals ? copy.quickLogCopyActive : copy.quickLogCopyEmpty,
-            mealListTitle: copy.mealListTitle,
-            commonFoodsTitle: copy.commonFoodsTitle || 'Common foods quick select',
-            commonFoodsHint: copy.commonFoodsHint || 'Choose a familiar food and keep Home light.',
-            commonFoodsMeta: viewModel?.presetRegionLabel
-                ? (copy.commonFoodsMeta?.(viewModel.presetRegionLabel) || viewModel.presetRegionLabel)
-                : '',
-            commonFoodsButton: copy.commonFoodsButton || t.presetApplyButton || 'Add this food to today',
-            manualAdvancedTitle: copy.manualAdvancedTitle || t.manualLabel || 'Advanced manual entry',
-            manualAdvancedHint: copy.manualAdvancedHint || 'Open only when you need to type a custom food or edit nutrition by hand.'
+        logHub: {
+            title: copy.logHubTitle || copy.quickLogTitle || t.txtRecordTitle || t.recordTitle || 'Log today\'s meals',
+            summary: hasMeals
+                ? (copy.logHubCopyActive || copy.quickLogCopyActive)
+                : (copy.logHubCopyEmpty || copy.quickLogCopyEmpty),
+            commonFoodsButton: copy.heroActionCommonFoods || t.presetFoodLabel || 'Common foods',
+            commonFoodsCopy: copy.commonFoodsHint || 'Choose a familiar food and keep Home light.',
+            favoritesButton: copy.logHubFavoritesButton || copy.heroActionFavorites || t.btnFavLoad || 'Favorites',
+            favoritesCopy: copy.logHubFavoritesCopy || 'Pick from foods you already save often.',
+            manualButton: copy.logHubManualButton || copy.heroActionManual || t.manualLabel || 'Manual entry',
+            manualCopy: copy.logHubManualCopy || 'Open this only when you need to type a custom food or nutrition.',
+            manualModalTitle: copy.manualModalTitle || copy.manualAdvancedTitle || t.manualLabel || 'Advanced manual entry',
+            manualModalHint: copy.manualModalHint || copy.manualAdvancedHint || 'Open only when you need to type a custom food or edit nutrition by hand.',
+            todayMealsKicker: copy.todayMealsKicker || copy.heroEyebrowEmpty || 'Daily diary',
+            todayMealsTitle: copy.todayMealsTitle || copy.mealListTitle || 'Today\'s meals',
+            todayMealsHint: copy.todayMealsHint || 'Keep meal sections visible here so Home still feels calm.'
         },
         overview: {
             title: copy.overviewTitle,

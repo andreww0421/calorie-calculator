@@ -17,6 +17,7 @@ import {
 import { findFoodPresetById } from '../js/repositories/food-preset-repository.js';
 import {
     createFoodPresetPickerViewModel,
+    createHomeFoodPresetQuickViewModel,
     getDefaultFoodPresetRegion,
     listFoodPresetsByRegion
 } from '../js/state/food-preset-selectors.js';
@@ -168,6 +169,15 @@ test('food preset selectors default and filter presets by locale-aware region', 
         profileRegion: 'taiwan'
     });
     assert.equal(profileRegionPicker.selectedRegion, 'taiwan');
+
+    const homeQuick = createHomeFoodPresetQuickViewModel({
+        lang: 'en',
+        profileRegion: 'taiwan',
+        limit: 3
+    });
+    assert.equal(homeQuick.selectedRegion, 'taiwan');
+    assert.ok(homeQuick.presets.length >= 1 && homeQuick.presets.length <= 3);
+    assert.ok(homeQuick.presets.every((preset) => typeof preset.calories === 'number'));
 });
 
 test('food preset modifier recalculation applies size sweetness and add-on deltas', () => {

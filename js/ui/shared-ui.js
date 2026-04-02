@@ -55,6 +55,11 @@ export function closeModal(id) {
     if (id === 'favorite-meal-modal') clearPendingFavoriteIndex();
 }
 
+export function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = 'flex';
+}
+
 export function toggleFabMenu() {
     const element = document.getElementById('fab-menu');
     if (element) element.classList.toggle('show');

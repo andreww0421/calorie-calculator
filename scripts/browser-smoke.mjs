@@ -345,19 +345,17 @@ async function run() {
     if (!URL_ARG) {
       const onboardingState = await client.evaluate(`
         (() => ({
-          emptyVisible: !document.getElementById('daily-empty-state').hidden,
           onboardingVisible: !document.getElementById('onboarding-card').hidden,
           coachTitle: document.getElementById('txt-coach-title')?.innerText?.trim() || '',
           coachHeadline: document.getElementById('coach-headline')?.innerText?.trim() || '',
           goalProgressPresent: Boolean(document.getElementById('goal-insights-card'))
         }))()
       `);
-      assert(onboardingState.emptyVisible, 'Quick-start empty state should be visible before the first log.');
       assert(onboardingState.onboardingVisible, 'Onboarding card should be visible before region setup is completed.');
       assert(Boolean(onboardingState.coachTitle), 'Coach card should render a title.');
       assert(Boolean(onboardingState.coachHeadline), 'Coach card should render a headline.');
       assert(!onboardingState.goalProgressPresent, 'Goal progress card should not render on the daily view.');
-      results.push('Quick-start and coach card render on an empty day');
+      results.push('Onboarding and coach card render on an empty day');
 
       await client.evaluate(`document.getElementById('btn-open-onboarding').click()`);
       await delay(300);
@@ -374,35 +372,80 @@ async function run() {
     if (!URL_ARG) {
       const homeQuickState = await client.evaluate(`
         (() => ({
-          regionVisible: Boolean(document.getElementById('food-preset-region')),
-          advancedOpen: Boolean(document.getElementById('manual-entry-details')?.open)
+          regionVisible: Boolean(document.querySelector('#view-daily #food-preset-region')),
+          manualFieldsOnHome: Boolean(document.querySelector('#view-daily #manual-name')),
+          mealSectionsOnHome: Boolean(document.querySelector('#view-daily #meal-sections-container')),
+          coachOnHome: Boolean(document.querySelector('#view-daily #daily-coach-card')),
+          weightOnHome: Boolean(document.querySelector('#view-daily #daily-weight-input')),
+          homeLogCardPresent: Boolean(document.querySelector('#view-daily .home-log-card')),
+          launcherCount: document.querySelectorAll('#home-log-modal .home-log-launcher-card').length
         }))()
       `);
       assert(!homeQuickState.regionVisible, 'Home should not expose the preset region selector.');
-      assert(!homeQuickState.advancedOpen, 'Advanced manual entry should stay collapsed by default.');
+      assert(!homeQuickState.manualFieldsOnHome, 'Home should not expose advanced manual input fields.');
+      assert(homeQuickState.mealSectionsOnHome, 'Home should render today meal sections inline.');
+      assert(!homeQuickState.coachOnHome, 'Home should not keep the coach card inline.');
+      assert(!homeQuickState.weightOnHome, 'Home should not keep the weight editor inline.');
+      assert(!homeQuickState.homeLogCardPresent, 'Home should not keep a dedicated logging card.');
+      assert(homeQuickState.launcherCount === 3, `Home log modal should contain 3 logging entry actions, got ${homeQuickState.launcherCount}.`);
+
+      await client.evaluate(`document.getElementById('btn-home-log-hub').click()`);
+      await delay(200);
+      const logHubState = await client.evaluate(`
+        (() => ({
+          open: document.getElementById('home-log-modal').style.display === 'flex',
+          launcherCount: document.querySelectorAll('#home-log-modal .home-log-launcher-card').length,
+          regionVisible: Boolean(document.querySelector('#home-log-modal #food-preset-region')),
+          shortcutCount: document.querySelectorAll('#home-log-modal [data-preset-quick-id]').length
+        }))()
+      `);
+      assert(logHubState.open, 'Home log hub should open from the primary hero action.');
+      assert(logHubState.launcherCount === 3, `Log hub should show 3 lightweight action cards, got ${logHubState.launcherCount}.`);
+      assert(!logHubState.regionVisible, 'Log hub should not expose region selection.');
+      assert(logHubState.shortcutCount === 0, 'Log hub should not show inline common-food quick shortcuts anymore.');
 
       await client.evaluate(`
-        (() => {
-          document.getElementById('food-preset-select').value = 'tw-bubble-milk-tea';
-          document.getElementById('food-preset-select').dispatchEvent(new Event('change', { bubbles: true }));
-        })();
+        document.getElementById('btn-home-log-common').click();
       `);
-      await delay(200);
-      await client.evaluate(`
-        (() => {
-          document.getElementById('food-preset-modifier-size').value = 'large';
-          document.getElementById('food-preset-modifier-size').dispatchEvent(new Event('change', { bubbles: true }));
-          document.getElementById('food-preset-modifier-sweetness').value = 'no-sugar';
-          document.getElementById('food-preset-modifier-sweetness').dispatchEvent(new Event('change', { bubbles: true }));
-          const extraPearls = [...document.querySelectorAll('#food-preset-modifiers input[type="checkbox"]')]
-            .find(input => input.value === 'extra-pearls');
-          if (extraPearls) {
-            extraPearls.checked = true;
-            extraPearls.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-          document.getElementById('btn-quick-add-food-preset').click();
-        })();
+      await delay(300);
+      const presetModalState = await client.evaluate(`
+        (() => ({
+          open: document.getElementById('food-preset-modal').style.display === 'flex',
+          regionVisible: Boolean(document.querySelector('#food-preset-modal #food-preset-region')),
+          selectedPreset: document.getElementById('food-preset-select')?.value || '',
+          baselineCalories: Number(document.getElementById('total-cal-display').innerText || '0'),
+          baselineSugar: Number(document.getElementById('sum-sugar').innerText || '0')
+        }))()
       `);
+      assert(presetModalState.open, 'Common foods action should open the preset modal.');
+      assert(!presetModalState.regionVisible, 'Preset modal should not expose region selection.');
+      assert(Boolean(presetModalState.selectedPreset), 'Preset modal should have a default selected preset.');
+      const expectedPresetDraft = await client.evaluate(`
+        (async () => {
+          const { readManualFoodPresetSelection } = await import('./js/ui/food-preset-ui.js');
+          const { createFoodPresetManualDraft } = await import('./js/domain/food-preset-domain.js');
+          const { findFoodPresetById } = await import('./js/repositories/food-preset-repository.js');
+
+          const selection = readManualFoodPresetSelection();
+          const preset = findFoodPresetById(selection.presetId);
+          const draft = preset
+            ? createFoodPresetManualDraft(preset, {
+                lang: document.documentElement.lang || 'en',
+                selectedModifiers: selection.modifiers
+              })
+            : null;
+
+          return {
+            name: draft?.name || '',
+            type: draft?.type || preset?.suggestedMealType || '',
+            calories: Number(draft?.nutri?.calories || 0),
+            sugar: Number(draft?.nutri?.sugar || 0),
+            fiber: Number(draft?.nutri?.fiber || 0)
+          };
+        })()
+      `);
+
+      await client.evaluate(`document.getElementById('btn-quick-add-food-preset').click()`);
       await delay(300);
       const presetQuickAddState = await client.evaluate(`
         (() => ({
@@ -414,20 +457,30 @@ async function run() {
           }))
         }))()
       `);
-      const presetSection = presetQuickAddState.mealSections.find((section) => /Bubble Milk Tea|珍珠奶茶/.test(section.text)) || null;
-      assert(presetQuickAddState.totalCalories === '440', `Preset quick add should update total calories, got ${presetQuickAddState.totalCalories}.`);
-      assert(presetQuickAddState.sugar === '37.3', `Preset quick add should update sugar total, got ${presetQuickAddState.sugar}.`);
-      assert(Boolean(presetSection), `Preset quick add should render the selected food. State: ${JSON.stringify(presetQuickAddState)}`);
-      assert(/Snack|點心|榛炲績/i.test(presetSection.title), `Preset quick add should land in the snack section, got ${presetSection?.title}.`);
-      results.push('Common food quick add works without region chooser');
+      const expectedPresetCalories = presetModalState.baselineCalories + expectedPresetDraft.calories;
+      const expectedPresetSugar = presetModalState.baselineSugar + expectedPresetDraft.sugar;
+      assert(
+        Number(presetQuickAddState.totalCalories) === expectedPresetCalories,
+        `Preset quick add should update total calories to ${expectedPresetCalories}, got ${presetQuickAddState.totalCalories}.`
+      );
+      assert(
+        Number(presetQuickAddState.sugar) === expectedPresetSugar,
+        `Preset quick add should update sugar total to ${expectedPresetSugar}, got ${presetQuickAddState.sugar}.`
+      );
+      const presetSection = presetQuickAddState.mealSections.find((section) => section.text.includes(expectedPresetDraft.name)) || null;
+      assert(Boolean(presetSection), `Home meal sections should show the quick-added food. State: ${JSON.stringify(presetQuickAddState)}`);
+      assert(
+        new RegExp(expectedPresetDraft.type || 'snack', 'i').test(presetSection.title)
+        || /Breakfast|早餐|Lunch|午餐|Dinner|晚餐|Snack|點心|榛炲績/i.test(presetSection.title),
+        `Preset quick add should land in the expected meal section, got ${presetSection?.title}.`
+      );
+      results.push('Common foods quick add works from a secondary modal while meals stay visible on Home');
 
       await client.evaluate(`
-        (() => {
-          const details = document.getElementById('manual-entry-details');
-          details.open = true;
-          document.getElementById('manual-name').focus();
-        })();
+        document.getElementById('btn-home-log-hub').click();
       `);
+      await delay(150);
+      await client.evaluate(`document.getElementById('btn-home-log-manual').click()`);
       await delay(150);
 
       await client.evaluate(`
@@ -440,19 +493,21 @@ async function run() {
         document.getElementById('btn-add-record').click();
       `);
       await delay(400);
-      assert((await client.evaluate(`document.getElementById('total-cal-display').innerText`)) === '563', 'Manual add should stack on top of the quick-added common food.');
-      assert((await client.evaluate(`document.getElementById('sum-fiber').innerText`)) === '4.2', 'Manual fiber did not update dashboard total.');
-      const coachState = await client.evaluate(`
+      assert(
+        Number(await client.evaluate(`document.getElementById('total-cal-display').innerText`)) === expectedPresetCalories + 123,
+        'Manual add should stack on top of the quick-added common food.'
+      );
+      assert(
+        Number(await client.evaluate(`document.getElementById('sum-fiber').innerText`)) === expectedPresetDraft.fiber + 4.2,
+        'Manual fiber did not update dashboard total.'
+      );
+      const homeStateAfterManual = await client.evaluate(`
         (() => ({
-          emptyHidden: document.getElementById('daily-empty-state').hidden,
-          tipCount: document.querySelectorAll('#coach-tips li').length,
-          statCount: document.querySelectorAll('#coach-weekly-stats .coach-stat-chip').length
+          manualModalClosed: document.getElementById('manual-entry-modal').style.display !== 'flex'
         }))()
       `);
-      assert(coachState.emptyHidden, 'Quick-start empty state should hide after a meal is logged.');
-      assert(coachState.tipCount >= 1, `Coach card should show at least one tip, got ${coachState.tipCount}.`);
-      assert(coachState.statCount === 3, `Coach card should show 3 weekly stats, got ${coachState.statCount}.`);
-      results.push('Manual add works');
+      assert(homeStateAfterManual.manualModalClosed, 'Manual modal should close after saving a record.');
+      results.push('Manual add works through the secondary modal flow');
 
       const rhythmState = await client.evaluate(`
         (() => ({
@@ -496,6 +551,12 @@ async function run() {
       await client.evaluate(`document.getElementById('btn-detail-close').click()`);
 
       await client.evaluate(`
+        document.getElementById('btn-home-log-hub').click();
+      `);
+      await delay(150);
+      await client.evaluate(`document.getElementById('btn-home-log-manual').click()`);
+      await delay(150);
+      await client.evaluate(`
         document.getElementById('manual-name').value = 'Smoke Apple';
         document.getElementById('manual-cal').value = '123';
         document.getElementById('manual-fiber').value = '4.2';
@@ -537,7 +598,9 @@ async function run() {
       await reloadAfterFavoriteSeed;
       await delay(2500);
 
-      await client.evaluate(`document.getElementById('btn-fav-load-main').click()`);
+      await client.evaluate(`document.getElementById('btn-home-log-hub').click()`);
+      await delay(150);
+      await client.evaluate(`document.getElementById('btn-home-log-favorites').click()`);
       await delay(300);
       assert(await client.evaluate(`document.getElementById('fav-modal').style.display === 'flex'`), 'Favorite modal did not open.');
       assert(await client.evaluate(`document.querySelectorAll('#fav-list-container .fav-item-row').length === 2`), 'Favorite modal list is incorrect.');
@@ -757,8 +820,8 @@ async function run() {
     assert((await client.evaluate(`document.getElementById('nav-settings').innerText`)) === 'Settings', 'Language switch to English failed.');
     const englishLanguageState = await client.evaluate(`
       (() => ({
-        dateLabel: document.getElementById('display-date-text')?.innerText?.trim() || '',
-        recordTitle: document.getElementById('txt-record-title')?.innerText?.trim() || '',
+        logHubLabel: document.getElementById('btn-home-log-hub-label')?.innerText?.trim() || '',
+        favoritesLabel: document.getElementById('btn-home-favorites-label')?.innerText?.trim() || '',
         summaryStatus: document.getElementById('daily-summary-status')?.innerText?.trim() || '',
         summaryHint: document.getElementById('txt-daily-summary-hint')?.innerText?.trim() || '',
         goalLabel: document.getElementById('lbl-goal-type')?.innerText?.trim() || '',
@@ -768,8 +831,8 @@ async function run() {
         foodSummary: document.querySelector('#list-breakfast .detail')?.innerText?.trim() || ''
       }))()
     `);
-    assert(englishLanguageState.dateLabel === 'Today', `Date label should switch to Today, got ${englishLanguageState.dateLabel}`);
-    assert(englishLanguageState.recordTitle === 'Diet Record', `Record title should switch to Diet Record, got ${englishLanguageState.recordTitle}`);
+    assert(englishLanguageState.logHubLabel === "Add a meal", `Home log CTA should switch to English, got ${englishLanguageState.logHubLabel}`);
+    assert(englishLanguageState.favoritesLabel === "Favorites", `Favorites CTA should switch to English, got ${englishLanguageState.favoritesLabel}`);
     assert(/\d+\s*kcal left today/i.test(englishLanguageState.summaryStatus), `English summary status is wrong: ${englishLanguageState.summaryStatus}`);
     assert(englishLanguageState.summaryHint === 'Tap for the full nutrition details', `English summary hint is wrong: ${englishLanguageState.summaryHint}`);
     assert(englishLanguageState.goalLabel === 'Goal', `Goal label should switch to English, got ${englishLanguageState.goalLabel}`);
@@ -785,8 +848,8 @@ async function run() {
     await delay(600);
     const arabicLanguageState = await client.evaluate(`
       (() => ({
-        dateLabel: document.getElementById('display-date-text')?.innerText?.trim() || '',
-        recordTitle: document.getElementById('txt-record-title')?.innerText?.trim() || '',
+        logHubLabel: document.getElementById('btn-home-log-hub-label')?.innerText?.trim() || '',
+        favoritesLabel: document.getElementById('btn-home-favorites-label')?.innerText?.trim() || '',
         summaryStatus: document.getElementById('daily-summary-status')?.innerText?.trim() || '',
         summaryHint: document.getElementById('txt-daily-summary-hint')?.innerText?.trim() || '',
         goalLabel: document.getElementById('lbl-goal-type')?.innerText?.trim() || '',
@@ -795,14 +858,14 @@ async function run() {
         foodSummary: document.querySelector('#list-breakfast .detail')?.innerText?.trim() || ''
       }))()
     `);
-    assert(arabicLanguageState.dateLabel === 'اليوم', `Date label should switch to Arabic today label, got ${arabicLanguageState.dateLabel}`);
-    assert(arabicLanguageState.recordTitle === 'سجل الوجبات', `Record title should switch to Arabic, got ${arabicLanguageState.recordTitle}`);
+    assert(arabicLanguageState.logHubLabel.length > 0 && arabicLanguageState.logHubLabel !== englishLanguageState.logHubLabel, `Home log CTA should switch to Arabic, got ${arabicLanguageState.logHubLabel}`);
+    assert(arabicLanguageState.favoritesLabel.length > 0 && arabicLanguageState.favoritesLabel !== englishLanguageState.favoritesLabel, `Favorites CTA should switch to Arabic, got ${arabicLanguageState.favoritesLabel}`);
     assert(/متبقي\s+\d+\s*kcal\s+لليوم/.test(arabicLanguageState.summaryStatus), `Arabic summary status is wrong: ${arabicLanguageState.summaryStatus}`);
     assert(arabicLanguageState.summaryHint === 'اضغط لعرض تفاصيل التغذية الكاملة', `Arabic summary hint is wrong: ${arabicLanguageState.summaryHint}`);
     assert(/[\u0600-\u06FF]/.test(arabicLanguageState.goalLabel), `Goal label should switch to Arabic: ${arabicLanguageState.goalLabel}`);
     assert(/فطور/.test(arabicLanguageState.breakfastTitle), `Breakfast section title did not switch to Arabic: ${arabicLanguageState.breakfastTitle}`);
     assert(/[\u0600-\u06FF]/.test(arabicLanguageState.breakfastGoal), `Breakfast goal text should be in Arabic: ${arabicLanguageState.breakfastGoal}`);
-    assert(!/[A-Za-z\u4e00-\u9fff]/.test(arabicLanguageState.recordTitle.replace(/\s/g, '')), `Arabic record title still contains non-Arabic leftovers: ${arabicLanguageState.recordTitle}`);
+    assert(!/[A-Za-z\u4e00-\u9fff]/.test(arabicLanguageState.logHubLabel.replace(/\s/g, '')), `Arabic home log CTA still contains non-Arabic leftovers: ${arabicLanguageState.logHubLabel}`);
     assert(/[\u0600-\u06FF]/.test(arabicLanguageState.foodSummary), `Food summary should contain Arabic labels: ${arabicLanguageState.foodSummary}`);
     results.push('Language switch updates dynamic UI text');
 

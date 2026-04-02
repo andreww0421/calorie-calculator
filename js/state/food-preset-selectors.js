@@ -112,3 +112,28 @@ export function createFoodPresetManualDraftViewModel(options = {}) {
         })
         : null;
 }
+
+export function createHomeFoodPresetQuickViewModel({
+    lang = 'en',
+    profileRegion = '',
+    limit = 4
+} = {}) {
+    const selectedRegion = String(profileRegion || '').trim() || getDefaultFoodPresetRegion(lang);
+    const presets = listFoodPresetsByRegion(selectedRegion, lang)
+        .slice(0, Math.max(1, Number(limit) || 4))
+        .map((preset) => {
+            const resolvedPreset = resolveFoodPreset(findFoodPresetById(preset.id), { lang });
+            return {
+                id: preset.id,
+                label: preset.label,
+                calories: Number(resolvedPreset?.nutrition?.calories || 0),
+                suggestedMealType: preset.suggestedMealType || '',
+            };
+        });
+
+    return {
+        selectedRegion,
+        regionLabel: localizeRegionLabel(selectedRegion, lang),
+        presets
+    };
+}

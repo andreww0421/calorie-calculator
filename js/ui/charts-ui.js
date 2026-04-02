@@ -165,7 +165,7 @@ function renderMealRhythmCard(cardId, state = getAppState(), variant = 'home') {
 function trackVisibleRhythmSummaryViews(state = getAppState()) {
     const rhythm = createMealRhythmViewModel(state, { days: 7 });
     const surfaces = [
-        ['home', document.getElementById('view-home')],
+        ['home', document.getElementById('view-daily')],
         ['dashboard', document.getElementById('view-dashboard')]
     ];
 
@@ -245,16 +245,24 @@ function renderHomeCompanionCard(state = getAppState()) {
         ['home-companion-kicker', content.hero.eyebrow],
         ['home-companion-title', content.hero.title],
         ['home-companion-summary', content.hero.summary],
+        ['btn-home-log-hub-label', content.hero.actions.log],
         ['btn-home-ai-label', content.hero.actions.ai],
-        ['btn-home-manual-label', content.hero.actions.manual],
         ['btn-home-favorites-label', content.hero.actions.favorites],
-        ['home-log-eyebrow', content.quickLog.eyebrow],
-        ['home-log-copy', content.quickLog.summary],
-        ['home-common-food-title', content.quickLog.commonFoodsTitle],
-        ['home-common-food-hint', content.quickLog.commonFoodsHint],
-        ['txt-manual-toggle', content.quickLog.manualAdvancedTitle],
-        ['txt-manual-toggle-copy', content.quickLog.manualAdvancedHint],
-        ['home-log-list-title', content.quickLog.mealListTitle],
+        ['txt-home-log-modal-title', content.logHub.title],
+        ['txt-home-log-modal-copy', content.logHub.summary],
+        ['btn-home-log-common-label', content.logHub.commonFoodsButton],
+        ['txt-home-log-common-copy', content.logHub.commonFoodsCopy],
+        ['txt-food-preset-modal-title', content.logHub.commonFoodsButton],
+        ['txt-food-preset-modal-copy', content.logHub.commonFoodsCopy],
+        ['btn-home-log-favorites-label', content.logHub.favoritesButton],
+        ['txt-home-log-favorites-copy', content.logHub.favoritesCopy],
+        ['btn-home-log-manual-label', content.logHub.manualButton],
+        ['txt-home-log-manual-copy', content.logHub.manualCopy],
+        ['txt-manual-modal-title', content.logHub.manualModalTitle],
+        ['txt-manual-modal-copy', content.logHub.manualModalHint],
+        ['txt-today-meals-kicker', content.logHub.todayMealsKicker],
+        ['txt-today-meals-title', content.logHub.todayMealsTitle],
+        ['txt-today-meals-copy', content.logHub.todayMealsHint],
         ['txt-total-intake', content.overview.title],
         ['txt-daily-summary-hint', content.overview.hint]
     ];
@@ -295,12 +303,6 @@ function renderHomeCompanionCard(state = getAppState()) {
             }));
         });
     }
-
-    const presetMeta = document.getElementById('food-preset-meta-copy');
-    if (presetMeta) {
-        presetMeta.innerText = content.quickLog.commonFoodsMeta || '';
-    }
-
     const signalGrid = document.getElementById('home-summary-signals');
     if (signalGrid) {
         clearElement(signalGrid);
@@ -442,9 +444,6 @@ export function renderListAndStats(viewModel = createDailyViewModel(getAppState(
     document.getElementById('sum-trans-fat').innerText = roundValue(viewModel.totals.trans).toFixed(1);
     document.getElementById('sum-fiber').innerText = roundValue(viewModel.totals.fiber).toFixed(1);
     document.getElementById('water-val').innerText = viewModel.waterTarget;
-
-    const emptyState = document.getElementById('daily-empty-state');
-    if (emptyState) emptyState.hidden = viewModel.foodItems.length > 0;
 
     renderCoachCard(viewModel);
     renderMealRhythmCards(state);

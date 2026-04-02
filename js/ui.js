@@ -1,5 +1,6 @@
 export {
     bindUIActions,
+    openModal,
     showToast,
     closeModal,
     toggleFabMenu

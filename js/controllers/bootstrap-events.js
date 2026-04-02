@@ -1,5 +1,6 @@
 import {
     closeModal,
+    openModal,
     openFavModal,
     openLangModal,
     openDailySummaryDetails,
@@ -16,6 +17,7 @@ import { handleFileSelect, startAnalysis, syncAnalysisInputState, tryCloseAnalys
 import {
     addManualFood,
     applySelectedFoodPreset,
+    openManualEntryModal,
     quickAddSelectedFoodPreset,
     saveToFavorites,
     saveAIResultToFavorites,
@@ -39,12 +41,45 @@ export function setupEventListeners() {
     document.getElementById('btn-home-ai')?.addEventListener('click', () => {
         switchView('view-ai');
     });
-    document.getElementById('btn-home-manual')?.addEventListener('click', () => {
-        const presetSelect = document.getElementById('food-preset-select');
-        presetSelect?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        presetSelect?.focus();
+    document.getElementById('btn-home-log-hub')?.addEventListener('click', () => {
+        openModal('home-log-modal');
     });
-    document.getElementById('btn-home-favorites')?.addEventListener('click', () => openFavModal());
+    document.getElementById('btn-home-favorites')?.addEventListener('click', () => {
+        openFavModal();
+    });
+    document.getElementById('btn-home-log-close')?.addEventListener('click', () => {
+        closeModal('home-log-modal');
+    });
+    document.getElementById('btn-home-log-common')?.addEventListener('click', () => {
+        closeModal('home-log-modal');
+        syncManualFoodPresetUI();
+        openModal('food-preset-modal');
+        document.getElementById('food-preset-select')?.focus();
+    });
+    document.getElementById('btn-home-log-favorites')?.addEventListener('click', () => {
+        closeModal('home-log-modal');
+        openFavModal();
+    });
+    document.getElementById('btn-home-log-manual')?.addEventListener('click', () => {
+        closeModal('home-log-modal');
+        openManualEntryModal();
+    });
+    document.getElementById('btn-manual-entry-close')?.addEventListener('click', () => {
+        closeModal('manual-entry-modal');
+    });
+    document.getElementById('btn-food-preset-close')?.addEventListener('click', () => {
+        closeModal('food-preset-modal');
+    });
+    document.getElementById('btn-change-log-date')?.addEventListener('click', () => {
+        const input = document.getElementById('current-date');
+        if (!input) return;
+        input.focus?.({ preventScroll: true });
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+            return;
+        }
+        input.click();
+    });
     document.getElementById('food-preset-panel')?.addEventListener('change', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
@@ -69,11 +104,8 @@ export function setupEventListeners() {
         }
         if (target.id === 'btn-preset-advanced-fill') {
             applySelectedFoodPreset();
-            const details = document.getElementById('manual-entry-details');
-            if (details instanceof HTMLDetailsElement) {
-                details.open = true;
-            }
-            document.getElementById('manual-name')?.focus();
+            closeModal('food-preset-modal');
+            openManualEntryModal();
         }
     });
     document.getElementById('meal-mode').addEventListener('change', () => calculateProfile());
