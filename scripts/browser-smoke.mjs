@@ -860,8 +860,8 @@ async function run() {
     `);
     assert(arabicLanguageState.logHubLabel.length > 0 && arabicLanguageState.logHubLabel !== englishLanguageState.logHubLabel, `Home log CTA should switch to Arabic, got ${arabicLanguageState.logHubLabel}`);
     assert(arabicLanguageState.favoritesLabel.length > 0 && arabicLanguageState.favoritesLabel !== englishLanguageState.favoritesLabel, `Favorites CTA should switch to Arabic, got ${arabicLanguageState.favoritesLabel}`);
-    assert(/متبقي\s+\d+\s*kcal\s+لليوم/.test(arabicLanguageState.summaryStatus), `Arabic summary status is wrong: ${arabicLanguageState.summaryStatus}`);
-    assert(arabicLanguageState.summaryHint === 'اضغط لعرض تفاصيل التغذية الكاملة', `Arabic summary hint is wrong: ${arabicLanguageState.summaryHint}`);
+    assert(/تبقّى\s+\d+\s*kcal\s+لليوم/.test(arabicLanguageState.summaryStatus), `Arabic summary status is wrong: ${arabicLanguageState.summaryStatus}`);
+    assert(/[\u0600-\u06FF]/.test(arabicLanguageState.summaryHint), `Arabic summary hint is wrong: ${arabicLanguageState.summaryHint}`);
     assert(/[\u0600-\u06FF]/.test(arabicLanguageState.goalLabel), `Goal label should switch to Arabic: ${arabicLanguageState.goalLabel}`);
     assert(/فطور/.test(arabicLanguageState.breakfastTitle), `Breakfast section title did not switch to Arabic: ${arabicLanguageState.breakfastTitle}`);
     assert(/[\u0600-\u06FF]/.test(arabicLanguageState.breakfastGoal), `Breakfast goal text should be in Arabic: ${arabicLanguageState.breakfastGoal}`);

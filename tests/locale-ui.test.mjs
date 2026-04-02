@@ -32,13 +32,22 @@ async function loadLocaleModule() {
     return import(`../js/ui/locale-ui.js?test=${Date.now()}-${Math.random()}`);
 }
 
-test('getExtraUiText exposes locale metadata and onboarding copy', async () => {
+test('getExtraUiText exposes clean locale metadata and onboarding copy', async () => {
     const { getExtraUiText } = await loadLocaleModule();
     const english = getExtraUiText('en');
     const arabic = getExtraUiText('ar');
+    const zhTW = getExtraUiText('zh-TW');
+    const zhCN = getExtraUiText('zh-CN');
+    const ja = getExtraUiText('ja');
+    const ko = getExtraUiText('ko');
 
     assert.equal(english.direction, 'ltr');
     assert.equal(arabic.direction, 'rtl');
+    assert.equal(zhTW.metaTitle, 'Woof Cal 汪卡管家');
+    assert.equal(zhTW.dailySummaryEmpty, '開始記下今天的飲食吧');
+    assert.equal(zhCN.dailySummaryEmpty, '开始记下今天的饮食吧');
+    assert.equal(ja.dailySummaryEmpty, '今日の食事を記録しましょう');
+    assert.equal(ko.dailySummaryEmpty, '오늘 식사를 기록해 보세요');
     assert.match(english.emptyStateTitle, /first meal/i);
     assert.match(arabic.aiGuideTitle, /[\u0600-\u06FF]/);
 });
@@ -112,6 +121,22 @@ test('buildNutritionFocusContent returns consumer-friendly nutrition focus copy'
     assert.equal(content.signals.length, 3);
     assert.match(content.signals[0].value, /46\/96g/);
     assert.match(content.signals[0].detail, /7-day avg 58g/i);
+});
+
+test('getNutritionUiText exposes clean detailed nutrition copy across locales', async () => {
+    const { getNutritionUiText } = await loadLocaleModule();
+    const zhTW = getNutritionUiText('zh-TW');
+    const ja = getNutritionUiText('ja');
+    const ko = getNutritionUiText('ko');
+    const ar = getNutritionUiText('ar');
+
+    assert.equal(zhTW.detail.overviewTitle, '營養快覽');
+    assert.equal(zhTW.detail.sections.fatDetails.title, '脂肪細節');
+    assert.ok(!zhTW.detail.sections.fatDetails.summary.includes('不用一次塞太多資訊'));
+    assert.match(zhTW.detail.sections.fatDetails.summary, /脂肪來源|油脂負擔/);
+    assert.equal(ja.detail.sections.fatDetails.title, '脂質の内訳');
+    assert.equal(ko.detail.sections.fatDetails.title, '지방 세부 구성');
+    assert.match(ar.detail.sections.fatDetails.title, /[\u0600-\u06FF]/);
 });
 
 test('buildHomeCompanionContent returns warm home hierarchy copy', async () => {

@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Woof Cal 姹崱绠″</title>
+    <title>Woof Cal 汪卡管家</title>
     
-    <!-- 鉁?Social Media / Link Preview Meta Tags -->
-    <meta name="description" content="姹紒浠婂ぉ鎯冲悆浠€楹煎憿锛焀oof Cal 姹崱绠″鏄竴娆剧祼鍚?AI 鐨勬櫤鑳介２椋熻垏鐔遍噺绱€閷勫伐鍏枫€?>
-    <meta property="og:title" content="Woof Cal 姹崱绠″ - AI 椋查鑸囩啽閲忚拷韫?>
-    <meta property="og:description" content="閫忛亷 AI 鍒嗘瀽鐓х墖鐕熼锛岃紩楝嗚拷韫ゆ瘡鏃ラ珨閲嶃€佺啽閲忚垏涓夊ぇ鐕熼绱狅紝璁撳仴搴风鐞嗘洿绨″柈锛?>
+    <!-- Social Media / Link Preview Meta Tags -->
+    <meta name="description" content="用 AI 分析飲食與照片營養，輕鬆追蹤每日熱量、體重與營養節奏。">
+    <meta property="og:title" content="Woof Cal 汪卡管家 - AI 飲食與熱量追蹤">
+    <meta property="og:description" content="用 AI 分析飲食與照片營養，輕鬆追蹤每日熱量、體重與營養節奏。">
     <meta property="og:image" content="https://andreww0421.github.io/calorie-calculator/calorie_icon.png">
     <meta property="og:url" content="https://andreww0421.github.io/calorie-calculator/index.html">
     <meta property="og:type" content="website">
     
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Woof Cal 姹崱绠″">
-    <meta name="twitter:description" content="閫忛亷 AI 鍒嗘瀽鐓х墖鐕熼锛岃紩楝嗚拷韫ゆ瘡鏃ラ珨閲嶃€佺啽閲忚垏涓夊ぇ鐕熼绱狅紝璁撳仴搴风鐞嗘洿绨″柈锛?>
+    <meta name="twitter:title" content="Woof Cal 汪卡管家">
+    <meta name="twitter:description" content="用 AI 分析飲食與照片營養，輕鬆追蹤每日熱量、體重與營養節奏。">
     <meta name="twitter:image" content="https://andreww0421.github.io/calorie-calculator/calorie_icon.png">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://andreww0421.github.io https://challenges.cloudflare.com; connect-src 'self' https://woof-cal-worker.jtwen12345us.workers.dev https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'">
     <link rel="manifest" href="manifest.json">
@@ -109,33 +109,33 @@
         <div class="dashboard-header" id="daily-summary-card" role="button" tabindex="0" aria-haspopup="dialog">
             <div class="dashboard-hero">
                 <div class="dashboard-hero-copy">
-                    <div class="label" id="txt-total-intake">浠婃棩鏀濆彇</div>
+                    <div class="label" id="txt-total-intake">今日攝取</div>
                     <div class="big-cal"><span id="total-cal-display">0</span><span class="cal-unit-inline">kcal</span></div>
                     <div class="label">
                         <span id="txt-kcal-unit">kcal</span> /
-                        <span id="txt-target-cal-display-label">鐩</span>
+                        <span id="txt-target-cal-display-label">目標</span>
                         <span id="target-cal-display">--</span>
                     </div>
                 </div>
                 <div class="dashboard-status-panel">
                     <div class="summary-pill" id="daily-summary-progress">0%</div>
-                    <div class="summary-status" id="daily-summary-status">闁嬪瑷橀寗浠婂ぉ鐨勯２椋熷惂</div>
+                    <div class="summary-status" id="daily-summary-status">開始記下今天的飲食吧</div>
                     <div class="summary-status-sub" id="txt-daily-summary-hint">Tap to view the full nutrition details</div>
                 </div>
             </div>
             <div class="home-signal-grid" id="home-summary-signals"></div>
             <div class="dashboard-hidden-values" aria-hidden="true">
-                <div class="nutri-box"><span class="n-val"><span id="sum-protein">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-pro">铔嬬櫧璩?/span></div>
-                <div class="nutri-box"><span class="n-val"><span id="sum-fat">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-fat">鑴傝偑</span></div>
-                <div class="nutri-box"><span class="n-val"><span id="sum-carb">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-carb">纰虫按</span></div>
-                <div class="nutri-box"><span class="n-val"><span id="sum-fiber">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-fiber">鑶抽绾栫董</span></div>
+                <div class="nutri-box"><span class="n-val"><span id="sum-protein">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-pro">蛋白質</span></div>
+                <div class="nutri-box"><span class="n-val"><span id="sum-fat">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-fat">脂肪</span></div>
+                <div class="nutri-box"><span class="n-val"><span id="sum-carb">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-carb">碳水</span></div>
+                <div class="nutri-box"><span class="n-val"><span id="sum-fiber">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-fiber">膳食纖維</span></div>
             </div>
             <div class="dashboard-hidden-values" aria-hidden="true">
-                <div class="nutri-box"><span class="n-val"><span id="sum-sugar">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-sugar">绯?/span></div>
-                <div class="nutri-box"><span class="n-val"><span id="sum-sodium">0</span><span class="n-unit">mg</span></span><span class="n-label" id="lbl-sod">閳?mg)</span></div>
-                <div class="nutri-box"><span class="n-val"><span id="sum-sat-fat">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-sat">椋藉拰鑴傝偑</span></div>
-                <div class="nutri-box"><span class="n-val"><span id="sum-trans-fat">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-trans">鍙嶅紡鑴傝偑</span></div>
-                <div class="nutri-box"><span class="n-val"><span id="water-val">--</span><span class="n-unit">ml</span></span><span class="n-label" id="lbl-water">鐩姘?/span></div>
+                <div class="nutri-box"><span class="n-val"><span id="sum-sugar">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-sugar">糖</span></div>
+                <div class="nutri-box"><span class="n-val"><span id="sum-sodium">0</span><span class="n-unit">mg</span></span><span class="n-label" id="lbl-sod">鈉 (mg)</span></div>
+                <div class="nutri-box"><span class="n-val"><span id="sum-sat-fat">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-sat">飽和脂肪</span></div>
+                <div class="nutri-box"><span class="n-val"><span id="sum-trans-fat">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-trans">反式脂肪</span></div>
+                <div class="nutri-box"><span class="n-val"><span id="water-val">--</span><span class="n-unit">ml</span></span><span class="n-label" id="lbl-water">水分</span></div>
             </div>
         </div>
 
@@ -229,23 +229,22 @@
             </div>
             <div style="text-align: center;">
                 <input type="file" id="image-upload" accept="image/*" style="display: none;">
-                <button class="btn-ai" id="btn-take-photo">馃摳 1. 鎷嶇収 / 閬告搰鍦栫墖</button>
+                <button class="btn-ai" id="btn-take-photo">1. 拍照 / 選擇圖片</button>
                 
-                <!-- 鉁?鏂囧瓧杓稿叆鍒嗘瀽 (鏂? -->
                 <div id="ai-text-only-group" style="margin-top: 15px; text-align: left;">
-                    <label id="txt-text-ai-label">馃摑 鎴栬€呯洿鎺ヨ几鍏ユ枃瀛楁弿杩帮細</label>
-                    <textarea id="ai-text-desc" rows="3" style="width:100%; padding:10px; border-radius:10px; margin-top:5px;" placeholder="渚嬪锛氫竴纰楃墰鑲夐旱锛屾矑鍔犺敟锛岄倓鏈変竴鐩ょ嚈闈掕彍..."></textarea>
+                    <label id="txt-text-ai-label">或直接輸入文字描述：</label>
+                    <textarea id="ai-text-desc" rows="3" style="width:100%; padding:10px; border-radius:10px; margin-top:5px;" placeholder="例如：一碗牛肉麵、滷蛋、還有一份燙青菜..."></textarea>
                 </div>
 
                 <div id="ai-desc-group" style="display:none; margin-top: 15px;">
-                    <textarea id="ai-desc" rows="2" style="width:100%; padding:10px; border-radius:10px;" placeholder="馃摑 鍦栫墖瑁滃厖瑾槑..."></textarea>
+                    <textarea id="ai-desc" rows="2" style="width:100%; padding:10px; border-radius:10px;" placeholder="補充圖片說明..."></textarea>
                 </div>
                 
                 <div id="turnstile-widget" aria-hidden="true"></div>
                 <div id="turnstile-status-note" class="ai-status-note" hidden></div>
-                <button id="analyze-btn" class="btn-analyze" style="display:inline-block; margin-top:15px; width:100%;">鉁?2. <span id="txt-analyze-btn">閫佸嚭鍒嗘瀽 (鍦栫墖鎴栨枃瀛?</span></button>
+                <button id="analyze-btn" class="btn-analyze" style="display:inline-block; margin-top:15px; width:100%;"><span id="txt-analyze-btn">2. 送出分析（圖片或文字）</span></button>
             </div>
-            <div class="loading-spinner" id="ai-loading">馃 <span id="txt-ai-loading">AI 姝ｅ湪鍒嗘瀽...</span></div>
+            <div class="loading-spinner" id="ai-loading"><span id="txt-ai-loading">AI 正在分析食物營養，請稍候...</span></div>
             <img id="image-preview">
         </div>
     </div>
@@ -271,7 +270,7 @@
                     <label id="lbl-height">身高 (cm)</label>
                     <input type="number" id="height" placeholder="170" class="settings-input">
                 </div>
-                <!-- 绉婚櫎浜嗗師鏈洿鎺ヤ慨鏀瑰€嬩汉楂旈噸鐨勬瑒浣嶏紝鏀硅畵绯荤当椤ず user 鏈€杩戠殑楂旈噸 (浣嗛€欒！閭勬槸鐣欒憲鍋氶爯瑷紝鎴栬€呯敤浣滃熀婧? -->
+            
                 <div class="settings-item">
                     <label id="lbl-weight">目標/基準體重 (kg)</label>
                     <input type="number" id="weight" placeholder="60" class="settings-input">
@@ -398,7 +397,7 @@
     </div>
 </div>
 
-<!-- Phase 4: 瑭崇窗鐕熼褰堢獥 -->
+      <!-- Phase 4: nutrition detail modal -->
 <div class="modal-overlay" id="detail-modal" style="display:none;">
     <div class="modal">
         <h3><span id="txt-detail-title">詳細營養資訊</span></h3>

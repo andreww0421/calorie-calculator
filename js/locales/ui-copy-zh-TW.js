@@ -3,26 +3,26 @@ const zhTWUiCopy = {
         direction: 'ltr',
         todayLabel: '今天',
         metaTitle: 'Woof Cal 汪卡管家',
-        metaOgTitle: 'Woof Cal 汪卡管家 - AI 飲食與熱量追蹤',
-        metaDescription: '透過 AI 分析照片或文字飲食內容，追蹤每日熱量、體重與營養素。',
-        dailySummaryHint: '點擊查看完整營養與水分',
-        dailySummaryEmpty: '開始記錄今天的飲食吧',
+        metaOgTitle: 'Woof Cal 汪卡管家',
+        metaDescription: '用 AI 分析照片或文字裡的餐點，輕鬆追蹤熱量、體重與營養。',
+        dailySummaryHint: '點一下看完整營養與水分',
+        dailySummaryEmpty: '開始記下今天的飲食吧',
         dailySummaryLeftGoal: (value) => `距離目標還差 ${value} kcal`,
-        dailySummaryLeftToday: (value) => `今天還差 ${value} kcal`,
-        dailySummaryOverTarget: (value) => `已超過目標 ${value} kcal`,
-        dailySummaryTitle: (dateText) => `${dateText} 營養總覽`,
-        remainingLabel: '剩餘熱量',
+        dailySummaryLeftToday: (value) => `今天還剩 ${value} kcal`,
+        dailySummaryOverTarget: (value) => `今天已超出 ${value} kcal`,
+        dailySummaryTitle: (dateText) => `${dateText} 的營養摘要`,
+        remainingLabel: '剩餘',
         emptyStateEyebrow: '快速開始',
-        emptyStateTitle: '記下今天的第一餐',
-        emptyStateBody: '你可以先拍照交給 AI，或用手動輸入快速建立第一筆飲食紀錄。',
-        emptyMealTitle: '還沒有紀錄',
-        emptyMealBody: '使用 AI 或手動輸入開始',
+        emptyStateTitle: '先記下今天的第一餐',
+        emptyStateBody: '你可以先拍照交給 AI，或用手動輸入快速建立第一筆飲食記錄。',
+        emptyMealTitle: '還沒有記錄',
+        emptyMealBody: '用 AI 或手動輸入開始今天的第一筆飲食。',
         aiGuideEyebrow: 'AI 提示',
-        aiGuideTitle: '讓 AI 更快更準',
-        aiGuideBody: '清楚的照片、食材名稱與份量描述，能讓分析結果更穩定。',
+        aiGuideTitle: '讓 AI 分析更快更穩',
+        aiGuideBody: '清楚的照片，加上一句關鍵食材或份量描述，通常能讓分析更穩定。',
         aiGuideTip1: '拍照時盡量避免食物被遮住',
-        aiGuideTip2: '有包裝食品時可補上品牌名稱',
-        aiGuideTip3: '如果結果不準，可先編輯食材再重新計算',
+        aiGuideTip2: '有包裝食品時，可補上品牌或品名',
+        aiGuideTip3: '如果結果不夠準，可先編輯食材再重新計算',
         aiItemsRequired: '請至少保留一個食材項目。'
     },
     goal: {
@@ -30,14 +30,14 @@ const zhTWUiCopy = {
         goalSummaryLabel: '目前目標',
         calorieTargetLabel: '熱量目標',
         reportTitle: '目標進度',
-        reportSubtitle: '最近 7 天的達標與紀錄狀況',
+        reportSubtitle: '最近 7 天的達標與記錄情況',
         goalTypes: {
             lose: '減重',
             maintain: '維持體重',
             gain: '增肌'
         },
         reportHeadline: (goal) => `${goal} 本週進度`,
-        reportSummary: (insights) => `已記錄 ${insights.loggedDays}/7 天，熱量達標 ${insights.calorieTargetDays} 天，蛋白質達標 ${insights.proteinTargetDays} 天`,
+        reportSummary: (insights) => `最近 7 天記錄 ${insights.loggedDays} 天，熱量達標 ${insights.calorieTargetDays} 天，蛋白質達標 ${insights.proteinTargetDays} 天`,
         statStreak: '連續記錄',
         statBestStreak: '最佳 streak',
         statCalories: '熱量達標',
@@ -51,77 +51,77 @@ const zhTWUiCopy = {
         headlines: {
             start_logging: '從第一餐開始建立今天的節奏',
             over_target: '今天的熱量已經偏高',
-            near_goal: '今天很接近目標區間',
-            protein_gap: '蛋白質還有補強空間',
-            fiber_gap: '纖維可以再補一點',
-            sodium_high: '今天的鈉攝取偏高',
-            steady: '今天的進度很穩定'
+            near_goal: '你已經接近今天的目標區間',
+            protein_gap: '蛋白質還可以再補一點',
+            fiber_gap: '纖維還可以再拉高一些',
+            sodium_high: '今天的鈉有點偏高',
+            steady: '今天目前的節奏算穩定'
         },
         summaries: {
-            start_logging: '先記下第一餐，儀表板和 AI 建議就能開始提供回饋。',
-            over_target: (coach) => `目前比目標多 ${coach.overCalories} kcal，下一餐建議清淡一點。`,
-            near_goal: (coach) => `距離目標只差 ${coach.remainingCalories} kcal，加餐建議保守一些。`,
-            protein_gap: (coach) => `距離今天的蛋白質建議量還差約 ${coach.proteinGap}g。`,
-            fiber_gap: (coach) => `今天的纖維距離建議值還差約 ${coach.fiberGap}g。`,
-            sodium_high: '下一餐建議減少重口味與加工食品，讓整天更平衡。',
-            steady: '目前熱量與營養節奏都算穩定，繼續保持。'
+            start_logging: '先記下第一餐之後，儀表板和 AI 建議就會開始變得更有幫助。',
+            over_target: (coach) => `目前比目標多了約 ${coach.overCalories} kcal，下一餐建議清爽一點。`,
+            near_goal: (coach) => `距離今天目標只剩約 ${coach.remainingCalories} kcal，點心份量建議保守一些。`,
+            protein_gap: (coach) => `距離今天的蛋白質目標還差約 ${coach.proteinGap}g。`,
+            fiber_gap: (coach) => `今天距離理想纖維量還差約 ${coach.fiberGap}g。`,
+            sodium_high: '下一餐清淡一點，整天的口味和營養平衡會更舒服。',
+            steady: '目前熱量和營養分配都算穩，繼續保持就好。'
         },
         tips: {
-            use_ai: '先用 AI 拍照記錄，通常最快。',
-            log_first_meal: '如果趕時間，也可以先手動輸入熱量和蛋白質。',
-            protein_boost: '下一餐可優先補蛋、豆腐、雞胸或優格。',
-            fiber_boost: '加一份蔬菜、水果、豆類或全穀類，纖維會更完整。',
-            watch_sodium: '接下來多喝水，並減少湯品、醬料與加工食品。',
-            portion_reset: '下一餐把主食或點心減半，通常就能把節奏拉回來。',
-            keep_momentum: '保持現在的節奏，晚餐前再看一次摘要卡。'
+            use_ai: '想快一點開始，直接用 AI 拍照記錄通常最快。',
+            log_first_meal: '如果很忙，也可以先手動記熱量與蛋白質。',
+            protein_boost: '下一餐可先補蛋、豆腐、雞胸、優格或牛奶。',
+            fiber_boost: '蔬菜、水果、豆類和全穀都很適合補纖維。',
+            watch_sodium: '接下來多喝水，也先少一點湯品、醬料或加工食品。',
+            portion_reset: '下一餐把主食或點心份量收小一點，通常就能把節奏拉回來。',
+            keep_momentum: '維持現在的節奏，晚一點再回來看摘要就夠了。'
         },
         weeklyAverage: (value) => `平均 ${value} kcal`,
-        weeklyDays: (days) => `${days} 天有完成紀錄`,
+        weeklyDays: (days) => `${days} 天有記錄`,
         weeklyBest: (day, cal) => `${day} 最高 ${cal} kcal`
     },
     rhythm: {
-        title: '近 7 天飲食節奏',
-        subtitle: '用簡單方式看這一週的飲食一致性。',
-        dashboardSubtitle: '從最近 7 天記錄看出你的飲食節奏。',
+        title: '7 天飲食節奏',
+        subtitle: '用比較生活化的方式，看這一週吃得如何。',
+        dashboardSubtitle: '從最近 7 天的記錄看出你的飲食節奏。',
         labels: {
             breakfast: '早餐',
             dinner: '晚餐',
             protein: '蛋白質',
-            hydration: '飲水'
+            hydration: '水分'
         },
         headlines: {
-            start_logging: '先記下幾餐，這張卡才會開始看見你的節奏',
-            building_consistency: '這週已經開始出現可追蹤的節奏',
-            steady_week: '這週的飲食節奏看起來算穩定',
-            breakfast_anchor: '早餐是這週最值得先固定下來的環節',
+            start_logging: '先記幾餐，這張卡才會開始看出你的節奏',
+            building_consistency: '這週已經開始有一點穩定感',
+            steady_week: '這週的飲食節奏看起來算穩',
+            breakfast_anchor: '早餐是這週最值得先固定下來的節奏',
             dinner_balance: '這週晚餐承擔了比較多熱量',
-            protein_rhythm: '蛋白質節奏還有點忽高忽低'
+            protein_rhythm: '蛋白質的節奏還有點高低起伏'
         },
         summaries: {
-            start_logging: '跨幾天先記下幾餐，系統就能開始幫你整理一週的節奏。',
-            building_consistency: '目前已經看得到一些規律，再多幾天穩定記錄會更清楚。',
-            steady_week: '你的餐次與營養節奏開始有一致性，整天更容易維持穩定。',
-            breakfast_anchor: '如果想讓整天更穩，先把早餐節奏固定下來通常最有感。',
-            dinner_balance: '這週晚餐吃得比較重，若其中一兩天稍微清爽一些，整體節奏會更平衡。',
-            protein_rhythm: '蛋白質的落點還不太平均，若有固定的蛋白質主角會更穩。'
+            start_logging: '再多記幾餐，系統就能開始整理這一週的飲食節奏。',
+            building_consistency: '目前已經看得到一些規律，再多兩三天穩定記錄會更清楚。',
+            steady_week: '你的餐次與營養節奏開始有一致性，整天比較容易維持穩定。',
+            breakfast_anchor: '如果想讓一天更穩，早餐通常是最值得先調整的地方。',
+            dinner_balance: '這週晚餐吃得比較重，偶爾清爽一點會讓整體更平衡。',
+            protein_rhythm: '蛋白質高低落差比較明顯，固定補充來源會更穩。'
         },
         breakfast: {
-            steady: (signal) => `近 7 天有 ${signal.breakfastDays}/${signal.loggedDays} 天有早餐，節奏相對穩定。`,
-            building: (signal) => `近 7 天有 ${signal.breakfastDays}/${signal.loggedDays} 天有早餐，正在建立規律。`,
-            irregular: (signal) => `近 7 天只有 ${signal.breakfastDays}/${signal.loggedDays} 天有早餐，還有空間更固定。`
+            steady: (signal) => `最近 7 天有 ${signal.breakfastDays}/${signal.loggedDays} 天吃早餐，開頭算穩定。`,
+            building: (signal) => `最近 7 天有 ${signal.breakfastDays}/${signal.loggedDays} 天記到早餐。`,
+            irregular: (signal) => `最近 7 天只有 ${signal.breakfastDays}/${signal.loggedDays} 天出現早餐，節奏還在建立中。`
         },
         dinner: {
-            light: () => '這週晚餐整體偏輕，白天分配得不錯。',
-            balanced: (signal) => `晚餐平均約占全天 ${signal.averageDinnerShare}% 熱量，算是中間帶。`,
-            heavy: (signal) => `近 7 天有 ${signal.heavyDays}/${signal.loggedDays} 天晚餐偏重。`
+            light: () => '這週晚餐整體偏輕，白天分配得比較平均。',
+            balanced: (signal) => `晚餐平均約占全天 ${signal.averageDinnerShare}% 的熱量。`,
+            heavy: (signal) => `最近 7 天有 ${signal.heavyDays}/${signal.loggedDays} 天是晚餐最重。`
         },
         protein: {
-            steady: (signal) => `蛋白質平均約 ${signal.averageProtein}g，整體節奏算穩。`,
-            building: (signal) => `近 7 天有 ${signal.targetDays}/${signal.loggedDays} 天接近蛋白質目標。`,
-            inconsistent: (signal) => `蛋白質高低落差比較大，目前只有 ${signal.targetDays}/${signal.loggedDays} 天接近目標。`
+            steady: (signal) => `蛋白質平均每天約 ${signal.averageProtein}g，整體節奏算穩。`,
+            building: (signal) => `最近 7 天裡有 ${signal.targetDays}/${signal.loggedDays} 天接近你的蛋白質節奏。`,
+            inconsistent: (signal) => `蛋白質分配還不夠平均，目前只有 ${signal.targetDays}/${signal.loggedDays} 天比較穩。`
         },
         hydration: {
-            placeholder: '飲水節奏會在開啟喝水記錄後出現在這裡。'
+            placeholder: '等水分記錄開啟後，這裡會開始顯示喝水節奏。'
         }
     }
 };
