@@ -100,6 +100,9 @@ export function updatePetStatus(currentCal, options = {}) {
     const viewModel = resolvePetRenderModel(currentCal, options);
     const petImg = document.getElementById('pet-img');
     const petMsg = document.getElementById('pet-msg');
+    const moodRing = document.getElementById('pet-avatar-ring');
+    const levelEl = document.getElementById('pet-bar-level');
+    const xpFill = document.getElementById('pet-xp-fill');
     const t = getTexts();
 
     if (!petImg || !petMsg) return;
@@ -115,6 +118,23 @@ export function updatePetStatus(currentCal, options = {}) {
     petMsg.dataset.petMessage = message;
     petMsg.dataset.petMessageKey = String(viewModel.messageKey || '');
     petMsg.innerText = message;
+
+    // Update mood ring color (map pet-domain mood strings to CSS data-mood)
+    const mood = viewModel.progress?.mood || 'hungry';
+    const moodToCss = { hungry: 'hungry', warming_up: 'low', curious: 'mid', happy: 'balanced', full: 'full' };
+    if (moodRing) {
+        moodRing.dataset.mood = moodToCss[mood] || 'low';
+    }
+
+    // Update level and XP bar
+    if (viewModel.progress) {
+        if (levelEl) levelEl.innerText = `Lv.${viewModel.progress.level || 1}`;
+        if (xpFill) {
+            const xp = viewModel.progress.xp || 0;
+            const xpInLevel = xp % 100;
+            xpFill.style.width = `${Math.min(xpInLevel, 100)}%`;
+        }
+    }
 }
 
 export function showEatingAnimation() {
@@ -139,6 +159,7 @@ export function showEatingAnimation() {
 export function petInteraction() {
     const state = getAppState();
     const petMsg = document.getElementById('pet-msg');
+    const petImg = document.getElementById('pet-img');
     if (!petMsg) return;
     const t = getTexts();
     const petViewModel = createPetViewModel(state);
@@ -156,5 +177,18 @@ export function petInteraction() {
         coachTipCount: coachTips.length,
         messageCount: messages.length
     });
-    petMsg.innerText = pickPetInteractionMessage({ messages });
+
+    // Bounce animation
+    if (petImg) {
+        petImg.classList.remove('pet-bounce');
+        void petImg.offsetWidth; // force reflow
+        petImg.classList.add('pet-bounce');
+    }
+
+    // Message swap animation
+    petMsg.classList.add('msg-swap');
+    setTimeout(() => {
+        petMsg.innerText = pickPetInteractionMessage({ messages });
+        petMsg.classList.remove('msg-swap');
+    }, 200);
 }

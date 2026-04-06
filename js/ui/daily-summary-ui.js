@@ -41,12 +41,23 @@ export function updateDailySummaryCard(total, waterTarget, targetCaloriesValue) 
     const progressEl = document.getElementById('daily-summary-progress');
     const statusEl = document.getElementById('daily-summary-status');
     const cardEl = document.getElementById('daily-summary-card');
+    const ringFill = document.getElementById('progress-ring-fill');
     const copy = getDailySummaryStrings(progressPercent, remainingCalories);
 
     if (progressEl) progressEl.innerText = copy.progress;
     if (statusEl) {
         statusEl.innerText = copy.status;
         statusEl.dataset.dynamic = 'true';
+    }
+
+    // Animate the SVG progress ring
+    if (ringFill) {
+        const radius = 60;
+        const circumference = 2 * Math.PI * radius;
+        const clampedPercent = Math.min(progressPercent, 100);
+        const offset = circumference - (clampedPercent / 100) * circumference;
+        ringFill.style.strokeDasharray = String(circumference);
+        ringFill.style.strokeDashoffset = String(offset);
     }
 
     if (cardEl) {

@@ -151,30 +151,34 @@ export function updateMealUI() {
     clearElement(modalBtns);
     clearElement(favoriteMealBtns);
 
-    mealPlan.forEach(({ type, title, suggestedCalories }) => {
-        const titleWrap = createElement('div', {
-            className: 'meal-title-wrap'
-        });
-        titleWrap.appendChild(createElement('span', {
-            className: 'meal-title',
-            text: title
-        }));
-        titleWrap.appendChild(createElement('span', {
-            className: 'meal-goal',
-            text: `(${t.suggest}: ${suggestedCalories})`
-        }));
+    const MEAL_ICONS = { breakfast: '\u2600', lunch: '\uD83C\uDF1E', dinner: '\uD83C\uDF19', snack: '\u2B50' };
 
-        const header = createElement('div', { className: 'meal-header' }, [
-            titleWrap,
+    mealPlan.forEach(({ type, title, suggestedCalories }) => {
+        const icon = MEAL_ICONS[type] || '\uD83C\uDF7D';
+
+        const missionHeader = createElement('div', { className: 'mission-header' }, [
+            createElement('span', { className: 'mission-icon', text: icon }),
+            createElement('div', { className: 'mission-title-wrap' }, [
+                createElement('span', { className: 'mission-title', text: title }),
+                createElement('span', { className: 'mission-goal', text: `${suggestedCalories} kcal` })
+            ]),
             createElement('div', {
-                className: 'meal-progress',
+                className: 'mission-kcal',
                 text: '0 kcal',
                 attrs: { id: `prog-${type}` }
             })
         ]);
 
-        const section = createElement('div', { className: 'meal-section' }, [
-            header,
+        const progressTrack = createElement('div', { className: 'mission-progress-track' }, [
+            createElement('div', { className: 'mission-progress-fill', attrs: { id: `prog-fill-${type}` } })
+        ]);
+
+        const section = createElement('div', {
+            className: 'mission-card mission-card--empty',
+            attrs: { 'data-meal-type': type }
+        }, [
+            missionHeader,
+            progressTrack,
             createElement('ul', { className: 'meal-list', attrs: { id: `list-${type}` } })
         ]);
         container.appendChild(section);
@@ -220,7 +224,7 @@ export function setTheme(theme, options = {}) {
 
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-        metaThemeColor.setAttribute('content', theme === 'dark' ? '#121212' : '#f0f2f5');
+        metaThemeColor.setAttribute('content', theme === 'dark' ? '#0F1117' : '#FAFBF8');
     }
 }
 

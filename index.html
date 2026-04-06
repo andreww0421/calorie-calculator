@@ -19,7 +19,7 @@
     <meta name="twitter:image" content="https://andreww0421.github.io/calorie-calculator/calorie_icon.png">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://andreww0421.github.io https://challenges.cloudflare.com; connect-src 'self' https://woof-cal-worker.jtwen12345us.workers.dev https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#f0f2f5">
+    <meta name="theme-color" content="#FAFBF8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="apple-touch-icon" href="calorie_icon.png">
@@ -31,18 +31,17 @@
         .manual-grid input { width: 100%; font-size: 14px; }
         .small-input-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
         .small-input-group input { padding: 8px; font-size: 12px; }
-        .macro-goal-box { background: rgba(46, 204, 113, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9em; line-height: 1.6; color: var(--text-color); }
+        .macro-goal-box { background: rgba(76, 175, 125, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9em; line-height: 1.6; color: var(--text-color); }
         
         .pet-card {
-            background: white; 
             background: var(--card-bg);
-            border-radius: 16px;
+            border-radius: var(--radius-lg);
             padding: 15px;
             text-align: center;
-            box-shadow: 0 4px 12px var(--shadow-color);
-            margin-bottom: 20px;
-            border: 2px solid var(--primary-color);
-            transition: 0.3s;
+            box-shadow: 0 1px 3px var(--shadow-color), 0 1px 2px rgba(0,0,0,0.06);
+            margin-bottom: var(--spacing-lg);
+            border: 1.5px solid rgba(76, 175, 125, 0.18);
+            transition: background-color 0.3s, box-shadow 0.2s;
         }
         .pet-image {
             max-width: 120px;
@@ -54,11 +53,11 @@
             margin-top: 10px;
             font-weight: bold;
             color: var(--primary-dark);
-            font-size: 1.1em;
-            background: rgba(46, 204, 113, 0.2);
+            font-size: var(--text-body);
+            background: var(--primary-light);
             display: inline-block;
             padding: 5px 15px;
-            border-radius: 20px;
+            border-radius: var(--radius-pill);
         }
     </style>
 </head>
@@ -68,75 +67,73 @@
     
     <!-- ==================== DAILY VIEW ==================== -->
     <div id="view-daily" class="view-section active-view">
-        <div class="pet-card companion-hero" id="pet-section">
-            <div class="companion-hero-main">
-                <div class="companion-hero-copy">
-                    <div class="companion-kicker" id="home-companion-kicker"></div>
-                    <div class="companion-title" id="home-companion-title"></div>
-                    <div id="pet-msg" class="pet-message">汪！今天想吃什麼呢？</div>
-                    <div class="companion-summary" id="home-companion-summary"></div>
-                </div>
-                <div class="companion-pet-shell">
-                    <img
-                        id="pet-img"
-                        class="pet-image"
-                        src="pet_placeholder.svg"
-                        alt="Pet companion"
-                        width="120"
-                        height="120"
-                        decoding="async"
-                        fetchpriority="low"
-                        data-pet-ready="false"
-                    >
+
+        <!-- Pet Status Bar (compact) -->
+        <div class="pet-status-bar" id="pet-section">
+            <div class="pet-avatar-wrap" id="pet-avatar-wrap">
+                <div class="pet-avatar-ring" id="pet-avatar-ring">
+                    <img id="pet-img" class="pet-avatar-img" src="pet_placeholder.svg" alt="Pet" width="48" height="48" decoding="async" fetchpriority="low" data-pet-ready="false">
                 </div>
             </div>
-            <div class="companion-stat-row" id="home-companion-stats"></div>
-            <div class="companion-meta-row" id="home-companion-meta"></div>
-            <div class="companion-action-row">
-                <button type="button" class="companion-action-btn companion-action-btn--primary" id="btn-home-log-hub">
-                    <span id="btn-home-log-hub-label"></span>
-                </button>
-                <button type="button" class="companion-action-btn companion-action-btn--secondary" id="btn-home-ai">
-                    <span id="btn-home-ai-label"></span>
-                </button>
-                <button type="button" class="companion-action-btn companion-action-btn--secondary" id="btn-home-favorites">
-                    <span id="btn-home-favorites-label"></span>
-                </button>
+            <div class="pet-bar-info">
+                <div class="pet-bar-name" id="home-companion-kicker"></div>
+                <div id="pet-msg" class="pet-bar-msg">汪！今天想吃什麼呢？</div>
+            </div>
+            <div class="pet-bar-xp">
+                <div class="pet-bar-level" id="pet-bar-level">Lv.1</div>
+                <div class="pet-xp-track"><div class="pet-xp-fill" id="pet-xp-fill" style="width:0%"></div></div>
             </div>
         </div>
+
+        <!-- Hidden companion data targets (kept for JS compatibility) -->
+        <div hidden aria-hidden="true">
+            <span id="home-companion-title"></span>
+            <span id="home-companion-summary"></span>
+            <span id="home-companion-stats"></span>
+            <span id="home-companion-meta"></span>
+            <span id="btn-home-log-hub-label"></span>
+            <span id="btn-home-ai-label"></span>
+            <span id="btn-home-favorites-label"></span>
+        </div>
+
         <div id="onboarding-card" hidden></div>
 
-        <div class="dashboard-header" id="daily-summary-card" role="button" tabindex="0" aria-haspopup="dialog">
-            <div class="dashboard-hero">
-                <div class="dashboard-hero-copy">
-                    <div class="label" id="txt-total-intake">今日攝取</div>
-                    <div class="big-cal"><span id="total-cal-display">0</span><span class="cal-unit-inline">kcal</span></div>
-                    <div class="label">
-                        <span id="txt-kcal-unit">kcal</span> /
-                        <span id="txt-target-cal-display-label">目標</span>
-                        <span id="target-cal-display">--</span>
+        <!-- Progress Ring Card -->
+        <div class="progress-ring-card" id="daily-summary-card" role="button" tabindex="0" aria-haspopup="dialog">
+            <div class="progress-ring-main">
+                <div class="progress-ring-wrap">
+                    <svg class="progress-ring-svg" viewBox="0 0 140 140">
+                        <circle class="progress-ring-bg" cx="70" cy="70" r="60" />
+                        <circle class="progress-ring-fill" id="progress-ring-fill" cx="70" cy="70" r="60" stroke-dasharray="376.99" stroke-dashoffset="376.99" />
+                    </svg>
+                    <div class="progress-ring-label">
+                        <div class="progress-ring-cal" id="total-cal-display">0</div>
+                        <div class="progress-ring-target" id="txt-total-intake">今日攝取</div>
+                        <div class="progress-ring-sub">/ <span id="target-cal-display">--</span> <span id="txt-kcal-unit">kcal</span></div>
                     </div>
                 </div>
-                <div class="dashboard-status-panel">
+                <div class="progress-ring-status">
                     <div class="summary-pill" id="daily-summary-progress">0%</div>
                     <div class="summary-status" id="daily-summary-status">開始記下今天的飲食吧</div>
-                    <div class="summary-status-sub" id="txt-daily-summary-hint">Tap to view the full nutrition details</div>
                 </div>
             </div>
+            <div class="progress-metric-row" id="progress-metric-row">
+                <div class="progress-metric"><span class="pm-val" id="sum-protein">0</span><span class="pm-unit">g</span><span class="pm-label" id="lbl-pro">蛋白質</span></div>
+                <div class="progress-metric"><span class="pm-val" id="sum-fat">0</span><span class="pm-unit">g</span><span class="pm-label" id="lbl-fat">脂肪</span></div>
+                <div class="progress-metric"><span class="pm-val" id="sum-carb">0</span><span class="pm-unit">g</span><span class="pm-label" id="lbl-carb">碳水</span></div>
+                <div class="progress-metric"><span class="pm-val" id="sum-fiber">0</span><span class="pm-unit">g</span><span class="pm-label" id="lbl-fiber">膳食纖維</span></div>
+            </div>
+            <!-- Hidden values for JS compatibility -->
+            <div class="dashboard-hidden-values" aria-hidden="true">
+                <span id="sum-sugar">0</span>
+                <span id="sum-sodium">0</span>
+                <span id="sum-sat-fat">0</span>
+                <span id="sum-trans-fat">0</span>
+                <span id="water-val">--</span>
+                <span id="txt-target-cal-display-label" hidden>目標</span>
+                <span id="txt-daily-summary-hint" hidden>Tap to view the full nutrition details</span>
+            </div>
             <div class="home-signal-grid" id="home-summary-signals"></div>
-            <div class="dashboard-hidden-values" aria-hidden="true">
-                <div class="nutri-box"><span class="n-val"><span id="sum-protein">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-pro">蛋白質</span></div>
-                <div class="nutri-box"><span class="n-val"><span id="sum-fat">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-fat">脂肪</span></div>
-                <div class="nutri-box"><span class="n-val"><span id="sum-carb">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-carb">碳水</span></div>
-                <div class="nutri-box"><span class="n-val"><span id="sum-fiber">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-fiber">膳食纖維</span></div>
-            </div>
-            <div class="dashboard-hidden-values" aria-hidden="true">
-                <div class="nutri-box"><span class="n-val"><span id="sum-sugar">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-sugar">糖</span></div>
-                <div class="nutri-box"><span class="n-val"><span id="sum-sodium">0</span><span class="n-unit">mg</span></span><span class="n-label" id="lbl-sod">鈉 (mg)</span></div>
-                <div class="nutri-box"><span class="n-val"><span id="sum-sat-fat">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-sat">飽和脂肪</span></div>
-                <div class="nutri-box"><span class="n-val"><span id="sum-trans-fat">0</span><span class="n-unit">g</span></span><span class="n-label" id="lbl-trans">反式脂肪</span></div>
-                <div class="nutri-box"><span class="n-val"><span id="water-val">--</span><span class="n-unit">ml</span></span><span class="n-label" id="lbl-water">水分</span></div>
-            </div>
         </div>
 
         <div class="card today-meals-card" id="today-meals-card">
@@ -156,13 +153,46 @@
 
         <div class="card rhythm-card" id="meal-rhythm-card" hidden></div>
 
+        <!-- Quick Action Strip -->
+        <div class="quick-action-strip">
+            <button type="button" class="qa-btn qa-btn--primary" id="btn-home-log-hub" aria-label="Log food">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </button>
+            <button type="button" class="qa-btn" id="btn-home-ai" aria-label="AI Analysis">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </button>
+            <button type="button" class="qa-btn" id="btn-home-favorites" aria-label="Favorites">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </button>
+        </div>
+
     </div>
     
     <!-- ==================== DASHBOARD VIEW ==================== -->
     <div id="view-dashboard" class="view-section hidden">
+
+        <!-- Weekly Summary Grid -->
+        <div class="dashboard-summary-grid" id="dashboard-summary-grid">
+            <div class="dash-tile"><div class="dash-tile-icon">&#x1F525;</div><div class="dash-tile-body"><div class="dash-tile-val" id="dash-avg-cal">--</div><div class="dash-tile-label" id="dash-avg-cal-label">平均熱量</div></div></div>
+            <div class="dash-tile"><div class="dash-tile-icon">&#x1F4C6;</div><div class="dash-tile-body"><div class="dash-tile-val" id="dash-streak">0</div><div class="dash-tile-label" id="dash-streak-label">連續打卡</div></div></div>
+            <div class="dash-tile"><div class="dash-tile-icon">&#x2705;</div><div class="dash-tile-body"><div class="dash-tile-val" id="dash-on-target">0/7</div><div class="dash-tile-label" id="dash-on-target-label">達標天數</div></div></div>
+            <div class="dash-tile"><div class="dash-tile-icon">&#x1F4AA;</div><div class="dash-tile-body"><div class="dash-tile-val" id="dash-avg-protein">--</div><div class="dash-tile-label" id="dash-avg-protein-label">平均蛋白質</div></div></div>
+        </div>
+
+        <!-- Pet Stats Card -->
+        <div class="card pet-stats-card" id="pet-stats-card">
+            <div class="pet-stats-header"><span class="pet-stats-title">夥伴狀態</span><span class="pet-stats-level" id="pet-stats-level">Lv.1</span></div>
+            <div class="pet-stats-bars">
+                <div class="pet-stat-row"><span class="pet-stat-lbl">XP</span><div class="pet-stat-track"><div class="pet-stat-fill pet-stat-fill--xp" id="pet-stat-xp-fill"></div></div></div>
+                <div class="pet-stat-row"><span class="pet-stat-lbl">Energy</span><div class="pet-stat-track"><div class="pet-stat-fill pet-stat-fill--energy" id="pet-stat-energy-fill"></div></div></div>
+                <div class="pet-stat-row"><span class="pet-stat-lbl">Bond</span><div class="pet-stat-track"><div class="pet-stat-fill pet-stat-fill--bond" id="pet-stat-bond-fill"></div></div></div>
+            </div>
+        </div>
+
         <div class="card rhythm-card rhythm-card--dashboard" id="dashboard-rhythm-card" hidden></div>
         <div class="card nutrition-focus-card" id="dashboard-nutrition-focus-card" hidden></div>
         <div class="coach-card card" id="daily-coach-card">
+            <div class="coach-status-bar" id="coach-status-bar"></div>
             <div class="coach-header">
                 <div class="quick-start-eyebrow" id="txt-coach-title">今日教練建議</div>
                 <div class="coach-headline" id="coach-headline">從第一餐開始建立今天的節奏</div>
@@ -175,31 +205,19 @@
             </div>
         </div>
 
+        <!-- Charts: Macros -->
+        <div class="dash-section-label" id="txt-chart-title">Nutrition Analysis</div>
         <div class="card">
-            <h3 id="txt-chart-title">Nutrition Analysis</h3>
             <div class="chart-grid">
                 <div class="chart-container" style="height:200px;"><canvas id="macroChart"></canvas></div>
                 <div class="chart-container" style="height:200px;"><canvas id="weeklyChart"></canvas></div>
             </div>
         </div>
         
-        <!-- Weight trend chart -->
+        <!-- Charts: Trends -->
+        <div class="dash-section-label" id="txt-cal-trend-title">Calorie Intake Trend</div>
         <div class="card">
-            <h3 id="txt-weight-chart-title">📱 體重趨勢 (近 30 天)</h3>
-            <div class="chart-container" style="height:200px;"><canvas id="weightChart"></canvas></div>
-        </div>
-        <div class="card weight-card">
-            <h3 id="txt-weight-title">⚖️ 體重記錄</h3>
-            <div style="display:flex; gap:10px;">
-                <input type="number" id="daily-weight-input" placeholder="今日體重 (kg)" step="0.1">
-                <button id="btn-save-weight" style="width:auto; padding:0 20px;">儲存</button>
-            </div>
-        </div>
-
-        <!-- Phase 4: 鐔遍噺 & 铔嬬櫧璩定鍕㈠湒 -->
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h3 id="txt-cal-trend-title" style="margin:0;">Calorie Intake Trend</h3>
+            <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
                 <div class="chart-range-toggle">
                     <button id="btn-chart-7d" class="range-btn active-range">7D</button>
                     <button id="btn-chart-30d" class="range-btn">30D</button>
@@ -208,8 +226,19 @@
             <div class="chart-container" style="height:200px;"><canvas id="calTrendChart"></canvas></div>
         </div>
         <div class="card">
-            <h3 id="txt-protein-trend-title">Protein Intake Trend</h3>
+            <h3 id="txt-protein-trend-title" style="margin:0 0 10px;">Protein Intake Trend</h3>
             <div class="chart-container" style="height:200px;"><canvas id="proteinTrendChart"></canvas></div>
+        </div>
+
+        <!-- Weight (combined input + chart) -->
+        <div class="dash-section-label">體重趨勢</div>
+        <div class="card">
+            <span id="txt-weight-chart-title" hidden></span>
+            <div class="weight-input-inline">
+                <input type="number" id="daily-weight-input" placeholder="今日體重 (kg)" step="0.1">
+                <button id="btn-save-weight" class="weight-save-btn"><span id="txt-weight-title">儲存</span></button>
+            </div>
+            <div class="chart-container" style="height:200px;"><canvas id="weightChart"></canvas></div>
         </div>
     </div>
 
@@ -347,11 +376,11 @@
 <nav class="bottom-nav">
     <a href="#" class="nav-item active" data-target="view-daily">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-        <span id="nav-daily">Daily</span>
+        <span id="nav-daily">首頁</span>
     </a>
     <a href="#" class="nav-item" data-target="view-dashboard">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-        <span id="nav-dashboard">Dashboard</span>
+        <span id="nav-dashboard">洞察</span>
     </a>
     <a href="#" class="nav-item nav-ai" data-target="view-ai">
         <div class="nav-ai-button">
