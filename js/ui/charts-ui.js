@@ -1,5 +1,6 @@
 import { createDailyViewModel, getAppState } from '../state/app-state.js';
 import {
+    createDashboardChartsViewModel,
     createDashboardNutritionFocusViewModel,
     createHomeCompanionViewModel,
     createMealRhythmViewModel
@@ -110,6 +111,65 @@ function renderCoachCard(viewModel) {
     }
 
     card.dataset.coachStatus = coach.status;
+
+    // Update coach status bar color
+    const statusBar = document.getElementById('coach-status-bar');
+    if (statusBar) {
+        const statusMap = { green: 'on-track', yellow: 'needs-attention', red: 'over' };
+        statusBar.dataset.status = statusMap[coach.status] || '';
+    }
+}
+
+function renderDashboardSummary(state) {
+    const chartData = createDashboardChartsViewModel(state, { range: 7 });
+    const targetCalories = Number(state?.targetCalories) || 0;
+
+    // Average calories
+    const weekCals = chartData.weeklyCalories || [];
+    const activeDays = weekCals.filter((d) => d.calories > 0);
+    const avgCal = activeDays.length > 0
+        ? Math.round(activeDays.reduce((s, d) => s + d.calories, 0) / activeDays.length)
+        : 0;
+    const avgCalEl = document.getElementById('dash-avg-cal');
+    if (avgCalEl) avgCalEl.innerText = avgCal > 0 ? `${avgCal}` : '--';
+
+    // On-target days (within 85%-115% of target)
+    const onTarget = targetCalories > 0
+        ? activeDays.filter((d) => d.calories >= targetCalories * 0.85 && d.calories <= targetCalories * 1.15).length
+        : 0;
+    const onTargetEl = document.getElementById('dash-on-target');
+    if (onTargetEl) onTargetEl.innerText = `${onTarget}/7`;
+
+    // Average protein
+    const proteinData = chartData.proteinTrend || [];
+    const activeProtein = proteinData.filter((d) => d.protein > 0);
+    const avgProtein = activeProtein.length > 0
+        ? Math.round(activeProtein.reduce((s, d) => s + d.protein, 0) / activeProtein.length)
+        : 0;
+    const avgProteinEl = document.getElementById('dash-avg-protein');
+    if (avgProteinEl) avgProteinEl.innerText = avgProtein > 0 ? `${avgProtein}g` : '--';
+
+    // Streak from pet progress
+    const pet = createPetViewModel(state);
+    const streak = pet.progress?.streak || 0;
+    const streakEl = document.getElementById('dash-streak');
+    if (streakEl) streakEl.innerText = String(streak);
+
+    // Pet stats card
+    const levelEl = document.getElementById('pet-stats-level');
+    if (levelEl) levelEl.innerText = `Lv.${pet.progress?.level || 1}`;
+
+    const xp = pet.progress?.xp || 0;
+    const xpFill = document.getElementById('pet-stat-xp-fill');
+    if (xpFill) xpFill.style.width = `${Math.min(xp % 100, 100)}%`;
+
+    const energy = pet.progress?.energy || 0;
+    const energyFill = document.getElementById('pet-stat-energy-fill');
+    if (energyFill) energyFill.style.width = `${Math.min(energy, 100)}%`;
+
+    const bond = pet.progress?.bond || 0;
+    const bondFill = document.getElementById('pet-stat-bond-fill');
+    if (bondFill) bondFill.style.width = `${Math.min(bond, 100)}%`;
 }
 
 function renderMealRhythmCard(cardId, state = getAppState(), variant = 'home') {
@@ -327,9 +387,17 @@ function renderHomeCompanionCard(state = getAppState()) {
     }
 }
 
+const VIEW_ORDER = ['view-daily', 'view-dashboard', 'view-ai', 'view-settings'];
+
 export function switchView(targetId) {
+    const currentView = document.querySelector('.view-section.active-view');
+    const currentId = currentView?.id || '';
+    const fromIndex = VIEW_ORDER.indexOf(currentId);
+    const toIndex = VIEW_ORDER.indexOf(targetId);
+    const direction = toIndex >= fromIndex ? 'right' : 'left';
+
     document.querySelectorAll('.view-section').forEach((view) => {
-        view.classList.remove('active-view');
+        view.classList.remove('active-view', 'view-enter-left', 'view-enter-right');
         view.classList.add('hidden');
     });
 
@@ -337,6 +405,13 @@ export function switchView(targetId) {
     if (targetView) {
         targetView.classList.remove('hidden');
         targetView.classList.add('active-view');
+        if (currentId && currentId !== targetId) {
+            const animClass = direction === 'right' ? 'view-enter-right' : 'view-enter-left';
+            targetView.classList.add(animClass);
+            targetView.addEventListener('animationend', () => {
+                targetView.classList.remove(animClass);
+            }, { once: true });
+        }
     }
 
     document.querySelectorAll('.nav-item').forEach((nav) => {
@@ -432,6 +507,29 @@ export function renderListAndStats(viewModel = createDailyViewModel(getAppState(
     Object.keys(viewModel.mealTotals).forEach((type) => {
         const el = document.getElementById(`prog-${type}`);
         if (el) el.innerText = `${Math.round(viewModel.mealTotals[type])} kcal`;
+
+        // Update mission card state
+        const missionCard = document.querySelector(`.mission-card[data-meal-type="${type}"]`);
+        const progressFill = document.getElementById(`prog-fill-${type}`);
+        if (missionCard) {
+            const mealCal = viewModel.mealTotals[type] || 0;
+            const target = Number(viewModel.targetCalories) || 0;
+            const mealTarget = target > 0 ? target * 0.3 : 500; // rough per-meal target
+            const percent = mealTarget > 0 ? Math.min((mealCal / mealTarget) * 100, 100) : 0;
+
+            missionCard.classList.remove('mission-card--empty', 'mission-card--partial', 'mission-card--complete');
+            if (mealCal <= 0) {
+                missionCard.classList.add('mission-card--empty');
+            } else if (percent >= 80) {
+                missionCard.classList.add('mission-card--complete');
+            } else {
+                missionCard.classList.add('mission-card--partial');
+            }
+
+            if (progressFill) {
+                progressFill.style.width = `${percent}%`;
+            }
+        }
     });
 
     document.getElementById('total-cal-display').innerText = Math.round(viewModel.totals.cal);
@@ -448,6 +546,7 @@ export function renderListAndStats(viewModel = createDailyViewModel(getAppState(
     renderCoachCard(viewModel);
     renderMealRhythmCards(state);
     renderDashboardNutritionFocusCard(state);
+    renderDashboardSummary(state);
 
     updateCharts(viewModel.totals);
     updatePetStatus(createPetViewModel(state));

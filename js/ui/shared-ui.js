@@ -51,13 +51,32 @@ export function clearPendingFavoriteIndex() {
 
 export function closeModal(id) {
     const modal = document.getElementById(id);
-    if (modal) modal.style.display = 'none';
+    if (!modal) return;
+    const inner = modal.querySelector('.modal, .modal--sheet, .lang-modal-box');
+    if (inner) {
+        inner.classList.add('modal-exit');
+        inner.addEventListener('animationend', () => {
+            inner.classList.remove('modal-exit');
+            modal.style.display = 'none';
+        }, { once: true });
+    } else {
+        modal.style.display = 'none';
+    }
     if (id === 'favorite-meal-modal') clearPendingFavoriteIndex();
 }
 
 export function openModal(id) {
     const modal = document.getElementById(id);
-    if (modal) modal.style.display = 'flex';
+    if (!modal) return;
+    modal.style.display = 'flex';
+    const inner = modal.querySelector('.modal, .modal--sheet, .lang-modal-box');
+    if (inner) {
+        inner.classList.remove('modal-exit');
+        inner.classList.add('modal-enter');
+        inner.addEventListener('animationend', () => {
+            inner.classList.remove('modal-enter');
+        }, { once: true });
+    }
 }
 
 export function toggleFabMenu() {
