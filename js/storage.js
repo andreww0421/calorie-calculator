@@ -218,6 +218,10 @@ export function saveSetting(key, value) {
     setStoredValue(key, value);
 }
 
+export function removeSetting(key) {
+    removeStoredValue(key);
+}
+
 export function saveFoodData(date, items) {
     setStoredValue(
         `record_${date}`,

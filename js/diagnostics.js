@@ -1,19 +1,11 @@
-import { DIAGNOSTICS_KEY, MAX_DIAGNOSTIC_EVENTS } from './env.js';
-import { safeParseJSON } from './utils.js';
+import { MAX_DIAGNOSTIC_EVENTS } from './env.js';
+import {
+    clearDiagnosticEntries,
+    loadDiagnosticEntries,
+    saveDiagnosticEntries
+} from './repositories/diagnostics-repository.js';
 
 let diagnosticsRegistered = false;
-
-function readDiagnosticsStore() {
-    const parsed = safeParseJSON(localStorage.getItem(DIAGNOSTICS_KEY), []);
-    return Array.isArray(parsed) ? parsed : [];
-}
-
-function writeDiagnosticsStore(entries) {
-    localStorage.setItem(
-        DIAGNOSTICS_KEY,
-        JSON.stringify(entries.slice(-MAX_DIAGNOSTIC_EVENTS))
-    );
-}
 
 function normalizeMessage(value) {
     if (typeof value === 'string') return value;
@@ -27,25 +19,25 @@ function normalizeMessage(value) {
 
 export function captureDiagnostic(level, message, context = {}) {
     try {
-        const entries = readDiagnosticsStore();
+        const entries = loadDiagnosticEntries();
         entries.push({
             timestamp: new Date().toISOString(),
             level: level || 'info',
             message: normalizeMessage(message),
             context: context && typeof context === 'object' ? context : {}
         });
-        writeDiagnosticsStore(entries);
+        saveDiagnosticEntries(entries.slice(-MAX_DIAGNOSTIC_EVENTS));
     } catch (error) {
         console.warn('Failed to persist diagnostic entry.', error);
     }
 }
 
 export function getDiagnostics() {
-    return readDiagnosticsStore();
+    return loadDiagnosticEntries();
 }
 
 export function clearDiagnostics() {
-    localStorage.removeItem(DIAGNOSTICS_KEY);
+    clearDiagnosticEntries();
 }
 
 export function registerGlobalDiagnostics() {

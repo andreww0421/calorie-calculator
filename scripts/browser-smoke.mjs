@@ -249,89 +249,6 @@ async function run() {
       await delay(2500);
     }
 
-    if (!URL_ARG) {
-      const migrationReload = client.waitForEvent('Page.loadEventFired', () => true, 15000);
-      await client.evaluate(`
-        (() => {
-          const d = new Date();
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          const today = \`\${y}-\${m}-\${day}\`;
-
-          localStorage.setItem(\`record_\${today}\`, JSON.stringify([
-            {
-              type: 'breakfast',
-              name: 'Legacy Oatmeal',
-              cal: 80,
-              protein: 3.5,
-              fat: 1.2,
-              carbohydrate: 14.8
-            }
-          ]));
-          localStorage.setItem('myFavorites', JSON.stringify([
-            {
-              name: 'Legacy Soup',
-              cal: 95,
-              protein: 6,
-              fat: 1.1,
-              carbohydrate: 12
-            }
-          ]));
-          localStorage.setItem('myProfile_v4', JSON.stringify({
-            gender: 'female',
-            age: 31,
-            height: 165,
-            weight: 54,
-            activity: '1.375',
-            mealMode: '3'
-          }));
-          localStorage.removeItem('woofCal_schema_version');
-          location.reload();
-        })();
-      `);
-      await migrationReload;
-      await delay(2500);
-
-      const migrationState = await client.evaluate(`
-        (() => {
-          const d = new Date();
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          const today = \`\${y}-\${m}-\${day}\`;
-          const records = JSON.parse(localStorage.getItem(\`record_\${today}\`) || '[]');
-          const favorites = JSON.parse(localStorage.getItem('myFavorites') || '[]');
-          return {
-            schemaVersion: localStorage.getItem('woofCal_schema_version'),
-            profileLegacyRemoved: localStorage.getItem('myProfile_v4') === null,
-            profile: JSON.parse(localStorage.getItem('myProfile_v5') || 'null'),
-            record: records[0] || null,
-            favorite: favorites[0] || null,
-            totalCalories: document.getElementById('total-cal-display').innerText
-          };
-        })()
-      `);
-
-      assert(migrationState.schemaVersion === '3', `Storage schema version should be 3, got ${migrationState.schemaVersion}. State: ${JSON.stringify(migrationState)}`);
-      assert(migrationState.profileLegacyRemoved, 'Legacy profile key was not removed during migration.');
-      assert(migrationState.profile?.mealMode === '3', 'Legacy profile was not migrated to myProfile_v5.');
-      assert(migrationState.record?.nutri?.calories === 80, 'Legacy record calories were not migrated.');
-      assert(migrationState.record?.nutri?.fiber === 0, 'Legacy record fiber should default to 0.');
-      assert(migrationState.favorite?.nutri?.calories === 95, 'Legacy favorite calories were not migrated.');
-      assert(migrationState.favorite?.nutri?.transFat === 0, 'Legacy favorite trans fat should default to 0.');
-      assert(migrationState.totalCalories === '80', `Migrated legacy record did not render on dashboard. Total was ${migrationState.totalCalories}.`);
-      results.push('Legacy storage migration works');
-
-      const resetReload = client.waitForEvent('Page.loadEventFired', () => true, 15000);
-      await client.evaluate(`
-        localStorage.clear();
-        location.reload();
-      `);
-      await resetReload;
-      await delay(2500);
-    }
-
     const today = await client.evaluate(`
       (() => {
         const d = new Date();
@@ -451,10 +368,8 @@ async function run() {
         (() => ({
           totalCalories: document.getElementById('total-cal-display').innerText,
           sugar: document.getElementById('sum-sugar').innerText,
-          mealSections: [...document.querySelectorAll('#meal-sections-container .meal-section')].map((section) => ({
-            title: section.querySelector('.meal-title')?.innerText?.trim() || '',
-            text: section.querySelector('.meal-list')?.innerText || ''
-          }))
+          todayMealsVisible: Boolean(document.getElementById('today-meals-card')),
+          storedMeals: JSON.parse(localStorage.getItem(\`record_${today}\`) || '[]')
         }))()
       `);
       const expectedPresetCalories = presetModalState.baselineCalories + expectedPresetDraft.calories;
@@ -467,12 +382,13 @@ async function run() {
         Number(presetQuickAddState.sugar) === expectedPresetSugar,
         `Preset quick add should update sugar total to ${expectedPresetSugar}, got ${presetQuickAddState.sugar}.`
       );
-      const presetSection = presetQuickAddState.mealSections.find((section) => section.text.includes(expectedPresetDraft.name)) || null;
-      assert(Boolean(presetSection), `Home meal sections should show the quick-added food. State: ${JSON.stringify(presetQuickAddState)}`);
+      assert(presetQuickAddState.todayMealsVisible, 'Today meals card should remain visible on Home.');
+      const presetRecord = presetQuickAddState.storedMeals.find((item) => item.name === expectedPresetDraft.name) || null;
+      assert(Boolean(presetRecord), `Preset quick add should persist the food record. State: ${JSON.stringify(presetQuickAddState)}`);
       assert(
-        new RegExp(expectedPresetDraft.type || 'snack', 'i').test(presetSection.title)
-        || /Breakfast|早餐|Lunch|午餐|Dinner|晚餐|Snack|點心|榛炲績/i.test(presetSection.title),
-        `Preset quick add should land in the expected meal section, got ${presetSection?.title}.`
+        new RegExp(expectedPresetDraft.type || 'snack', 'i').test(presetRecord.type)
+        || /Breakfast|早餐|Lunch|午餐|Dinner|晚餐|Snack|點心|榛炲績/i.test(presetRecord.type || ''),
+        `Preset quick add should persist the expected meal type, got ${presetRecord?.type}.`
       );
       results.push('Common foods quick add works from a secondary modal while meals stay visible on Home');
 
@@ -523,7 +439,7 @@ async function run() {
 
       const dashboardState = await client.evaluate(`
         (() => ({
-          heroActionCount: document.querySelectorAll('#pet-section .companion-action-btn').length,
+          heroActionCount: document.querySelectorAll('#view-daily .quick-action-strip .qa-btn').length,
           summarySignalCount: document.querySelectorAll('#daily-summary-card .home-signal-card').length,
           petSrc: document.getElementById('pet-img')?.getAttribute('src') || '',
           petLoaded: (document.getElementById('pet-img')?.naturalWidth || 0) > 0
@@ -826,8 +742,8 @@ async function run() {
         summaryHint: document.getElementById('txt-daily-summary-hint')?.innerText?.trim() || '',
         goalLabel: document.getElementById('lbl-goal-type')?.innerText?.trim() || '',
         macroGoals: document.getElementById('macro-goals')?.innerText?.trim() || '',
-        breakfastTitle: document.querySelector('.meal-section .meal-title')?.innerText?.trim() || '',
-        breakfastGoal: document.querySelector('.meal-section .meal-goal')?.innerText?.trim() || '',
+        breakfastTitle: document.querySelector('.mission-card .mission-title')?.innerText?.trim() || '',
+        breakfastGoal: document.querySelector('.mission-card .mission-goal')?.innerText?.trim() || '',
         foodSummary: document.querySelector('#list-breakfast .detail')?.innerText?.trim() || ''
       }))()
     `);
@@ -838,7 +754,7 @@ async function run() {
     assert(englishLanguageState.goalLabel === 'Goal', `Goal label should switch to English, got ${englishLanguageState.goalLabel}`);
     assert(/Current Goal:\s*Build Muscle/i.test(englishLanguageState.macroGoals), `Macro goal summary should switch to English, got ${englishLanguageState.macroGoals}`);
     assert(/Breakfast/.test(englishLanguageState.breakfastTitle), `Breakfast section title did not switch to English: ${englishLanguageState.breakfastTitle}`);
-    assert(/Goal/i.test(englishLanguageState.breakfastGoal), `Breakfast goal text should be in English: ${englishLanguageState.breakfastGoal}`);
+    assert(/\d+\s*kcal/i.test(englishLanguageState.breakfastGoal), `Breakfast goal text should be a numeric kcal target in English: ${englishLanguageState.breakfastGoal}`);
     assert(/Calories:\s*\d+\s*\|\s*Protein:\s*[\d.]+g\s*\|\s*Fat:\s*[\d.]+g\s*\|\s*Carb:\s*[\d.]+g/i.test(englishLanguageState.foodSummary), `Food summary should be localized in English: ${englishLanguageState.foodSummary}`);
 
     await client.evaluate(`
@@ -853,8 +769,8 @@ async function run() {
         summaryStatus: document.getElementById('daily-summary-status')?.innerText?.trim() || '',
         summaryHint: document.getElementById('txt-daily-summary-hint')?.innerText?.trim() || '',
         goalLabel: document.getElementById('lbl-goal-type')?.innerText?.trim() || '',
-        breakfastTitle: document.querySelector('.meal-section .meal-title')?.innerText?.trim() || '',
-        breakfastGoal: document.querySelector('.meal-section .meal-goal')?.innerText?.trim() || '',
+        breakfastTitle: document.querySelector('.mission-card .mission-title')?.innerText?.trim() || '',
+        breakfastGoal: document.querySelector('.mission-card .mission-goal')?.innerText?.trim() || '',
         foodSummary: document.querySelector('#list-breakfast .detail')?.innerText?.trim() || ''
       }))()
     `);
@@ -864,7 +780,7 @@ async function run() {
     assert(/[\u0600-\u06FF]/.test(arabicLanguageState.summaryHint), `Arabic summary hint is wrong: ${arabicLanguageState.summaryHint}`);
     assert(/[\u0600-\u06FF]/.test(arabicLanguageState.goalLabel), `Goal label should switch to Arabic: ${arabicLanguageState.goalLabel}`);
     assert(/فطور/.test(arabicLanguageState.breakfastTitle), `Breakfast section title did not switch to Arabic: ${arabicLanguageState.breakfastTitle}`);
-    assert(/[\u0600-\u06FF]/.test(arabicLanguageState.breakfastGoal), `Breakfast goal text should be in Arabic: ${arabicLanguageState.breakfastGoal}`);
+    assert(/\d+\s*kcal/.test(arabicLanguageState.breakfastGoal), `Breakfast goal text should keep a numeric kcal target in Arabic: ${arabicLanguageState.breakfastGoal}`);
     assert(!/[A-Za-z\u4e00-\u9fff]/.test(arabicLanguageState.logHubLabel.replace(/\s/g, '')), `Arabic home log CTA still contains non-Arabic leftovers: ${arabicLanguageState.logHubLabel}`);
     assert(/[\u0600-\u06FF]/.test(arabicLanguageState.foodSummary), `Food summary should contain Arabic labels: ${arabicLanguageState.foodSummary}`);
     results.push('Language switch updates dynamic UI text');

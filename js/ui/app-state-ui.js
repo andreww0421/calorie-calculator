@@ -14,35 +14,35 @@ import { setLang, setTheme, updateMealUI } from './settings-ui.js';
 import { closeModal } from './shared-ui.js';
 import { renderAnalysisModalState, syncAnalysisView } from './analysis-ui.js';
 
+function setInputValue(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.value = value;
+    }
+}
+
+function setTextById(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.innerText = value;
+    }
+}
+
 function applyDateInputs(state) {
-    const currentDateInput = document.getElementById('current-date');
-    if (currentDateInput) {
-        currentDateInput.value = state.selectedDate;
-    }
-
-    const displayDateText = document.getElementById('display-date-text');
-    if (displayDateText) {
-        displayDateText.innerText = getDisplayDateLabel(state.selectedDate, state.curLang);
-    }
-
-    const weightInput = document.getElementById('daily-weight-input');
-    if (weightInput) {
-        weightInput.value = state.loggedWeight ?? '';
-    }
+    setInputValue('current-date', state.selectedDate);
+    setTextById('display-date-text', getDisplayDateLabel(state.selectedDate, state.curLang));
+    setInputValue('daily-weight-input', state.loggedWeight ?? '');
 }
 
 function syncProfileGoalPresentation(state) {
     const goalResult = document.getElementById('goal-result');
-    const targetDisplayEl = document.getElementById('target-cal-display');
     const plan = calculateProfilePlan(state.profile || {});
 
     if (!plan) {
         if (goalResult) {
             goalResult.style.display = 'none';
         }
-        if (targetDisplayEl) {
-            targetDisplayEl.innerText = '--';
-        }
+        setTextById('target-cal-display', '--');
         return false;
     }
 
@@ -89,16 +89,17 @@ function syncAnalysisModal(state, meta = {}) {
 
 export function syncAppStateUI(state, previousState, meta = {}) {
     const reason = meta.reason || 'state:sync';
-    const bootstrapSync = reason.startsWith('bootstrap:');
-    const themeChanged = bootstrapSync || !previousState || state.curTheme !== previousState.curTheme || reason === 'theme:set';
-    const langChanged = bootstrapSync || !previousState || state.curLang !== previousState.curLang || reason === 'lang:set';
-    const mealPlanChanged = bootstrapSync
+    const isBootstrapSync = reason.startsWith('bootstrap:');
+    const themeChanged = isBootstrapSync || !previousState || state.curTheme !== previousState.curTheme || reason === 'theme:set';
+    const langChanged = isBootstrapSync || !previousState || state.curLang !== previousState.curLang || reason === 'lang:set';
+    const shouldSyncProfile = isBootstrapSync || !previousState || reason === 'profile:apply' || reason === 'state:sync' || langChanged;
+    const shouldSyncMealPlan = isBootstrapSync
         || !previousState
         || state.currentMealMode !== previousState.currentMealMode
         || state.targetCalories !== previousState.targetCalories
         || reason === 'profile:apply'
         || langChanged;
-    const dailyChanged = bootstrapSync
+    const shouldSyncDaily = isBootstrapSync
         || !previousState
         || state.selectedDate !== previousState.selectedDate
         || state.loggedWeight !== previousState.loggedWeight
@@ -115,7 +116,7 @@ export function syncAppStateUI(state, previousState, meta = {}) {
         setTheme(state.curTheme, { persist: false });
     }
 
-    if (bootstrapSync || langChanged || reason === 'profile:apply' || reason === 'state:sync') {
+    if (shouldSyncProfile) {
         syncProfilePreferencePresentation(state);
     }
 
@@ -125,7 +126,7 @@ export function syncAppStateUI(state, previousState, meta = {}) {
 
     syncAnalysisView(state);
 
-    if (mealPlanChanged) {
+    if (shouldSyncMealPlan) {
         updateMealUI();
         if (reason === 'profile:apply') {
             renderManualFoodPresetPanel({
@@ -144,7 +145,7 @@ export function syncAppStateUI(state, previousState, meta = {}) {
         syncProfileGoalPresentation(state);
     }
 
-    if (dailyChanged) {
+    if (shouldSyncDaily) {
         applyDateInputs(state);
         renderListAndStats(createDailyViewModel(state));
     }

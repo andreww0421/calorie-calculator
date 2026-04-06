@@ -42,11 +42,167 @@ import {
     showEatingAnimation,
     updatePetStatus
 } from './pet-ui.js';
-import { openDailySummaryDetails, updateDailySummaryCard } from './daily-summary-ui.js';
+import {
+    buildDailySummaryMetricsViewModel,
+    openDailySummaryDetails,
+    updateDailySummaryCard
+} from './daily-summary-ui.js';
 
-function roundValue(value, digits = 1) {
-    const factor = 10 ** digits;
-    return Math.round((Number(value) || 0) * factor) / factor;
+function setTextById(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.innerText = value;
+    }
+}
+
+function setWidthById(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.style.width = value;
+    }
+}
+
+function calculateAverage(entries = [], field) {
+    const activeEntries = entries.filter((entry) => Number(entry?.[field]) > 0);
+    if (activeEntries.length === 0) {
+        return 0;
+    }
+
+    return Math.round(
+        activeEntries.reduce((sum, entry) => sum + Number(entry?.[field] || 0), 0) / activeEntries.length
+    );
+}
+
+function calculateMealTargetPercent(mealCalories, targetCalories) {
+    const mealTarget = targetCalories > 0 ? targetCalories * 0.3 : 500;
+    return mealTarget > 0 ? Math.min((mealCalories / mealTarget) * 100, 100) : 0;
+}
+
+export function buildDashboardSummaryMetrics(chartData, targetCalories, pet) {
+    const weeklyCalories = chartData.weeklyCalories || [];
+    const proteinTrend = chartData.proteinTrend || [];
+    const averageCalories = calculateAverage(weeklyCalories, 'calories');
+    const onTargetDays = targetCalories > 0
+        ? weeklyCalories.filter((day) => day.calories > 0
+            && day.calories >= targetCalories * 0.85
+            && day.calories <= targetCalories * 1.15).length
+        : 0;
+    const averageProtein = calculateAverage(proteinTrend, 'protein');
+
+    return {
+        averageCalories,
+        averageProtein,
+        onTargetDays,
+        streak: pet.progress?.streak || 0,
+        level: pet.progress?.level || 1,
+        xpWidth: `${Math.min((pet.progress?.xp || 0) % 100, 100)}%`,
+        energyWidth: `${Math.min(pet.progress?.energy || 0, 100)}%`,
+        bondWidth: `${Math.min(pet.progress?.bond || 0, 100)}%`
+    };
+}
+
+function renderMealListRows(viewModel, extra, t = getTexts()) {
+    ['breakfast', 'lunch', 'dinner', 'snack'].forEach((type) => {
+        clearElement(document.getElementById(`list-${type}`));
+    });
+
+    viewModel.foodItems.forEach((item, index) => {
+        const n = item.nutri || {};
+
+        const info = createElement('div', {
+            className: 'food-info',
+            style: { cursor: 'pointer' }
+        });
+        info.addEventListener('click', () => showDetailModal(index));
+        info.appendChild(createElement('div', { className: 'name', text: item.name || '--' }));
+        info.appendChild(createElement('div', {
+            className: 'detail',
+            text: formatNutritionInline(n, t)
+        }));
+
+        const actionWrap = createElement('div', {
+            style: { display: 'flex', gap: '5px' }
+        });
+
+        const favBtn = createElement('button', {
+            className: 'btn-delete',
+            text: t.btnFavSave || 'Save',
+            style: { backgroundColor: '#ff7675' }
+        });
+        favBtn.addEventListener('click', () => uiActions.addRecordToFav?.(index));
+
+        const deleteBtn = createElement('button', {
+            className: 'btn-delete',
+            text: 'X'
+        });
+        deleteBtn.addEventListener('click', () => uiActions.deleteItem?.(index));
+
+        actionWrap.appendChild(favBtn);
+        actionWrap.appendChild(deleteBtn);
+
+        const listItem = document.createElement('li');
+        listItem.appendChild(info);
+        listItem.appendChild(actionWrap);
+
+        const listEl = document.getElementById(`list-${item.type}`);
+        if (listEl) listEl.appendChild(listItem);
+    });
+
+    ['breakfast', 'lunch', 'dinner', 'snack'].forEach((type) => {
+        const listEl = document.getElementById(`list-${type}`);
+        if (!listEl || listEl.children.length > 0) return;
+        listEl.appendChild(createEmptyMealRow(extra.emptyMealTitle, extra.emptyMealBody));
+    });
+}
+
+function renderMealProgressCards(viewModel) {
+    Object.keys(viewModel.mealTotals).forEach((type) => {
+        const mealCalories = viewModel.mealTotals[type] || 0;
+        const percent = calculateMealTargetPercent(mealCalories, Number(viewModel.targetCalories) || 0);
+        setTextById(`prog-${type}`, `${Math.round(mealCalories)} kcal`);
+
+        const missionCard = document.querySelector(`.mission-card[data-meal-type="${type}"]`);
+        const progressFill = document.getElementById(`prog-fill-${type}`);
+        if (!missionCard) {
+            return;
+        }
+
+        missionCard.classList.add('meal-section');
+        missionCard.classList.remove('mission-card--empty', 'mission-card--partial', 'mission-card--complete');
+        if (mealCalories <= 0) {
+            missionCard.classList.add('mission-card--empty');
+        } else if (percent >= 80) {
+            missionCard.classList.add('mission-card--complete');
+        } else {
+            missionCard.classList.add('mission-card--partial');
+        }
+
+        if (progressFill) {
+            progressFill.style.width = `${percent}%`;
+        }
+    });
+}
+
+function renderDailySummaryMetrics(viewModel) {
+    const metricViewModel = buildDailySummaryMetricsViewModel(
+        viewModel.totals,
+        viewModel.waterTarget,
+        viewModel.targetCalories,
+        viewModel.lang
+    );
+
+    [
+        ['total-cal-display', metricViewModel.totalCalories],
+        ['sum-protein', metricViewModel.protein],
+        ['sum-fat', metricViewModel.fat],
+        ['sum-carb', metricViewModel.carb],
+        ['sum-sugar', metricViewModel.sugar],
+        ['sum-sodium', metricViewModel.sodium],
+        ['sum-sat-fat', metricViewModel.saturatedFat],
+        ['sum-trans-fat', metricViewModel.transFat],
+        ['sum-fiber', metricViewModel.fiber],
+        ['water-val', metricViewModel.waterTarget]
+    ].forEach(([id, value]) => setTextById(id, value));
 }
 
 function createEmptyMealRow(title, body) {
@@ -123,53 +279,22 @@ function renderCoachCard(viewModel) {
 function renderDashboardSummary(state) {
     const chartData = createDashboardChartsViewModel(state, { range: 7 });
     const targetCalories = Number(state?.targetCalories) || 0;
-
-    // Average calories
-    const weekCals = chartData.weeklyCalories || [];
-    const activeDays = weekCals.filter((d) => d.calories > 0);
-    const avgCal = activeDays.length > 0
-        ? Math.round(activeDays.reduce((s, d) => s + d.calories, 0) / activeDays.length)
-        : 0;
-    const avgCalEl = document.getElementById('dash-avg-cal');
-    if (avgCalEl) avgCalEl.innerText = avgCal > 0 ? `${avgCal}` : '--';
-
-    // On-target days (within 85%-115% of target)
-    const onTarget = targetCalories > 0
-        ? activeDays.filter((d) => d.calories >= targetCalories * 0.85 && d.calories <= targetCalories * 1.15).length
-        : 0;
-    const onTargetEl = document.getElementById('dash-on-target');
-    if (onTargetEl) onTargetEl.innerText = `${onTarget}/7`;
-
-    // Average protein
-    const proteinData = chartData.proteinTrend || [];
-    const activeProtein = proteinData.filter((d) => d.protein > 0);
-    const avgProtein = activeProtein.length > 0
-        ? Math.round(activeProtein.reduce((s, d) => s + d.protein, 0) / activeProtein.length)
-        : 0;
-    const avgProteinEl = document.getElementById('dash-avg-protein');
-    if (avgProteinEl) avgProteinEl.innerText = avgProtein > 0 ? `${avgProtein}g` : '--';
-
-    // Streak from pet progress
     const pet = createPetViewModel(state);
-    const streak = pet.progress?.streak || 0;
-    const streakEl = document.getElementById('dash-streak');
-    if (streakEl) streakEl.innerText = String(streak);
+    const metrics = buildDashboardSummaryMetrics(chartData, targetCalories, pet);
 
-    // Pet stats card
-    const levelEl = document.getElementById('pet-stats-level');
-    if (levelEl) levelEl.innerText = `Lv.${pet.progress?.level || 1}`;
+    [
+        ['dash-avg-cal', metrics.averageCalories > 0 ? `${metrics.averageCalories}` : '--'],
+        ['dash-on-target', `${metrics.onTargetDays}/7`],
+        ['dash-avg-protein', metrics.averageProtein > 0 ? `${metrics.averageProtein}g` : '--'],
+        ['dash-streak', String(metrics.streak)],
+        ['pet-stats-level', `Lv.${metrics.level}`]
+    ].forEach(([id, value]) => setTextById(id, value));
 
-    const xp = pet.progress?.xp || 0;
-    const xpFill = document.getElementById('pet-stat-xp-fill');
-    if (xpFill) xpFill.style.width = `${Math.min(xp % 100, 100)}%`;
-
-    const energy = pet.progress?.energy || 0;
-    const energyFill = document.getElementById('pet-stat-energy-fill');
-    if (energyFill) energyFill.style.width = `${Math.min(energy, 100)}%`;
-
-    const bond = pet.progress?.bond || 0;
-    const bondFill = document.getElementById('pet-stat-bond-fill');
-    if (bondFill) bondFill.style.width = `${Math.min(bond, 100)}%`;
+    [
+        ['pet-stat-xp-fill', metrics.xpWidth],
+        ['pet-stat-energy-fill', metrics.energyWidth],
+        ['pet-stat-bond-fill', metrics.bondWidth]
+    ].forEach(([id, value]) => setWidthById(id, value));
 }
 
 function renderMealRhythmCard(cardId, state = getAppState(), variant = 'home') {
@@ -451,98 +576,17 @@ export function renderListAndStats(viewModel = createDailyViewModel(getAppState(
     const t = getTexts();
     const extra = getExtraUiText(viewModel.lang);
     const state = getAppState();
+    renderDailySurface(viewModel, extra, t);
+    renderCompanionSurface(state, viewModel);
+}
 
-    ['breakfast', 'lunch', 'dinner', 'snack'].forEach((type) => {
-        clearElement(document.getElementById(`list-${type}`));
-    });
+function renderDailySurface(viewModel, extra, t) {
+    renderMealListRows(viewModel, extra, t);
+    renderMealProgressCards(viewModel);
+    renderDailySummaryMetrics(viewModel);
+}
 
-    viewModel.foodItems.forEach((item, index) => {
-        const n = item.nutri || {};
-
-        const info = createElement('div', {
-            className: 'food-info',
-            style: { cursor: 'pointer' }
-        });
-        info.addEventListener('click', () => showDetailModal(index));
-        info.appendChild(createElement('div', { className: 'name', text: item.name || '--' }));
-        info.appendChild(createElement('div', {
-            className: 'detail',
-            text: formatNutritionInline(n, t)
-        }));
-
-        const actionWrap = createElement('div', {
-            style: { display: 'flex', gap: '5px' }
-        });
-
-        const favBtn = createElement('button', {
-            className: 'btn-delete',
-            text: t.btnFavSave || 'Save',
-            style: { backgroundColor: '#ff7675' }
-        });
-        favBtn.addEventListener('click', () => uiActions.addRecordToFav?.(index));
-
-        const deleteBtn = createElement('button', {
-            className: 'btn-delete',
-            text: 'X'
-        });
-        deleteBtn.addEventListener('click', () => uiActions.deleteItem?.(index));
-
-        actionWrap.appendChild(favBtn);
-        actionWrap.appendChild(deleteBtn);
-
-        const listItem = document.createElement('li');
-        listItem.appendChild(info);
-        listItem.appendChild(actionWrap);
-
-        const listEl = document.getElementById(`list-${item.type}`);
-        if (listEl) listEl.appendChild(listItem);
-    });
-
-    ['breakfast', 'lunch', 'dinner', 'snack'].forEach((type) => {
-        const listEl = document.getElementById(`list-${type}`);
-        if (!listEl || listEl.children.length > 0) return;
-        listEl.appendChild(createEmptyMealRow(extra.emptyMealTitle, extra.emptyMealBody));
-    });
-
-    Object.keys(viewModel.mealTotals).forEach((type) => {
-        const el = document.getElementById(`prog-${type}`);
-        if (el) el.innerText = `${Math.round(viewModel.mealTotals[type])} kcal`;
-
-        // Update mission card state
-        const missionCard = document.querySelector(`.mission-card[data-meal-type="${type}"]`);
-        const progressFill = document.getElementById(`prog-fill-${type}`);
-        if (missionCard) {
-            const mealCal = viewModel.mealTotals[type] || 0;
-            const target = Number(viewModel.targetCalories) || 0;
-            const mealTarget = target > 0 ? target * 0.3 : 500; // rough per-meal target
-            const percent = mealTarget > 0 ? Math.min((mealCal / mealTarget) * 100, 100) : 0;
-
-            missionCard.classList.remove('mission-card--empty', 'mission-card--partial', 'mission-card--complete');
-            if (mealCal <= 0) {
-                missionCard.classList.add('mission-card--empty');
-            } else if (percent >= 80) {
-                missionCard.classList.add('mission-card--complete');
-            } else {
-                missionCard.classList.add('mission-card--partial');
-            }
-
-            if (progressFill) {
-                progressFill.style.width = `${percent}%`;
-            }
-        }
-    });
-
-    document.getElementById('total-cal-display').innerText = Math.round(viewModel.totals.cal);
-    document.getElementById('sum-protein').innerText = roundValue(viewModel.totals.pro).toFixed(1);
-    document.getElementById('sum-fat').innerText = roundValue(viewModel.totals.fat).toFixed(1);
-    document.getElementById('sum-carb').innerText = roundValue(viewModel.totals.carb).toFixed(1);
-    document.getElementById('sum-sugar').innerText = roundValue(viewModel.totals.sugar).toFixed(1);
-    document.getElementById('sum-sodium').innerText = Math.round(viewModel.totals.sod);
-    document.getElementById('sum-sat-fat').innerText = roundValue(viewModel.totals.sat).toFixed(1);
-    document.getElementById('sum-trans-fat').innerText = roundValue(viewModel.totals.trans).toFixed(1);
-    document.getElementById('sum-fiber').innerText = roundValue(viewModel.totals.fiber).toFixed(1);
-    document.getElementById('water-val').innerText = viewModel.waterTarget;
-
+function renderCompanionSurface(state, viewModel) {
     renderCoachCard(viewModel);
     renderMealRhythmCards(state);
     renderDashboardNutritionFocusCard(state);
