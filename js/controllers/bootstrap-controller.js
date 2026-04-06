@@ -58,4 +58,7 @@ export function bootstrapApp() {
     }
 
     scheduleServiceWorkerRegistration();
+
+    // Signal CSS that app is ready (prevents initial load FOUC)
+    document.body.classList.add('app-ready');
 }

@@ -48,6 +48,11 @@
     --lang-modal-bg: #1A1D27; --lang-text: #E2E8F0; --lang-opt-bg: rgba(255,255,255,0.08); --lang-opt-border: rgba(255,255,255,0.12); --lang-cancel-color: #A0AEC0;
     --nav-bg: #1A1D27; --nav-text: #718096; --nav-active: #4CAF7D;
 }
+/* Prevent double-tap zoom on all interactive elements */
+button, a, input, select, textarea, [role="button"], .nav-item, .pet-avatar-img, .qa-btn {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
 body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: var(--spacing-md); padding-bottom: 90px; display: flex; justify-content: center; transition: background-color 0.3s, color 0.3s; }
 .container { max-width: 800px; width: 100%; display: grid; gap: var(--spacing-lg); }
 .card, .pet-card { background: var(--card-bg); border-radius: var(--radius-lg); padding: var(--spacing-lg); box-shadow: 0 1px 3px var(--shadow-color), 0 1px 2px rgba(0,0,0,0.06); transition: background-color 0.3s, box-shadow 0.2s; }
@@ -688,16 +693,19 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
     border: 1px solid var(--border-card);
     cursor: pointer;
     transition: box-shadow 0.2s, transform 0.15s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 .pet-status-bar:active { transform: scale(0.99); }
 .pet-avatar-wrap { flex-shrink: 0; }
 .pet-avatar-ring {
-    width: 52px; height: 52px;
+    width: 72px; height: 72px;
     border-radius: 50%;
     padding: 3px;
     background: conic-gradient(var(--text-tertiary) 0%, var(--text-tertiary) 100%);
     transition: background 0.4s;
     display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 .pet-avatar-ring[data-mood="hungry"] { background: conic-gradient(#A0AEC0 0%, #A0AEC0 100%); }
 .pet-avatar-ring[data-mood="low"] { background: conic-gradient(var(--warm-accent) 0%, var(--warm-accent) 100%); }
@@ -705,7 +713,7 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
 .pet-avatar-ring[data-mood="balanced"] { background: conic-gradient(var(--primary-color) 0%, var(--primary-color) 100%); }
 .pet-avatar-ring[data-mood="full"] { background: conic-gradient(#4299E1 0%, #4299E1 100%); }
 .pet-avatar-img {
-    width: 44px; height: 44px;
+    width: 64px; height: 64px;
     border-radius: 50%;
     object-fit: cover;
     background: var(--card-bg);
@@ -715,17 +723,17 @@ button.btn-delete { width: auto; padding: 4px 10px; background-color: #ff7675; f
     flex: 1; min-width: 0;
 }
 .pet-bar-name {
-    font-size: var(--text-micro);
+    font-size: var(--text-caption);
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--primary-dark);
 }
 .pet-bar-msg {
-    font-size: var(--text-caption);
+    font-size: var(--text-body);
     font-weight: 600;
     color: var(--text-color);
-    margin-top: 2px;
+    margin-top: 3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1041,9 +1049,17 @@ button:active:not(:disabled) {
 }
 
 /* === View Management === */
-.view-section { display: none; animation: fadeIn 0.3s ease; }
+.view-section { display: none; }
 .active-view { display: block; }
+
+/* Only animate after app has initialized (JS adds .app-ready to body) */
+body.app-ready .view-section { animation: fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Prevent FOUC: hide app container until styles are applied */
+.container { opacity: 1; }
+body:not(.app-ready) .container { animation: appReveal 0.15s ease-out forwards; }
+@keyframes appReveal { from { opacity: 0; } to { opacity: 1; } }
 
 /* === Bottom Navigation === */
 .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--nav-bg); box-shadow: 0 -1px 8px rgba(0,0,0,0.04); display: flex; justify-content: space-around; padding: 10px 0 15px 0; z-index: 1000; border-top: 1px solid var(--border-light); backdrop-filter: blur(12px); background: rgba(255,255,255,0.92); }
@@ -1606,14 +1622,46 @@ button:active:not(:disabled) {
 }
 
 @media (max-width: 640px) {
+    .progress-ring-card {
+        padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm);
+    }
+
     .progress-ring-main {
         flex-direction: column;
         text-align: center;
+        gap: var(--spacing-sm);
+    }
+
+    .progress-ring-wrap {
+        width: 120px;
+        height: 120px;
+    }
+
+    .progress-ring-cal {
+        font-size: 1.8rem;
+    }
+
+    .progress-ring-target,
+    .progress-ring-sub {
+        font-size: var(--text-micro);
     }
 
     .progress-ring-status {
         align-items: center;
         text-align: center;
+    }
+
+    .progress-metric-row {
+        gap: var(--spacing-xs);
+        padding-top: var(--spacing-sm);
+    }
+
+    .container {
+        gap: var(--spacing-md);
+    }
+
+    .card, .pet-card {
+        padding: var(--spacing-md);
     }
 
     .nutrition-grid,
