@@ -1,0 +1,383 @@
+:root {
+    --woof-home-bg: #f4f7f2;
+    --woof-home-card: rgba(255, 255, 255, 0.92);
+    --woof-home-card-border: rgba(61, 118, 79, 0.12);
+    --woof-home-text: #25312a;
+    --woof-home-muted: #657268;
+    --woof-home-accent: #57a56d;
+    --woof-home-accent-soft: rgba(87, 165, 109, 0.14);
+    --woof-home-accent-strong: #3d8150;
+    --woof-home-shadow: 0 20px 44px rgba(34, 59, 35, 0.1);
+}
+
+.woof-home {
+    width: min(100%, 840px);
+    margin: 0 auto;
+    padding: 18px 16px 28px;
+    color: var(--woof-home-text);
+}
+
+.woof-home__hero,
+.woof-home__today,
+.woof-home__overview,
+.woof-home__panel {
+    border: 1px solid var(--woof-home-card-border);
+    border-radius: 28px;
+    background: var(--woof-home-card);
+    box-shadow: var(--woof-home-shadow);
+    backdrop-filter: blur(14px);
+}
+
+.woof-home__hero {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.9fr);
+    padding: 22px;
+    margin-bottom: 14px;
+    background:
+        radial-gradient(circle at top right, rgba(87, 165, 109, 0.16), transparent 34%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 246, 0.96));
+}
+
+.woof-home__hero-eyebrow,
+.woof-home__eyebrow,
+.woof-home__hero-companion-chip {
+    color: var(--woof-home-accent-strong);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.woof-home__hero-title {
+    margin: 10px 0 0;
+    font-size: clamp(1.8rem, 4vw, 3.1rem);
+    line-height: 1.04;
+    letter-spacing: -0.04em;
+}
+
+.woof-home__hero-summary {
+    margin: 12px 0 0;
+    max-width: 34ch;
+    color: var(--woof-home-muted);
+    line-height: 1.65;
+}
+
+.woof-home__hero-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.woof-home__action-button {
+    display: grid;
+    gap: 4px;
+    padding: 14px 14px 13px;
+    border: 0;
+    border-radius: 18px;
+    text-align: left;
+    cursor: pointer;
+    color: var(--woof-home-text);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 249, 243, 0.98));
+    box-shadow: inset 0 0 0 1px rgba(75, 128, 92, 0.11);
+    transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.woof-home__action-button:hover,
+.woof-home__action-button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 0 1px rgba(75, 128, 92, 0.22), 0 12px 24px rgba(87, 165, 109, 0.14);
+    outline: none;
+}
+
+.woof-home__action-button--primary {
+    background: linear-gradient(180deg, rgba(87, 165, 109, 0.16), rgba(255, 255, 255, 0.96));
+}
+
+.woof-home__action-label {
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.woof-home__action-hint,
+.woof-home__section-hint,
+.woof-home__metric-detail,
+.woof-home__summary-copy,
+.woof-home__panel-summary,
+.woof-home__insight-detail,
+.woof-home__pet-progress-label {
+    color: var(--woof-home-muted);
+    line-height: 1.55;
+}
+
+.woof-home__hero-companion {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    padding: 18px;
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(87, 165, 109, 0.12), rgba(255, 255, 255, 0.94));
+    border: 1px solid rgba(87, 165, 109, 0.12);
+}
+
+.woof-home__hero-companion-chip {
+    display: inline-flex;
+    width: fit-content;
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: rgba(87, 165, 109, 0.12);
+}
+
+.woof-home__pet-level {
+    font-size: 1.5rem;
+    font-weight: 900;
+}
+
+.woof-home__pet-status {
+    font-weight: 700;
+}
+
+.woof-home__pet-progress {
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(87, 165, 109, 0.12);
+}
+
+.woof-home__pet-progress-fill,
+.woof-home__summary-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #57a56d, #82c68f);
+}
+
+.woof-home__hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.woof-home__hero-meta-item {
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--woof-home-muted);
+    font-size: 0.82rem;
+    box-shadow: inset 0 0 0 1px rgba(87, 165, 109, 0.12);
+}
+
+.woof-home__today,
+.woof-home__overview,
+.woof-home__panel {
+    padding: 18px;
+    margin-top: 14px;
+}
+
+.woof-home__section-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: start;
+    margin-bottom: 14px;
+}
+
+.woof-home__section-title {
+    margin: 4px 0 0;
+    font-size: 1.22rem;
+    line-height: 1.25;
+}
+
+.woof-home__ghost-button {
+    border: 1px solid rgba(87, 165, 109, 0.16);
+    border-radius: 999px;
+    padding: 10px 14px;
+    background: rgba(87, 165, 109, 0.08);
+    color: var(--woof-home-accent-strong);
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.woof-home__metric-grid,
+.woof-home__signal-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.woof-home__metric-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.woof-home__signal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.woof-home__metric-card,
+.woof-home__insight-card {
+    padding: 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(87, 165, 109, 0.12);
+}
+
+.woof-home__meal-list {
+    display: grid;
+    gap: 10px;
+}
+
+.woof-home__meal-group-list {
+    display: grid;
+    gap: 12px;
+}
+
+.woof-home__meal-group {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid rgba(87, 165, 109, 0.12);
+}
+
+.woof-home__meal-group-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: start;
+}
+
+.woof-home__meal-group-meta {
+    margin-top: 4px;
+    color: var(--woof-home-muted);
+    font-size: 0.88rem;
+}
+
+.woof-home__meal-group-total {
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: var(--woof-home-text);
+    white-space: nowrap;
+}
+
+.woof-home__meal-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(87, 165, 109, 0.12);
+}
+
+.woof-home__meal-row-main {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.woof-home__meal-type {
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--woof-home-accent-strong);
+}
+
+.woof-home__meal-name {
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.woof-home__meal-portion,
+.woof-home__meal-group-empty {
+    color: var(--woof-home-muted);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.woof-home__meal-calories {
+    font-size: 0.98rem;
+    font-weight: 800;
+}
+
+.woof-home__empty-state {
+    padding: 16px;
+    border-radius: 20px;
+    border: 1px dashed rgba(87, 165, 109, 0.18);
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.woof-home__empty-title {
+    font-weight: 800;
+}
+
+.woof-home__empty-copy {
+    margin: 6px 0 0;
+    color: var(--woof-home-muted);
+    line-height: 1.55;
+}
+
+.woof-home__metric-value,
+.woof-home__insight-value {
+    font-size: 1.16rem;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.woof-home__metric-label,
+.woof-home__insight-label {
+    margin-top: 8px;
+    color: var(--woof-home-muted);
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.woof-home__metric-detail,
+.woof-home__insight-detail {
+    margin-top: 6px;
+    font-size: 0.92rem;
+}
+
+.woof-home__summary-bar {
+    height: 12px;
+    margin-top: 14px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(87, 165, 109, 0.12);
+}
+
+.woof-home__panel-summary {
+    margin: 0 0 14px;
+}
+
+@media (max-width: 760px) {
+    .woof-home {
+        padding-inline: 12px;
+    }
+
+    .woof-home__hero {
+        grid-template-columns: 1fr;
+    }
+
+    .woof-home__hero-actions,
+    .woof-home__metric-grid,
+    .woof-home__signal-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .woof-home__meal-row {
+        flex-direction: column;
+    }
+
+    .woof-home__meal-group-header {
+        flex-direction: column;
+    }
+
+    .woof-home__meal-group-total {
+        white-space: normal;
+    }
+}

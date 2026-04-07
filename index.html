@@ -26,6 +26,7 @@
     <link rel="icon" type="image/png" href="calorie_icon.png">
     
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="js/react-home/react-home-island.css">
     <style>
         .manual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .manual-grid input { width: 100%; font-size: 14px; }
@@ -97,6 +98,7 @@
         </div>
 
         <div id="onboarding-card" hidden></div>
+        <div id="home-react-root" class="home-react-root" aria-live="polite"></div>
 
         <!-- Progress Ring Card -->
         <div class="progress-ring-card" id="daily-summary-card" role="button" tabindex="0" aria-haspopup="dialog">
@@ -522,7 +524,13 @@
 </div>
 <!-- Original FAB menu removed -> Moved to settings -->
 
+<script>
+    globalThis.process = globalThis.process || {};
+    globalThis.process.env = globalThis.process.env || {};
+    globalThis.process.env.NODE_ENV = globalThis.process.env.NODE_ENV || 'production';
+</script>
 <script type="module" src="js/app.js"></script>
+<script type="module" src="js/react-home/react-home-island.js"></script>
 </body>
 </html>
 

@@ -218,7 +218,9 @@ async function run() {
       }
     }]);
     client.eventListeners.set('Runtime.exceptionThrown', [params => {
-      exceptions.push(params.exceptionDetails?.text || 'Runtime exception');
+      const details = params.exceptionDetails || {};
+      const description = details.exception?.description || details.exception?.value || '';
+      exceptions.push(description || details.text || 'Runtime exception');
     }]);
 
     const targetUrl = URL_ARG ? BASE_URL : `${BASE_URL}/index.html`;
@@ -288,25 +290,44 @@ async function run() {
 
     if (!URL_ARG) {
       const homeQuickState = await client.evaluate(`
-        (() => ({
+        (async () => ({
+          reactHomeStatus: window.__woofReactHomeStatus || '',
+          reactHomeError: window.__woofReactHomeError || '',
+          reactBundleTagPresent: Boolean(document.querySelector('script[src="js/react-home/react-home-island.js"]')),
+          reactBundleRequested: performance.getEntriesByType('resource').some((entry) => entry.name.includes('/js/react-home/react-home-island.js')),
+          reactBundleReachable: await fetch('js/react-home/react-home-island.js', { cache: 'no-store' })
+            .then((response) => response.ok)
+            .catch(() => false),
+          reactHomeMounted: document.getElementById('view-daily')?.classList.contains('react-home-enabled') || false,
+          reactRootVisible: getComputedStyle(document.getElementById('home-react-root')).display !== 'none',
           regionVisible: Boolean(document.querySelector('#view-daily #food-preset-region')),
           manualFieldsOnHome: Boolean(document.querySelector('#view-daily #manual-name')),
-          mealSectionsOnHome: Boolean(document.querySelector('#view-daily #meal-sections-container')),
+          reactMealSectionVisible: Boolean(document.querySelector('#home-react-root .woof-home__meal-group-list, #home-react-root .woof-home__empty-state')),
           coachOnHome: Boolean(document.querySelector('#view-daily #daily-coach-card')),
           weightOnHome: Boolean(document.querySelector('#view-daily #daily-weight-input')),
           homeLogCardPresent: Boolean(document.querySelector('#view-daily .home-log-card')),
+          legacyPetVisible: getComputedStyle(document.getElementById('pet-section')).display !== 'none',
+          legacySummaryVisible: getComputedStyle(document.getElementById('daily-summary-card')).display !== 'none',
+          legacyTodayMealsVisible: getComputedStyle(document.getElementById('today-meals-card')).display !== 'none',
+          legacyQuickActionsVisible: getComputedStyle(document.querySelector('#view-daily .quick-action-strip')).display !== 'none',
           launcherCount: document.querySelectorAll('#home-log-modal .home-log-launcher-card').length
         }))()
       `);
+      assert(homeQuickState.reactHomeMounted, `Home React island should mount into the live daily shell. Status: ${homeQuickState.reactHomeStatus}. Error: ${homeQuickState.reactHomeError}. Tag: ${homeQuickState.reactBundleTagPresent}. Requested: ${homeQuickState.reactBundleRequested}. Reachable: ${homeQuickState.reactBundleReachable}. Console: ${consoleErrors.join(' | ')}. Exceptions: ${exceptions.join(' | ')}`);
+      assert(homeQuickState.reactRootVisible, `Home React root should be visible after mount. Status: ${homeQuickState.reactHomeStatus}. Error: ${homeQuickState.reactHomeError}. Tag: ${homeQuickState.reactBundleTagPresent}. Requested: ${homeQuickState.reactBundleRequested}. Reachable: ${homeQuickState.reactBundleReachable}. Console: ${consoleErrors.join(' | ')}. Exceptions: ${exceptions.join(' | ')}`);
       assert(!homeQuickState.regionVisible, 'Home should not expose the preset region selector.');
       assert(!homeQuickState.manualFieldsOnHome, 'Home should not expose advanced manual input fields.');
-      assert(homeQuickState.mealSectionsOnHome, 'Home should render today meal sections inline.');
+      assert(homeQuickState.reactMealSectionVisible, 'Home should render today meals from the React island.');
       assert(!homeQuickState.coachOnHome, 'Home should not keep the coach card inline.');
       assert(!homeQuickState.weightOnHome, 'Home should not keep the weight editor inline.');
       assert(!homeQuickState.homeLogCardPresent, 'Home should not keep a dedicated logging card.');
+      assert(!homeQuickState.legacyPetVisible, 'Legacy pet section should be hidden once the React Home island mounts.');
+      assert(!homeQuickState.legacySummaryVisible, 'Legacy daily summary card should be hidden once the React Home island mounts.');
+      assert(!homeQuickState.legacyTodayMealsVisible, 'Legacy today meals card should be hidden once the React Home island mounts.');
+      assert(!homeQuickState.legacyQuickActionsVisible, 'Legacy quick action strip should be hidden once the React Home island mounts.');
       assert(homeQuickState.launcherCount === 3, `Home log modal should contain 3 logging entry actions, got ${homeQuickState.launcherCount}.`);
 
-      await client.evaluate(`document.getElementById('btn-home-log-hub').click()`);
+      await client.evaluate(`document.querySelector('#home-react-root .woof-home__action-button--primary')?.click()`);
       await delay(200);
       const logHubState = await client.evaluate(`
         (() => ({
@@ -363,15 +384,19 @@ async function run() {
       `);
 
       await client.evaluate(`document.getElementById('btn-quick-add-food-preset').click()`);
-      await delay(300);
-      const presetQuickAddState = await client.evaluate(`
-        (() => ({
-          totalCalories: document.getElementById('total-cal-display').innerText,
-          sugar: document.getElementById('sum-sugar').innerText,
-          todayMealsVisible: Boolean(document.getElementById('today-meals-card')),
-          storedMeals: JSON.parse(localStorage.getItem(\`record_${today}\`) || '[]')
-        }))()
-      `);
+      let presetQuickAddState = null;
+      for (let attempt = 0; attempt < 10; attempt += 1) {
+        await delay(200);
+        presetQuickAddState = await client.evaluate(`
+          (() => ({
+            totalCalories: document.getElementById('total-cal-display').innerText,
+            sugar: document.getElementById('sum-sugar').innerText,
+            reactMealNames: [...document.querySelectorAll('#home-react-root .woof-home__meal-name')].map((node) => node.innerText.trim()),
+            storedMeals: JSON.parse(localStorage.getItem(\`record_${today}\`) || '[]')
+          }))()
+        `);
+        if (presetQuickAddState.reactMealNames.length > 0) break;
+      }
       const expectedPresetCalories = presetModalState.baselineCalories + expectedPresetDraft.calories;
       const expectedPresetSugar = presetModalState.baselineSugar + expectedPresetDraft.sugar;
       assert(
@@ -382,9 +407,12 @@ async function run() {
         Number(presetQuickAddState.sugar) === expectedPresetSugar,
         `Preset quick add should update sugar total to ${expectedPresetSugar}, got ${presetQuickAddState.sugar}.`
       );
-      assert(presetQuickAddState.todayMealsVisible, 'Today meals card should remain visible on Home.');
       const presetRecord = presetQuickAddState.storedMeals.find((item) => item.name === expectedPresetDraft.name) || null;
       assert(Boolean(presetRecord), `Preset quick add should persist the food record. State: ${JSON.stringify(presetQuickAddState)}`);
+      assert(
+        presetQuickAddState.reactMealNames.some((name) => name === expectedPresetDraft.name),
+        `React home meals section should update after preset quick add. State: ${JSON.stringify(presetQuickAddState)}`
+      );
       assert(
         new RegExp(expectedPresetDraft.type || 'snack', 'i').test(presetRecord.type)
         || /Breakfast|早餐|Lunch|午餐|Dinner|晚餐|Snack|點心|榛炲績/i.test(presetRecord.type || ''),
@@ -439,14 +467,14 @@ async function run() {
 
       const dashboardState = await client.evaluate(`
         (() => ({
-          heroActionCount: document.querySelectorAll('#view-daily .quick-action-strip .qa-btn').length,
-          summarySignalCount: document.querySelectorAll('#daily-summary-card .home-signal-card').length,
+          heroActionCount: document.querySelectorAll('#home-react-root .woof-home__action-button').length,
+          summarySignalCount: document.querySelectorAll('#home-react-root .woof-home__overview .woof-home__insight-card').length,
           petSrc: document.getElementById('pet-img')?.getAttribute('src') || '',
           petLoaded: (document.getElementById('pet-img')?.naturalWidth || 0) > 0
         }))()
       `);
       assert(dashboardState.heroActionCount === 3, `Home companion hero should show 3 quick actions, got ${dashboardState.heroActionCount}.`);
-      assert(dashboardState.summarySignalCount === 2, `Daily summary card should show 2 companion signals, got ${dashboardState.summarySignalCount}.`);
+      assert(dashboardState.summarySignalCount >= 2, `React Home overview should show at least 2 insight cards, got ${dashboardState.summarySignalCount}.`);
       assert(dashboardState.petLoaded, `Pet image failed to load: ${dashboardState.petSrc}`);
       assert(/dog_animation\/dog_[a-z]+\.gif$/i.test(dashboardState.petSrc), `Pet image should point to a bundled gif, got ${dashboardState.petSrc}.`);
       results.push('Companion hero and lighter summary render correctly');
