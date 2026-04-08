@@ -6,9 +6,14 @@
   "scripts": {
     "dev:react": "vite --config vite.config.js",
     "build:react": "vite build --config vite.config.js",
+    "build": "npm run build:react:island",
+    "prepreview": "npm run build:react:island",
+    "preview": "node scripts/preview-site.mjs",
     "preview:react": "vite preview --config vite.config.js",
     "build:react-home": "node scripts/build-react-home.mjs",
-    "build:react:island": "npm run build:react-home"
+    "build:react:island": "npm run build:react-home",
+    "test": "node --test",
+    "verify": "npm run build:react:island && npm test"
   },
   "dependencies": {
     "react": "^18.3.1",

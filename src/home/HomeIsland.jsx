@@ -4,6 +4,19 @@ import './home-island.css';
 
 function noop() {}
 
+const PET_FRAME_SOURCES = Object.freeze({
+    hungry: 'dog_animation/dog_sad.gif',
+    low: 'dog_animation/dog_idle.gif',
+    mid: 'dog_animation/dog_walk.gif',
+    balanced: 'dog_animation/dog_happy.gif',
+    full: 'dog_animation/dog_fat.gif',
+    eating: 'dog_animation/dog_eat.gif'
+});
+
+function getPetFrameSource(frameKey = 'low') {
+    return PET_FRAME_SOURCES[frameKey] || PET_FRAME_SOURCES.low;
+}
+
 function MetricCard({ label, value, detail }) {
     return (
         <div className="woof-home__metric-card">
@@ -39,9 +52,7 @@ function MealRow({ name, calories, portion }) {
 function MealGroupCard({ group }) {
     const items = group.items || [];
     const hasItems = items.length > 0;
-    const metaText = hasItems
-        ? `${items.length} · ${group.totalCalories > 0 ? `${Math.round(group.totalCalories)} kcal` : '--'}`
-        : group.emptyText;
+    const metaText = group.metaText || group.emptyText;
 
     return (
         <div className="woof-home__meal-group">
@@ -109,46 +120,31 @@ export function HomeIsland({
     onOpenAI = noop,
     onOpenFavorites = noop,
     onOpenTodayMeals = noop,
-    onOpenRhythm = noop
+    onOpenRhythm = noop,
+    onOpenDailySummary = noop
 }) {
     const model = useHomeIslandState();
-    const { copy, hero, quickLog, overview, rhythm, nutrition, todayMeals, today, companion } = model;
+    const { copy, hero, quickLog, overview, todayMeals, today, companion } = model;
     const overviewSignals = overview.signals || [];
-    const rhythmSignals = rhythm.signals || [];
-    const nutritionSignals = nutrition.signals || [];
     const mealGroups = todayMeals.groups || [];
+    const hasMeals = todayMeals.count > 0;
 
     return (
         <main className="woof-home" data-surface="home">
             <section className="woof-home__hero">
-                <div className="woof-home__hero-copy">
-                    {hero.eyebrow ? <div className="woof-home__hero-eyebrow">{hero.eyebrow}</div> : null}
-                    <h1 className="woof-home__hero-title">{hero.title}</h1>
-                    <p className="woof-home__hero-summary">{hero.summary}</p>
-                    <div className="woof-home__hero-actions">
-                        <QuickActionButton
-                            label={hero.actions.log}
-                            hint={quickLog.title || copy.quickLog}
-                            onClick={onQuickLog}
-                            variant="primary"
-                        />
-                        <QuickActionButton
-                            label={hero.actions.ai}
-                            hint={rhythm.headline || copy.open}
-                            onClick={onOpenAI}
-                        />
-                        <QuickActionButton
-                            label={hero.actions.favorites}
-                            hint={quickLog.favoritesCopy || copy.open}
-                            onClick={onOpenFavorites}
-                        />
-                    </div>
-                </div>
-
                 <aside className="woof-home__hero-companion" aria-label={copy.pet}>
                     <div className="woof-home__hero-companion-chip">{copy.pet}</div>
+                    <div className="woof-home__pet-stage">
+                        <img
+                            className="woof-home__pet-image"
+                            src={getPetFrameSource(companion.pet?.frameKey)}
+                            alt=""
+                            loading="eager"
+                            decoding="async"
+                        />
+                    </div>
                     <div className="woof-home__pet-level">{`Lv.${companion.pet?.progress?.level || 1}`}</div>
-                    <div className="woof-home__pet-status">{companion.pet?.messageKey || 'petMsg1'}</div>
+                    <div className="woof-home__pet-status">{companion.pet?.resolvedMessage || companion.pet?.messageKey || ''}</div>
                     <div className="woof-home__pet-progress" aria-hidden="true">
                         <div
                             className="woof-home__pet-progress-fill"
@@ -162,29 +158,51 @@ export function HomeIsland({
                         ))}
                     </div>
                 </aside>
+
+                <div className="woof-home__hero-spotlight" aria-hidden="true" />
+                <div className="woof-home__hero-copy">
+                    {hero.eyebrow ? <div className="woof-home__hero-eyebrow">{hero.eyebrow}</div> : null}
+                    <h1 className="woof-home__hero-title">{hero.title}</h1>
+                    <p className="woof-home__hero-summary">{hero.summary}</p>
+                    <div className="woof-home__hero-actions">
+                        <QuickActionButton
+                            label={hero.actions.log}
+                            hint=""
+                            onClick={onQuickLog}
+                            variant="primary"
+                        />
+                        <QuickActionButton
+                            label={hero.actions.ai}
+                            hint=""
+                            onClick={onOpenAI}
+                        />
+                        <QuickActionButton
+                            label={hero.actions.favorites}
+                            hint=""
+                            onClick={onOpenFavorites}
+                        />
+                    </div>
+                </div>
             </section>
 
             <section className="woof-home__today" aria-label={copy.today}>
                 <SectionHeader
                     eyebrow={copy.today}
                     title={copy.today}
-                    hint={quickLog.summary}
+                    hint={todayMeals.dateLabel || quickLog.summary}
+                    action={copy.open}
+                    onAction={onOpenDailySummary}
                 />
                 <div className="woof-home__metric-grid">
                     <MetricCard
                         label={copy.metrics.calories}
                         value={`${today.calories} / ${today.targetCalories}`}
-                        detail={today.targetCalories > 0 ? `${today.remainingCalories} kcal left` : '--'}
+                        detail={today.targetCalories > 0 ? copy.caloriesRemaining(today.remainingCalories) : '--'}
                     />
                     <MetricCard
                         label={copy.metrics.protein}
                         value={`${today.proteinCurrent} / ${today.proteinTarget} g`}
-                        detail={today.proteinRemaining > 0 ? `${today.proteinRemaining} g remaining` : copy.statusOnTrack}
-                    />
-                    <MetricCard
-                        label={copy.metrics.meals}
-                        value={`${today.loggedMeals}/${today.plannedMeals}`}
-                        detail={today.nextMealType || copy.statusKeepGoing}
+                        detail={today.proteinRemaining > 0 ? copy.proteinRemaining(today.proteinRemaining) : copy.proteinOnTrack}
                     />
                 </div>
                 <div className="woof-home__summary-bar" aria-hidden="true">
@@ -193,24 +211,26 @@ export function HomeIsland({
                         style={{ width: `${Math.min(today.calorieProgressPercent, 100)}%` }}
                     />
                 </div>
-            </section>
-
-            <section className="woof-home__panel" aria-label={todayMeals.title}>
-                <SectionHeader
-                    eyebrow={todayMeals.kicker}
-                    title={todayMeals.title}
-                    hint={todayMeals.dateLabel || todayMeals.hint}
-                    action={copy.changeDate}
-                    onAction={onOpenTodayMeals}
-                />
-                {todayMeals.count > 0 ? (
-                    <div className="woof-home__meal-group-list">
-                        {mealGroups.map((group) => (
-                            <MealGroupCard key={group.key} group={group} />
-                        ))}
+                {hasMeals ? (
+                    <div className="woof-home__today-meals">
+                        <div className="woof-home__today-meals-header">
+                            <div>
+                                <div className="woof-home__eyebrow">{todayMeals.kicker}</div>
+                                <div className="woof-home__today-meals-title">{todayMeals.title}</div>
+                            </div>
+                            <button type="button" className="woof-home__ghost-button woof-home__ghost-button--small" onClick={onOpenTodayMeals}>
+                                {copy.changeDate}
+                            </button>
+                        </div>
+                        <p className="woof-home__today-meals-hint">{todayMeals.hint}</p>
+                        <div className="woof-home__meal-group-list">
+                            {mealGroups.map((group) => (
+                                <MealGroupCard key={group.key} group={group} />
+                            ))}
+                        </div>
                     </div>
                 ) : (
-                    <div className="woof-home__empty-state">
+                    <div className="woof-home__empty-state woof-home__today-empty">
                         <div className="woof-home__empty-title">{copy.companion}</div>
                         <p className="woof-home__empty-copy">{todayMeals.hint || quickLog.summary}</p>
                     </div>
@@ -222,50 +242,13 @@ export function HomeIsland({
                     eyebrow={copy.overview}
                     title={overview.title}
                     hint={overview.hint}
+                    action={copy.open}
+                    onAction={onOpenRhythm}
                 />
                 <div className="woof-home__signal-grid">
                     {overviewSignals.map((signal) => (
                         <InsightCard
                             key={signal.label}
-                            label={signal.label}
-                            value={signal.value}
-                            detail={signal.detail}
-                        />
-                    ))}
-                </div>
-            </section>
-
-            <section className="woof-home__panel" aria-label={copy.rhythm}>
-                <SectionHeader
-                    eyebrow={rhythm.subtitle}
-                    title={rhythm.title}
-                    hint={rhythm.headline}
-                    action={copy.open}
-                    onAction={onOpenRhythm}
-                />
-                <p className="woof-home__panel-summary">{rhythm.summary}</p>
-                <div className="woof-home__signal-grid">
-                    {rhythmSignals.map((signal) => (
-                        <InsightCard
-                            key={signal.key}
-                            label={signal.label}
-                            value={signal.text}
-                        />
-                    ))}
-                </div>
-            </section>
-
-            <section className="woof-home__panel" aria-label={copy.nutrition}>
-                <SectionHeader
-                    eyebrow={nutrition.subtitle}
-                    title={nutrition.title}
-                    hint={nutrition.headline}
-                />
-                <p className="woof-home__panel-summary">{nutrition.summary}</p>
-                <div className="woof-home__signal-grid">
-                    {nutritionSignals.map((signal) => (
-                        <InsightCard
-                            key={signal.key}
                             label={signal.label}
                             value={signal.value}
                             detail={signal.detail}

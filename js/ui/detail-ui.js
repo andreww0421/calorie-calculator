@@ -1,88 +1,41 @@
-import { getAppState } from '../state/app-state.js';
-import { createElement, clearElement } from './dom-ui.js';
-import { getTexts } from './shared-ui.js';
-import { createDetailedNutritionPanel, createItemSummaryList, createScoreBadge } from './modal-content-ui.js';
+import { clearDetailSurfaceState, showDailyDetailSurface, showItemDetailSurface } from './detail-surface-bridge.js';
+
+function prepareDetailModalOpen() {
+    const modal = document.getElementById('detail-modal');
+    const reactContent = document.getElementById('detail-react-root');
+
+    if (!modal) return null;
+
+    delete modal.dataset.closingToken;
+    reactContent?.classList.remove('modal-exit');
+    return modal;
+}
 
 export function showDetailModal(index) {
-    const item = getAppState().foodItems[index];
+    const item = window.__woofAppStateBridge?.getAppState?.()?.foodItems?.[index];
     if (item) renderDetailModal(item);
 }
 
 export function showFavDetailModal(index) {
-    const item = getAppState().favoriteFoods[index];
+    const item = window.__woofAppStateBridge?.getAppState?.()?.favoriteFoods?.[index];
     if (item) renderDetailModal(item);
 }
 
 export function renderDetailModal(item) {
-    const t = getTexts();
-    const nd = t.noData || '--';
-    const nutri = item.nutri || {};
-    const content = document.getElementById('detail-content');
-    if (!content) return;
+    const reactRoot = document.getElementById('detail-react-root');
+    if (!reactRoot) return;
 
-    clearElement(content);
-
-    const wrapper = createElement('div', {
-        style: { textAlign: 'left' }
-    });
-
-    wrapper.appendChild(createElement('h3', {
-        text: item.name || nd,
-        style: { margin: '0 0 10px' }
-    }));
-
-    if (Number(item.healthScore) > 0) {
-        wrapper.appendChild(createScoreBadge(item.healthScore, t.healthScoreLabel || 'Health Score'));
-    }
-
-    wrapper.appendChild(createDetailedNutritionPanel(nutri, t, getAppState().curLang, { fallback: nd }));
-
-    const section = createElement('div', { style: { marginTop: '15px' } }, [
-        createElement('strong', { text: t.aiItemsLabel || 'Estimated Food Items' }),
-        createItemSummaryList(item.items, nd)
-    ]);
-    wrapper.appendChild(section);
-
-    content.appendChild(wrapper);
-    document.getElementById('detail-modal').style.display = 'flex';
+    clearDetailSurfaceState();
+    showItemDetailSurface(item);
+    const modal = prepareDetailModalOpen();
+    if (modal) modal.style.display = 'flex';
 }
 
 export function showDailyNutritionSummary(summary) {
     if (!summary) return;
-
-    const t = getTexts();
-    const nd = t.noData || '--';
-    const content = document.getElementById('detail-content');
-    if (!content) return;
-
-    clearElement(content);
-
-    const wrapper = createElement('div', {
-        style: { textAlign: 'left' }
-    });
-
-    wrapper.appendChild(createElement('h3', {
-        text: summary.title || 'Daily Nutrition Summary',
-        style: { margin: '0 0 10px' }
-    }));
-
-    const highlights = createElement('div', { className: 'ai-nutri-grid ai-nutri-grid--summary' });
-    [
-        [summary.goalLabel || 'Goal', summary.goalValue ?? nd],
-        [summary.remainingLabel || 'Remaining', summary.remainingValue ?? nd],
-        [summary.waterLabel || 'Water', summary.waterValue ?? nd]
-    ].forEach(([label, value]) => {
-        highlights.appendChild(createElement('div', { className: 'ai-nutri-item ai-nutri-item--soft' }, [
-            createElement('span', { className: 'ai-n-val', text: String(value) }),
-            createElement('span', { className: 'ai-n-lbl', text: label })
-        ]));
-    });
-
-    wrapper.appendChild(highlights);
-    wrapper.appendChild(createDetailedNutritionPanel(summary.nutri || {}, t, getAppState().curLang, { fallback: nd }));
-
-    content.appendChild(wrapper);
-    document.getElementById('detail-modal').style.display = 'flex';
+    showDailyDetailSurface();
+    const modal = prepareDetailModalOpen();
+    if (modal) modal.style.display = 'flex';
 }
 
 export { renderDetailModal as _renderDetailModal };

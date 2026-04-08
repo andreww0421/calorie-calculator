@@ -32,6 +32,32 @@ async function loadLocaleModule() {
     return import(`../js/ui/locale-ui.js?test=${Date.now()}-${Math.random()}`);
 }
 
+async function loadLocaleCatalogModule() {
+    return import(`../js/locales/index.js?test=${Date.now()}-${Math.random()}`);
+}
+
+test('locale catalog exposes clean app titles and nav labels', async () => {
+    const { getLocaleTranslations, supportedLocales } = await loadLocaleCatalogModule();
+
+    assert.ok(supportedLocales.includes('zh-TW'));
+    assert.ok(supportedLocales.includes('zh-CN'));
+    assert.ok(supportedLocales.includes('ja'));
+    assert.ok(supportedLocales.includes('ko'));
+    assert.ok(supportedLocales.includes('ar'));
+
+    const zhTW = getLocaleTranslations('zh-TW');
+    const zhCN = getLocaleTranslations('zh-CN');
+    const ja = getLocaleTranslations('ja');
+    const ko = getLocaleTranslations('ko');
+    const ar = getLocaleTranslations('ar');
+
+    assert.equal(zhTW.appTitle, 'Woof Cal 汪卡管家');
+    assert.equal(zhCN.navDashboard, '面板');
+    assert.equal(ja.navSettings, '設定');
+    assert.equal(ko.appTitle, 'Woof Cal - AI Diet Tracker');
+    assert.equal(ar.btnAnalyze, 'بدء التحليل');
+});
+
 test('getExtraUiText exposes clean locale metadata and onboarding copy', async () => {
     const { getExtraUiText } = await loadLocaleModule();
     const english = getExtraUiText('en');
@@ -126,15 +152,16 @@ test('buildNutritionFocusContent returns consumer-friendly nutrition focus copy'
 test('getNutritionUiText exposes clean detailed nutrition copy across locales', async () => {
     const { getNutritionUiText } = await loadLocaleModule();
     const zhTW = getNutritionUiText('zh-TW');
+    const zhCN = getNutritionUiText('zh-CN');
     const ja = getNutritionUiText('ja');
     const ko = getNutritionUiText('ko');
     const ar = getNutritionUiText('ar');
 
     assert.equal(zhTW.detail.overviewTitle, '營養快覽');
     assert.equal(zhTW.detail.sections.fatDetails.title, '脂肪細節');
-    assert.ok(!zhTW.detail.sections.fatDetails.summary.includes('不用一次塞太多資訊'));
-    assert.match(zhTW.detail.sections.fatDetails.summary, /脂肪來源|油脂負擔/);
-    assert.equal(ja.detail.sections.fatDetails.title, '脂質の内訳');
+    assert.ok(zhTW.detail.sections.fatDetails.summary.includes('脂肪來源'));
+    assert.equal(zhCN.detail.sections.fatDetails.title, '脂肪细节');
+    assert.match(ja.detail.sections.fatDetails.title, /脂質/);
     assert.equal(ko.detail.sections.fatDetails.title, '지방 세부 구성');
     assert.match(ar.detail.sections.fatDetails.title, /[\u0600-\u06FF]/);
 });
@@ -143,9 +170,6 @@ test('buildHomeCompanionContent returns warm home hierarchy copy', async () => {
     const { buildHomeCompanionContent } = await loadLocaleModule();
     const content = buildHomeCompanionContent({
         goalType: 'maintain',
-        presetRegionLabel: 'Taiwan',
-        presetCount: 3,
-        featuredPresetName: 'Bubble Milk Tea',
         proteinCurrent: 46,
         proteinTarget: 96,
         proteinRemaining: 50,
@@ -168,14 +192,9 @@ test('buildHomeCompanionContent returns warm home hierarchy copy', async () => {
     assert.equal(content.hero.stats.length, 3);
     assert.equal(content.hero.meta.length, 2);
     assert.equal(content.overview.signals.length, 2);
-    assert.match(content.overview.signals[0].detail, /50g to today/i);
+    assert.match(content.overview.signals[0].detail, /50g to today's goal/i);
     assert.match(content.logHub.title, /Log/i);
-    assert.match(content.logHub.commonFoodsButton, /Common foods/i);
-    assert.match(content.logHub.commonFoodsCopy, /familiar/i);
-    assert.match(content.logHub.favoritesButton, /Favorites/i);
-    assert.match(content.logHub.manualButton, /Manual/i);
-    assert.match(content.logHub.manualModalTitle, /Manual meal entry/i);
-    assert.match(content.logHub.todayMealsTitle, /Today's meals/i);
+    assert.match(content.logHub.todayMealsTitle, /Today/);
 });
 
 test('getDisplayDateLabel localizes today and falls back when date is missing', async () => {

@@ -8,7 +8,8 @@ export default function App({
     onOpenAI = noop,
     onOpenFavorites = noop,
     onOpenTodayMeals = noop,
-    onOpenRhythm = noop
+    onOpenRhythm = noop,
+    onOpenDailySummary = noop
 }) {
     return (
         <HomeIsland
@@ -17,6 +18,7 @@ export default function App({
             onOpenFavorites={onOpenFavorites}
             onOpenTodayMeals={onOpenTodayMeals}
             onOpenRhythm={onOpenRhythm}
+            onOpenDailySummary={onOpenDailySummary}
         />
     );
 }

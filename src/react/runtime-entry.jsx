@@ -1,21 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
+import { DetailSurface } from '../detail/index.js';
+import '../detail/detail-surface.css';
 
 window.__woofReactHomeStatus = 'bundle-loaded';
 
-function clickById(id) {
-    return () => {
-        document.getElementById(id)?.click();
+function getUiBridge() {
+    return window.__woofUiBridge || {
+        openHomeLogModal() {},
+        openAIView() {},
+        openFavorites() {},
+        openTodayMealsDatePicker() {},
+        openRhythmView() {},
+        openDailySummaryDetail() {},
+        closeDetailModal() {}
     };
-}
-
-function openTodayMealsDatePicker() {
-    document.getElementById('btn-change-log-date')?.click();
-}
-
-function openRhythmSurface() {
-    document.querySelector('.nav-item[data-target="view-dashboard"]')?.click();
 }
 
 function mountHomeIsland() {
@@ -31,11 +31,12 @@ function mountHomeIsland() {
         ReactDOM.createRoot(rootElement).render(
             <React.StrictMode>
                 <App
-                    onQuickLog={clickById('btn-home-log-hub')}
-                    onOpenAI={clickById('btn-home-ai')}
-                    onOpenFavorites={clickById('btn-home-favorites')}
-                    onOpenTodayMeals={openTodayMealsDatePicker}
-                    onOpenRhythm={openRhythmSurface}
+                    onQuickLog={() => getUiBridge().openHomeLogModal()}
+                    onOpenAI={() => getUiBridge().openAIView()}
+                    onOpenFavorites={() => getUiBridge().openFavorites()}
+                    onOpenTodayMeals={() => getUiBridge().openTodayMealsDatePicker()}
+                    onOpenRhythm={() => getUiBridge().openRhythmView()}
+                    onOpenDailySummary={() => getUiBridge().openDailySummaryDetail()}
                 />
             </React.StrictMode>
         );
@@ -50,8 +51,29 @@ function mountHomeIsland() {
     }
 }
 
+function mountDetailSurface() {
+    const rootElement = document.getElementById('detail-react-root');
+    if (!rootElement || rootElement.dataset.mounted === 'true') return;
+
+    try {
+        rootElement.dataset.mounted = 'true';
+        ReactDOM.createRoot(rootElement).render(
+            <React.StrictMode>
+                <DetailSurface />
+            </React.StrictMode>
+        );
+    } catch (error) {
+        rootElement.dataset.mounted = 'false';
+        console.error('React detail surface mount failed', error);
+    }
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mountHomeIsland, { once: true });
+    document.addEventListener('DOMContentLoaded', () => {
+        mountHomeIsland();
+        mountDetailSurface();
+    }, { once: true });
 } else {
     mountHomeIsland();
+    mountDetailSurface();
 }

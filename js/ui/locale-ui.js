@@ -1,5 +1,5 @@
 import { getLocaleTranslations } from '../locales/index.js';
-import { getHomeUiCopy, hasHomeUiCopy } from '../locales/home-ui-copy.js';
+import { getHomeUiCopy } from '../locales/home-ui-copy.js';
 import { getNutritionUiCopy } from '../locales/nutrition-ui-copy.js';
 import { uiCopyCatalog } from '../locales/ui-copy.js';
 import { getAppState } from '../state/app-state.js';
@@ -33,8 +33,6 @@ export function getGoalSummaryText(goalType = 'lose', lang = getAppState().curLa
 export function buildHomeCompanionContent(viewModel, lang = getAppState().curLang) {
     const copy = getHomeUiCopy(lang);
     const t = getLocaleTranslations(lang);
-    const extra = getExtraUiText(lang);
-    const localizedHomeCopy = hasHomeUiCopy(lang);
     const hasMeals = (viewModel?.mealCoverage?.loggedMeals || 0) > 0;
     const nextMealLabel = t.meals?.[viewModel?.mealCoverage?.nextMealTitleKey || ''] || '';
     const heroSummary = hasMeals
@@ -80,7 +78,7 @@ export function buildHomeCompanionContent(viewModel, lang = getAppState().curLan
             }
         },
         logHub: {
-            title: copy.logHubTitle || copy.quickLogTitle || t.txtRecordTitle || t.recordTitle || 'Log today\'s meals',
+            title: copy.logHubTitle || copy.quickLogTitle || t.txtRecordTitle || t.recordTitle || 'Quick logging',
             summary: hasMeals
                 ? (copy.logHubCopyActive || copy.quickLogCopyActive)
                 : (copy.logHubCopyEmpty || copy.quickLogCopyEmpty),
@@ -89,16 +87,16 @@ export function buildHomeCompanionContent(viewModel, lang = getAppState().curLan
             favoritesButton: copy.logHubFavoritesButton || copy.heroActionFavorites || t.btnFavLoad || 'Favorites',
             favoritesCopy: copy.logHubFavoritesCopy || 'Pick from foods you already save often.',
             manualButton: copy.logHubManualButton || copy.heroActionManual || t.manualLabel || 'Manual entry',
-            manualCopy: copy.logHubManualCopy || 'Open this only when you need to type a custom food or nutrition.',
-            manualModalTitle: copy.manualModalTitle || copy.manualAdvancedTitle || t.manualLabel || 'Advanced manual entry',
-            manualModalHint: copy.manualModalHint || copy.manualAdvancedHint || 'Open only when you need to type a custom food or edit nutrition by hand.',
+            manualCopy: copy.logHubManualCopy || 'Open this only when you need a custom food or detailed nutrition.',
+            manualModalTitle: copy.manualModalTitle || copy.manualAdvancedTitle || t.manualLabel || 'Manual meal entry',
+            manualModalHint: copy.manualModalHint || copy.manualAdvancedHint || 'Use this for custom foods or detailed nutrition edits.',
             todayMealsKicker: copy.todayMealsKicker || copy.heroEyebrowEmpty || 'Daily diary',
             todayMealsTitle: copy.todayMealsTitle || copy.mealListTitle || 'Today\'s meals',
-            todayMealsHint: copy.todayMealsHint || 'Keep meal sections visible here so Home still feels calm.'
+            todayMealsHint: copy.todayMealsHint || 'Keep meals visible without turning Home into a form.'
         },
         overview: {
             title: copy.overviewTitle,
-            hint: localizedHomeCopy ? copy.overviewHint : extra.dailySummaryHint,
+            hint: copy.overviewHint,
             signals: [
                 {
                     label: copy.signals.protein,

@@ -23,21 +23,26 @@ import {
     saveAIResultToFavorites,
     syncManualFoodPresetUI
 } from './record-controller.js';
+import { clearDetailSurfaceState } from '../ui/detail-surface-bridge.js';
+
+function bindEventListener(id, eventName, handler) {
+    document.getElementById(id)?.addEventListener(eventName, handler);
+}
 
 export function setupEventListeners() {
-    document.getElementById('current-date').addEventListener('change', changeDate);
-    document.getElementById('image-upload').addEventListener('change', function onFileChange() {
+    bindEventListener('current-date', 'change', changeDate);
+    bindEventListener('image-upload', 'change', function onFileChange() {
         handleFileSelect(this);
     });
     document.getElementById('ai-text-desc')?.addEventListener('input', syncAnalysisInputState);
     document.getElementById('ai-desc')?.addEventListener('input', syncAnalysisInputState);
-    document.getElementById('btn-take-photo').addEventListener('click', () => {
+    bindEventListener('btn-take-photo', 'click', () => {
         clickFileInput(document.getElementById('image-upload'));
     });
-    document.getElementById('analyze-btn').addEventListener('click', startAnalysis);
-    document.getElementById('btn-add-record').addEventListener('click', addManualFood);
-    document.getElementById('btn-fav-save-main').addEventListener('click', saveToFavorites);
-    document.getElementById('btn-fav-load-main').addEventListener('click', () => openFavModal());
+    bindEventListener('analyze-btn', 'click', startAnalysis);
+    bindEventListener('btn-add-record', 'click', addManualFood);
+    bindEventListener('btn-fav-save-main', 'click', saveToFavorites);
+    bindEventListener('btn-fav-load-main', 'click', () => openFavModal());
     document.getElementById('btn-home-ai')?.addEventListener('click', () => {
         switchView('view-ai');
     });
@@ -46,6 +51,14 @@ export function setupEventListeners() {
     });
     document.getElementById('btn-home-favorites')?.addEventListener('click', () => {
         openFavModal();
+    });
+    document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const quickLogButton = target.closest('.woof-home__action-button--primary');
+        if (!quickLogButton) return;
+        if (!quickLogButton.closest('#home-react-root')) return;
+        openModal('home-log-modal');
     });
     document.getElementById('btn-home-log-close')?.addEventListener('click', () => {
         closeModal('home-log-modal');
@@ -108,12 +121,12 @@ export function setupEventListeners() {
             openManualEntryModal();
         }
     });
-    document.getElementById('meal-mode').addEventListener('change', () => calculateProfile());
+    bindEventListener('meal-mode', 'change', () => calculateProfile());
     document.getElementById('goal-type')?.addEventListener('change', () => calculateProfile());
-    document.getElementById('btn-calc').addEventListener('click', () => calculateProfile());
-    document.getElementById('btn-ai-fav-save').addEventListener('click', saveAIResultToFavorites);
-    document.getElementById('btn-cancel').addEventListener('click', tryCloseAnalysisModal);
-    document.getElementById('btn-fav-close').addEventListener('click', () => {
+    bindEventListener('btn-calc', 'click', () => calculateProfile());
+    bindEventListener('btn-ai-fav-save', 'click', saveAIResultToFavorites);
+    bindEventListener('btn-cancel', 'click', tryCloseAnalysisModal);
+    bindEventListener('btn-fav-close', 'click', () => {
         closeModal('fav-modal');
     });
 
@@ -127,6 +140,7 @@ export function setupEventListeners() {
     const detailCloseBtn = document.getElementById('btn-detail-close');
     if (detailCloseBtn) {
         detailCloseBtn.addEventListener('click', () => {
+            clearDetailSurfaceState();
             closeModal('detail-modal');
         });
     }
@@ -142,17 +156,6 @@ export function setupEventListeners() {
     const petImg = document.getElementById('pet-img');
     if (petImg) petImg.addEventListener('click', petInteraction);
 
-    const dailySummaryCard = document.getElementById('daily-summary-card');
-    if (dailySummaryCard) {
-        dailySummaryCard.addEventListener('click', openDailySummaryDetails);
-        dailySummaryCard.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                openDailySummaryDetails();
-            }
-        });
-    }
-
     document.getElementById('onboarding-card')?.addEventListener('click', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
@@ -167,13 +170,13 @@ export function setupEventListeners() {
     const btnSaveWeight = document.getElementById('btn-save-weight');
     if (btnSaveWeight) btnSaveWeight.addEventListener('click', saveCurrentWeight);
 
-    document.getElementById('btn-toggle-theme-setting').addEventListener('click', toggleTheme);
-    document.getElementById('btn-open-lang-setting').addEventListener('click', openLangModal);
-    document.getElementById('btn-export-setting').addEventListener('click', exportBackup);
-    document.getElementById('import-file').addEventListener('change', function onImportChange() {
+    bindEventListener('btn-toggle-theme-setting', 'click', toggleTheme);
+    bindEventListener('btn-open-lang-setting', 'click', openLangModal);
+    bindEventListener('btn-export-setting', 'click', exportBackup);
+    bindEventListener('import-file', 'change', function onImportChange() {
         handleImportData(this);
     });
-    document.getElementById('btn-lang-cancel').addEventListener('click', () => {
+    bindEventListener('btn-lang-cancel', 'click', () => {
         closeModal('lang-modal');
     });
 

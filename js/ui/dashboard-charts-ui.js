@@ -1,6 +1,7 @@
 import { getAppState } from '../state/app-state.js';
 import { createDashboardChartsViewModel } from '../state/app-selectors.js';
 import { getTexts } from './shared-ui.js';
+import { LocalChart } from './local-chart.js';
 
 export let macroChart = null;
 export let weeklyChart = null;
@@ -8,64 +9,13 @@ export let weightChart = null;
 export let calTrendChart = null;
 export let proteinTrendChart = null;
 export let dashboardChartRange = 7;
+export const dashboardChartRenderer = Object.freeze({
+    name: 'local-canvas',
+    chartType: LocalChart.name,
+    supported: true
+});
 
-let chartLibraryPromise = null;
 let chartsInitialized = false;
-
-const CHART_JS_SRC = 'https://cdn.jsdelivr.net/npm/chart.js';
-
-function loadChartLibrary() {
-    if (typeof globalThis.Chart === 'function') {
-        return Promise.resolve(globalThis.Chart);
-    }
-
-    if (chartLibraryPromise) {
-        return chartLibraryPromise;
-    }
-
-    chartLibraryPromise = new Promise((resolve, reject) => {
-        let script = document.querySelector('script[data-chartjs-loader="true"]');
-
-        const cleanupListeners = () => {
-            script?.removeEventListener('load', handleLoad);
-            script?.removeEventListener('error', handleError);
-        };
-
-        const handleLoad = () => {
-            cleanupListeners();
-            if (typeof globalThis.Chart === 'function') {
-                resolve(globalThis.Chart);
-                return;
-            }
-            chartLibraryPromise = null;
-            reject(new Error('Chart.js loaded without exposing Chart.'));
-        };
-
-        const handleError = () => {
-            cleanupListeners();
-            chartLibraryPromise = null;
-            reject(new Error('Chart.js failed to load.'));
-        };
-
-        if (!script) {
-            script = document.createElement('script');
-            script.src = CHART_JS_SRC;
-            script.async = true;
-            script.dataset.chartjsLoader = 'true';
-            document.head.appendChild(script);
-        }
-
-        if (typeof globalThis.Chart === 'function') {
-            handleLoad();
-            return;
-        }
-
-        script.addEventListener('load', handleLoad);
-        script.addEventListener('error', handleError);
-    });
-
-    return chartLibraryPromise;
-}
 
 function getWeeklyCalories(state = getAppState()) {
     const history = createDashboardChartsViewModel(state).weeklyCalories;
@@ -94,7 +44,7 @@ export async function initCharts() {
         return false;
     }
 
-    const ChartConstructor = await loadChartLibrary();
+    const ChartConstructor = LocalChart;
     if (chartsInitialized) {
         return true;
     }
@@ -304,4 +254,8 @@ export async function ensureDashboardChartsReady() {
     } catch (error) {
         console.error('Dashboard chart initialization failed.', error);
     }
+}
+
+export function getDashboardChartRenderer() {
+    return dashboardChartRenderer;
 }

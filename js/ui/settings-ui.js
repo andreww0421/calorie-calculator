@@ -11,9 +11,6 @@ import { getMealPlan } from '../domain/nutrition-domain.js';
 
 const TEXT_BINDINGS = [
     ['txt-date-label', ({ t }) => t.dateLabel],
-    ['txt-total-intake', ({ t }) => t.totalIntake],
-    ['txt-kcal-unit', () => 'kcal'],
-    ['txt-daily-summary-hint', ({ extra }) => extra.dailySummaryHint],
     ['lbl-pro', ({ t }) => t.pro],
     ['lbl-fat', ({ t }) => t.fat],
     ['lbl-carb', ({ t }) => t.carb],
@@ -80,7 +77,6 @@ const TEXT_BINDINGS = [
     ['nav-daily', ({ t }) => t.navDaily],
     ['nav-dashboard', ({ t }) => t.navDashboard],
     ['nav-settings', ({ t }) => t.navSettings],
-    ['txt-target-cal-display-label', ({ t }) => t.txtTargetCalDisplayUnit],
     ['txt-tdee-unit', ({ t }) => t.txtTdeeUnit],
     ['txt-cal-trend-title', ({ t }) => t.chartCalTrend],
     ['txt-protein-trend-title', ({ t }) => t.chartProteinTrend],

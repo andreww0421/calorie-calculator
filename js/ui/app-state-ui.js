@@ -42,7 +42,6 @@ function syncProfileGoalPresentation(state) {
         if (goalResult) {
             goalResult.style.display = 'none';
         }
-        setTextById('target-cal-display', '--');
         return false;
     }
 

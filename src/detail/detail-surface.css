@@ -1,0 +1,157 @@
+.woof-detail {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(99, 138, 104, 0.18);
+    box-shadow: 0 18px 42px rgba(39, 59, 41, 0.12);
+    backdrop-filter: blur(12px);
+}
+
+.woof-detail__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.woof-detail__header-copy {
+    min-width: 0;
+}
+
+.woof-detail__eyebrow,
+.woof-detail__panel-kicker {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #6d8f72;
+    text-transform: uppercase;
+}
+
+.woof-detail__title {
+    margin: 0.2rem 0 0;
+    font-size: 1.35rem;
+    line-height: 1.15;
+}
+
+.woof-detail__subtitle,
+.woof-detail__panel-summary,
+.woof-detail__section-summary,
+.woof-detail__signal-detail {
+    margin: 0.35rem 0 0;
+    color: #59705d;
+    font-size: 0.96rem;
+    line-height: 1.5;
+}
+
+.woof-detail__close-button {
+    border: 0;
+    border-radius: 999px;
+    padding: 0.7rem 1rem;
+    background: #d8e6d8;
+    color: #2c4230;
+    font-weight: 700;
+}
+
+.woof-detail__summary-grid,
+.woof-detail__metric-grid,
+.woof-detail__signal-grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.woof-detail__summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.woof-detail__metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.woof-detail__signal-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.woof-detail__summary-card,
+.woof-detail__metric-chip,
+.woof-detail__signal-card,
+.woof-detail__section {
+    border-radius: 20px;
+    background: rgba(241, 248, 242, 0.95);
+    border: 1px solid rgba(131, 177, 137, 0.18);
+}
+
+.woof-detail__summary-card,
+.woof-detail__metric-chip,
+.woof-detail__signal-card {
+    padding: 0.9rem;
+}
+
+.woof-detail__summary-value,
+.woof-detail__metric-value,
+.woof-detail__signal-value {
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: #273a2a;
+}
+
+.woof-detail__summary-label,
+.woof-detail__metric-label,
+.woof-detail__signal-label {
+    margin-top: 0.2rem;
+    font-size: 0.82rem;
+    color: #68806c;
+}
+
+.woof-detail__metric-unit {
+    margin-left: 0.2rem;
+    font-size: 0.82em;
+    color: #6d8f72;
+}
+
+.woof-detail__panel {
+    padding: 1rem;
+    border-radius: 24px;
+    background: rgba(248, 251, 248, 0.94);
+    border: 1px solid rgba(131, 177, 137, 0.18);
+}
+
+.woof-detail__panel--focus {
+    background: rgba(245, 249, 246, 0.97);
+}
+
+.woof-detail__panel-head {
+    margin-bottom: 0.9rem;
+}
+
+.woof-detail__panel-title {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.woof-detail__section-list {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.woof-detail__section {
+    padding: 1rem;
+}
+
+.woof-detail__section-title {
+    margin: 0;
+    font-size: 1rem;
+}
+
+@media (max-width: 720px) {
+    .woof-detail__summary-grid,
+    .woof-detail__metric-grid,
+    .woof-detail__signal-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .woof-detail__header {
+        flex-direction: column;
+    }
+}

@@ -13,15 +13,23 @@ export const expectedArtifacts = [
   path.join(outDir, 'react-home-island.css')
 ];
 
+export async function ensureExpectedArtifactsExist(artifacts = expectedArtifacts) {
+  for (const artifact of artifacts) {
+    try {
+      await access(artifact, fsConstants.F_OK);
+    } catch {
+      throw new Error(`Expected React home island artifact was not produced: ${artifact}`);
+    }
+  }
+}
+
 export async function buildReactHomeIsland() {
   await build({
     configFile,
     mode: 'island'
   });
 
-  for (const artifact of expectedArtifacts) {
-    await access(artifact, fsConstants.F_OK);
-  }
+  await ensureExpectedArtifactsExist();
 
   return {
     outDir,

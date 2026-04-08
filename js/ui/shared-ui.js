@@ -52,15 +52,22 @@ export function clearPendingFavoriteIndex() {
 export function closeModal(id) {
     const modal = document.getElementById(id);
     if (!modal) return;
+    const closingToken = `${Date.now()}-${Math.random()}`;
+    modal.dataset.closingToken = closingToken;
     const inner = modal.querySelector('.modal, .modal--sheet, .lang-modal-box');
+    const finalizeClose = () => {
+        if (modal.dataset.closingToken !== closingToken) return;
+        modal.style.display = 'none';
+        delete modal.dataset.closingToken;
+    };
     if (inner) {
         inner.classList.add('modal-exit');
         inner.addEventListener('animationend', () => {
             inner.classList.remove('modal-exit');
-            modal.style.display = 'none';
+            finalizeClose();
         }, { once: true });
     } else {
-        modal.style.display = 'none';
+        finalizeClose();
     }
     if (id === 'favorite-meal-modal') clearPendingFavoriteIndex();
 }
@@ -68,6 +75,7 @@ export function closeModal(id) {
 export function openModal(id) {
     const modal = document.getElementById(id);
     if (!modal) return;
+    delete modal.dataset.closingToken;
     modal.style.display = 'flex';
     const inner = modal.querySelector('.modal, .modal--sheet, .lang-modal-box');
     if (inner) {
