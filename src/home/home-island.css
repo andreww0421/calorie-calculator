@@ -11,15 +11,19 @@
 }
 
 .woof-home {
-    width: min(100%, 840px);
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 16px 14px 24px;
+    padding: 12px 0 24px;
     color: var(--woof-home-text);
 }
 
 .woof-home__hero,
 .woof-home__today,
 .woof-home__overview {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     border: 1px solid var(--woof-home-card-border);
     border-radius: 28px;
     background: var(--woof-home-card);
@@ -271,15 +275,16 @@
 }
 
 .woof-home__metric-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
 }
 
 .woof-home__signal-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
 }
 
 .woof-home__metric-card,
 .woof-home__insight-card {
+    min-width: 0;
     padding: 14px;
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.9);
@@ -325,6 +330,7 @@
 .woof-home__meal-group {
     display: grid;
     gap: 10px;
+    min-width: 0;
     padding: 12px;
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.86);
@@ -355,6 +361,7 @@
     display: flex;
     justify-content: space-between;
     gap: 12px;
+    min-width: 0;
     padding: 12px 14px;
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.9);
@@ -451,7 +458,7 @@
 
 @media (max-width: 760px) {
     .woof-home {
-        padding-inline: 12px;
+        padding: 8px 0 24px;
     }
 
     .woof-home__hero-copy {

@@ -18,6 +18,7 @@ export {
     openDailySummaryDetails,
     updateCharts,
     updateWeightChart,
+    previewWeightChart,
     renderListAndStats,
     macroChart,
     weeklyChart,

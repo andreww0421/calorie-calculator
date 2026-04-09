@@ -1,5 +1,6 @@
 import { createDailyViewModel, getAppState } from '../state/app-state.js';
 import { createPetViewModel } from '../state/pet-selectors.js';
+import { createDashboardChartsViewModel } from '../state/app-selectors.js';
 import { getTexts } from './shared-ui.js';
 import { executeTurnstile, initializeTurnstileWidget } from '../platform.js';
 import { getExtraUiText } from './locale-ui.js';
@@ -9,6 +10,7 @@ import {
     initCharts,
     macroChart,
     proteinTrendChart,
+    previewWeightChart,
     calTrendChart,
     setDashboardChartRange,
     updateChartTheme,
@@ -113,12 +115,15 @@ function renderDailySurface(viewModel, extra, t) {
 }
 
 function renderCompanionSurface(state, viewModel) {
+    const chartData = createDashboardChartsViewModel(state, { range: dashboardChartRange });
     renderCoachCard(viewModel);
     renderMealRhythmCards(state);
     renderDashboardNutritionFocusCard(state);
     renderDashboardSummary(state);
 
-    updateCharts(viewModel.totals);
+    updateCharts(viewModel.totals, chartData);
+    updateTrendCharts(dashboardChartRange, chartData);
+    updateWeightChart(chartData.weightTrend);
     updatePetStatus(createPetViewModel(state));
 }
 
@@ -139,6 +144,7 @@ export {
     updatePetStatus,
     updateTrendCharts,
     updateWeightChart,
+    previewWeightChart,
     weightChart,
     weeklyChart
 };

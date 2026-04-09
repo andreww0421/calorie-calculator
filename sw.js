@@ -1,4 +1,4 @@
-const CACHE_NAME = 'woof-cal-v5';
+const CACHE_NAME = 'woof-cal-v6';
 const APP_SHELL = [
   './',
   './index.html',
@@ -10,8 +10,21 @@ const APP_SHELL = [
   './js/api.js',
   './js/config.js',
   './js/ui.js',
-  './js/utils.js'
+  './js/utils.js',
+  './js/react-home/react-home-island.js',
+  './js/react-home/react-home-island.css'
 ];
+
+function isNetworkFirstAsset(request) {
+  const url = new URL(request.url);
+  const destination = request.destination || '';
+
+  if (destination === 'script' || destination === 'style' || destination === 'worker') {
+    return true;
+  }
+
+  return /\.m?js$|\.css$/i.test(url.pathname);
+}
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -48,6 +61,23 @@ self.addEventListener('fetch', event => {
         return networkResponse;
       } catch (error) {
         return (await caches.match(request)) || (await caches.match('./index.html'));
+      }
+    })());
+    return;
+  }
+
+  if (isNetworkFirstAsset(request)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+
+      try {
+        const networkResponse = await fetch(request);
+        if (networkResponse && networkResponse.ok) {
+          cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+      } catch (error) {
+        return (await cache.match(request)) || Response.error();
       }
     })());
     return;

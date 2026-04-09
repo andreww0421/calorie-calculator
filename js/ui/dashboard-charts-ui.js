@@ -25,6 +25,30 @@ function getWeeklyCalories(state = getAppState()) {
     };
 }
 
+export function buildWeightTrendPreview(weightHistory, {
+    selectedDate = '',
+    previewWeight = null
+} = {}) {
+    if (!Array.isArray(weightHistory)) return [];
+    const normalizedPreview = Number(previewWeight);
+    if (!Number.isFinite(normalizedPreview) || normalizedPreview <= 0) {
+        return [...weightHistory];
+    }
+
+    const dateLabel = String(selectedDate || '').slice(5);
+    let applied = false;
+    const nextHistory = weightHistory.map((item) => {
+        if (item?.date !== dateLabel) return item;
+        applied = true;
+        return {
+            ...item,
+            weight: normalizedPreview
+        };
+    });
+
+    return applied ? nextHistory : [...weightHistory];
+}
+
 export function setDashboardChartRange(days) {
     dashboardChartRange = days;
 }
@@ -58,6 +82,7 @@ export async function initCharts() {
             datasets: [{
                 data: [1, 1, 1],
                 backgroundColor: ['#e0e0e0', '#e0e0e0', '#e0e0e0'],
+                placeholder: true,
                 borderWidth: 2,
                 borderColor: 'var(--card-bg)'
             }]
@@ -218,6 +243,7 @@ export function updateCharts(totalNutri, chartData = createDashboardChartsViewMo
     macroChart.data.datasets[0].backgroundColor = sum === 0
         ? ['#e0e0e0', '#e0e0e0', '#e0e0e0']
         : ['#55efc4', '#ffeaa7', '#74b9ff'];
+    macroChart.data.datasets[0].placeholder = sum === 0;
     macroChart.update();
 
     const weeklyData = {
@@ -236,6 +262,17 @@ export function updateWeightChart(weightHistory = createDashboardChartsViewModel
     weightChart.data.labels = weightHistory.map((item) => item.date);
     weightChart.data.datasets[0].data = weightHistory.map((item) => item.weight);
     weightChart.update();
+}
+
+export function previewWeightChart(previewWeight, {
+    state = getAppState()
+} = {}) {
+    const chartData = createDashboardChartsViewModel(state);
+    const previewHistory = buildWeightTrendPreview(chartData.weightTrend, {
+        selectedDate: state.selectedDate,
+        previewWeight
+    });
+    updateWeightChart(previewHistory);
 }
 
 export function updateMacroChartLanguage(translations) {

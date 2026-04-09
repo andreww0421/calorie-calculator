@@ -2,7 +2,7 @@ import {
     importBackup
 } from '../repositories/backup-repository.js';
 import { saveProfileRecord } from '../repositories/profile-repository.js';
-import { saveWeight } from '../repositories/weight-repository.js';
+import { loadWeight, saveWeight } from '../repositories/weight-repository.js';
 import { reloadApp } from '../platform.js';
 import { showToast } from '../ui.js';
 import { dispatchAppAction } from '../state/app-actions.js';
@@ -68,12 +68,19 @@ export function saveCurrentWeight() {
     if (saveWeight(selectedDate, weightValue)) {
         showToast(t.alertWeightSaved || 'Weight saved.', 'success');
         document.getElementById('weight').value = weightValue;
+        const savedWeight = loadWeight(selectedDate);
         const profile = readProfileForm();
         if (document.getElementById('goal-result')?.style.display === 'block') {
             calculateProfile(true);
+            refreshAppState({
+                loggedWeight: savedWeight
+            }, { reason: 'weight:save' });
         } else {
             saveProfileRecord(profile);
-            refreshAppState({ profile }, { reason: 'weight:save' });
+            refreshAppState({
+                profile,
+                loggedWeight: savedWeight
+            }, { reason: 'weight:save' });
         }
         return true;
     }

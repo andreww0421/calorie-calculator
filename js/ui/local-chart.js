@@ -8,10 +8,14 @@ function prepareCanvas(ctx) {
     const width = Math.max(canvas.clientWidth || canvas.width || 320, 180);
     const height = Math.max(canvas.clientHeight || canvas.height || 200, 140);
 
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    canvas.style.display = 'block';
     canvas.width = Math.round(width * ratio);
     canvas.height = Math.round(height * ratio);
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-    ctx.clearRect(0, 0, width, height);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(ratio, ratio);
 
     return { width, height };
 }
@@ -19,12 +23,19 @@ function prepareCanvas(ctx) {
 function drawBarChart(ctx, data, dataset, size) {
     const values = Array.isArray(dataset?.data) ? dataset.data.map((value) => Number(value) || 0) : [];
     const labels = Array.isArray(data?.labels) ? data.labels : [];
+    if (!values.length) return;
     const maxValue = Math.max(...values, 1);
     const chartHeight = size.height - 44;
     const baseline = size.height - 24;
-    const gap = 10;
-    const barWidth = Math.max((size.width - 36 - gap * Math.max(values.length - 1, 0)) / Math.max(values.length, 1), 18);
+    const gap = values.length >= 21 ? 3 : values.length >= 11 ? 5 : 8;
+    const availableWidth = Math.max(size.width - 36, 24);
+    const barWidth = clamp(
+        (availableWidth - gap * Math.max(values.length - 1, 0)) / Math.max(values.length, 1),
+        4,
+        32
+    );
     const backgroundColor = dataset?.backgroundColor || '#74b9ff';
+    const labelStep = values.length > 14 ? Math.ceil(values.length / 7) : 1;
 
     ctx.fillStyle = 'rgba(120, 132, 122, 0.12)';
     ctx.fillRect(18, baseline, size.width - 36, 1);
@@ -46,13 +57,16 @@ function drawBarChart(ctx, data, dataset, size) {
         ctx.fillStyle = '#657268';
         ctx.font = '12px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(String(labels[index] || ''), x + barWidth / 2, size.height - 8);
+        if (index % labelStep === 0 || index === values.length - 1) {
+            ctx.fillText(String(labels[index] || ''), x + barWidth / 2, size.height - 8);
+        }
     });
 }
 
 function drawLineChart(ctx, data, dataset, size) {
     const values = Array.isArray(dataset?.data) ? dataset.data.map((value) => Number(value) || 0) : [];
     const labels = Array.isArray(data?.labels) ? data.labels : [];
+    if (!values.length) return;
     const maxValue = Math.max(...values, 1);
     const minValue = Math.min(...values, 0);
     const range = Math.max(maxValue - minValue, 1);
@@ -63,6 +77,7 @@ function drawLineChart(ctx, data, dataset, size) {
     const innerWidth = Math.max(right - left, 1);
     const innerHeight = Math.max(bottom - top, 1);
     const step = values.length > 1 ? innerWidth / (values.length - 1) : 0;
+    const labelStep = values.length > 14 ? Math.ceil(values.length / 7) : 1;
     const points = values.map((value, index) => ({
         x: left + step * index,
         y: bottom - ((value - minValue) / range) * innerHeight
@@ -106,22 +121,27 @@ function drawLineChart(ctx, data, dataset, size) {
     ctx.textAlign = 'center';
     labels.forEach((label, index) => {
         const point = points[index];
-        if (point) ctx.fillText(String(label || ''), point.x, size.height - 8);
+        if (point && (index % labelStep === 0 || index === labels.length - 1)) {
+            ctx.fillText(String(label || ''), point.x, size.height - 8);
+        }
     });
 }
 
-function drawDoughnutChart(ctx, dataset, size) {
+function drawDoughnutChart(ctx, data, dataset, size) {
     const values = Array.isArray(dataset?.data) ? dataset.data.map((value) => Number(value) || 0) : [];
-    const total = values.reduce((sum, value) => sum + value, 0) || values.length || 1;
+    const placeholder = Boolean(dataset?.placeholder);
+    const rawTotal = values.reduce((sum, value) => sum + value, 0);
+    const total = rawTotal || values.length || 1;
+    const labels = Array.isArray(data?.labels) ? data.labels : [];
     const colors = Array.isArray(dataset?.backgroundColor) ? dataset.backgroundColor : ['#55efc4', '#ffeaa7', '#74b9ff'];
     const centerX = size.width / 2;
-    const centerY = size.height / 2;
-    const outerRadius = Math.min(size.width, size.height) * 0.34;
+    const centerY = size.height * 0.42;
+    const outerRadius = Math.min(size.width, size.height) * 0.26;
     const innerRadius = outerRadius * 0.58;
     let start = -Math.PI / 2;
 
     values.forEach((value, index) => {
-        const slice = (value / total) * Math.PI * 2;
+        const slice = ((placeholder ? 1 : value) / total) * Math.PI * 2;
         const end = start + slice;
         ctx.fillStyle = colors[index % colors.length];
         ctx.beginPath();
@@ -140,7 +160,26 @@ function drawDoughnutChart(ctx, dataset, size) {
     ctx.fillStyle = '#25312a';
     ctx.font = '700 14px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`${Math.round(total)}`, centerX, centerY + 4);
+    ctx.fillText(`${Math.round(rawTotal)}`, centerX, centerY + 4);
+
+    if (!labels.length) return;
+
+    const legendTop = size.height - 42;
+    const legendWidth = size.width - 32;
+    const legendItemWidth = legendWidth / Math.max(labels.length, 1);
+
+    labels.forEach((label, index) => {
+        const itemCenterX = 16 + legendItemWidth * index + legendItemWidth / 2;
+        ctx.fillStyle = colors[index % colors.length];
+        ctx.beginPath();
+        ctx.arc(itemCenterX - 22, legendTop + 8, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#657268';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(String(label || ''), itemCenterX - 12, legendTop + 12);
+    });
 }
 
 export class LocalChart {
@@ -157,7 +196,7 @@ export class LocalChart {
         const dataset = this.data?.datasets?.[0] || {};
 
         if (this.type === 'doughnut') {
-            drawDoughnutChart(this.ctx, dataset, size);
+            drawDoughnutChart(this.ctx, this.data, dataset, size);
             return;
         }
 

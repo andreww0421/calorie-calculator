@@ -31,6 +31,7 @@
     /* Radius scale */
     --radius-sm: 8px; --radius-md: 14px; --radius-lg: 20px; --radius-xl: 28px; --radius-pill: 999px;
 }
+*, *::before, *::after { box-sizing: border-box; }
 [data-theme="dark"] {
     --primary-color: #4CAF7D; --primary-dark: #5CC98F; --primary-light: rgba(76,175,125,0.15);
     --accent-color: #a29bfe; --accent-light: rgba(162,155,254,0.15);
@@ -53,9 +54,9 @@ button, a, input, select, textarea, [role="button"], .nav-item, .pet-avatar-img 
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 }
-body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: var(--spacing-md); padding-bottom: 90px; display: flex; justify-content: center; transition: background-color 0.3s, color 0.3s; }
-.container { max-width: 800px; width: 100%; display: grid; gap: var(--spacing-lg); }
-.card, .pet-card { background: var(--card-bg); border-radius: var(--radius-lg); padding: var(--spacing-lg); box-shadow: 0 1px 3px var(--shadow-color), 0 1px 2px rgba(0,0,0,0.06); transition: background-color 0.3s, box-shadow 0.2s; }
+body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: var(--spacing-md); padding-bottom: 90px; display: flex; justify-content: center; overflow-x: hidden; transition: background-color 0.3s, color 0.3s; }
+.container { max-width: 800px; width: min(100%, 800px); display: grid; gap: var(--spacing-lg); min-width: 0; margin: 0 auto; }
+.card, .pet-card { width: 100%; max-width: 100%; min-width: 0; background: var(--card-bg); border-radius: var(--radius-lg); padding: var(--spacing-lg); box-shadow: 0 1px 3px var(--shadow-color), 0 1px 2px rgba(0,0,0,0.06); transition: background-color 0.3s, box-shadow 0.2s; }
 
 /* 日期控制區 */
 .date-control { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--text-color); }
@@ -535,8 +536,27 @@ body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; b
 }
 .meal-empty-title { font-weight: 700; color: var(--text-color); }
 .meal-empty-copy { margin-top: 4px; font-size: 0.92em; color: var(--nav-text); }
-.chart-container { position: relative; height: 250px; width: 100%; margin-bottom: 20px; }
-.chart-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+.chart-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+.chart-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100%;
+}
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 20px;
+    align-items: stretch;
+}
 @media (min-width: 600px) { .chart-grid { grid-template-columns: 1fr 1fr; } }
 .meal-section {
     border: 1px solid rgba(76, 175, 125, 0.12);
@@ -1020,8 +1040,9 @@ button:active:not(:disabled) {
 }
 
 /* === View Management === */
-.view-section { display: none; }
+.view-section { display: none; width: 100%; max-width: 100%; min-width: 0; }
 .active-view { display: block; }
+.active-view > * { width: 100%; max-width: 100%; min-width: 0; }
 
 /* Only animate after app has initialized (JS adds .app-ready to body) */
 body.app-ready .view-section { animation: fadeIn 0.3s ease; }
@@ -1178,7 +1199,7 @@ body:not(.app-ready) .container { animation: appReveal 0.15s ease-out forwards; 
 
 .nutrition-focus-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
     gap: 10px;
 }
 
@@ -1392,9 +1413,10 @@ body:not(.app-ready) .container { animation: appReveal 0.15s ease-out forwards; 
 
 .dashboard-summary-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-lg);
+    align-items: stretch;
 }
 
 .dash-tile {
@@ -1407,6 +1429,7 @@ body:not(.app-ready) .container { animation: appReveal 0.15s ease-out forwards; 
     box-shadow: 0 1px 3px var(--shadow-color);
     border: 1px solid var(--border-card);
     transition: transform 0.15s, box-shadow 0.15s;
+    min-width: 0;
 }
 
 .dash-tile:hover {
@@ -1445,6 +1468,7 @@ body:not(.app-ready) .container { animation: appReveal 0.15s ease-out forwards; 
 /* Pet Stats Card (Dashboard) */
 .pet-stats-card {
     margin-bottom: var(--spacing-lg);
+    justify-self: center;
 }
 
 .pet-stats-header {
@@ -1516,6 +1540,8 @@ body:not(.app-ready) .container { animation: appReveal 0.15s ease-out forwards; 
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin: var(--spacing-lg) 0 var(--spacing-sm) 0;
+    width: 100%;
+    max-width: 100%;
 }
 
 /* Weight Input Inline */
@@ -1523,10 +1549,14 @@ body:not(.app-ready) .container { animation: appReveal 0.15s ease-out forwards; 
     display: flex;
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-md);
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
 }
 
 .weight-input-inline input {
     flex: 1;
+    min-width: 0;
     padding: 10px 14px;
     border-radius: var(--radius-md);
     border: 1.5px solid var(--input-border);
@@ -1552,6 +1582,8 @@ body:not(.app-ready) .container { animation: appReveal 0.15s ease-out forwards; 
     cursor: pointer;
     transition: background 0.2s, transform 0.1s;
     white-space: nowrap;
+    width: auto;
+    flex-shrink: 0;
 }
 
 .weight-save-btn:hover { background: var(--primary-dark); }
@@ -1664,6 +1696,14 @@ body:not(.app-ready) .container { animation: appReveal 0.15s ease-out forwards; 
 
     .dash-tile {
         padding: var(--spacing-sm);
+    }
+
+    .weight-input-inline {
+        flex-direction: column;
+    }
+
+    .weight-save-btn {
+        width: 100%;
     }
 }
 
@@ -1829,11 +1869,25 @@ body:not(.app-ready) .container { animation: appReveal 0.15s ease-out forwards; 
 
 #home-react-root {
     display: none;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .react-home-enabled #home-react-root {
     display: block;
     margin-bottom: var(--spacing-lg);
+}
+
+@media (max-width: 900px) {
+    .dashboard-hero {
+        flex-direction: column;
+    }
+
+    .dashboard-status-panel {
+        min-width: 0;
+        width: 100%;
+    }
 }
 
 @media (max-width: 760px) {

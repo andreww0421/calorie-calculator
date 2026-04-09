@@ -4,11 +4,13 @@ import {
     openFavModal,
     openLangModal,
     openDailySummaryDetails,
+    previewWeightChart,
     petInteraction,
     switchView,
     setChartRange,
     toggleTheme
 } from '../ui.js';
+import { getAppState } from '../state/app-state.js';
 import { clickFileInput } from '../platform.js';
 import { exportBackup } from '../repositories/backup-repository.js';
 import { dispatchAppAction } from '../state/app-actions.js';
@@ -169,6 +171,11 @@ export function setupEventListeners() {
 
     const btnSaveWeight = document.getElementById('btn-save-weight');
     if (btnSaveWeight) btnSaveWeight.addEventListener('click', saveCurrentWeight);
+    document.getElementById('daily-weight-input')?.addEventListener('input', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        previewWeightChart(target.value, { state: getAppState() });
+    });
 
     bindEventListener('btn-toggle-theme-setting', 'click', toggleTheme);
     bindEventListener('btn-open-lang-setting', 'click', openLangModal);

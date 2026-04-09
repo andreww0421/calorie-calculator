@@ -260,6 +260,21 @@ export function clearPreviewImage(imageElement) {
 
 export async function registerAppServiceWorker(scriptPath = SERVICE_WORKER_PATH) {
     if (!('serviceWorker' in navigator)) return null;
+    if (typeof location !== 'undefined' && ['127.0.0.1', 'localhost'].includes(location.hostname)) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+
+        if (typeof caches !== 'undefined' && typeof caches.keys === 'function') {
+            const keys = await caches.keys();
+            await Promise.all(
+                keys
+                    .filter((key) => String(key || '').startsWith('woof-cal-'))
+                    .map((key) => caches.delete(key))
+            );
+        }
+
+        return null;
+    }
     return navigator.serviceWorker.register(scriptPath);
 }
 
