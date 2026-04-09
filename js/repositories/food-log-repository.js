@@ -14,14 +14,14 @@ export function saveFoodLog(date, items) {
     saveFoodData(date, items);
 }
 
-export function getFoodCalorieHistory(days = 7) {
-    return getCalorieHistory(days);
+export function getFoodCalorieHistory(days = 7, baseDate) {
+    return getCalorieHistory(days, baseDate);
 }
 
-export function getFoodProteinHistory(days = 7) {
-    return getProteinHistory(days);
+export function getFoodProteinHistory(days = 7, baseDate) {
+    return getProteinHistory(days, baseDate);
 }
 
-export function getFoodLogHistory(days = 7) {
-    return getStoredFoodLogHistory(days);
+export function getFoodLogHistory(days = 7, baseDate) {
+    return getStoredFoodLogHistory(days, baseDate);
 }

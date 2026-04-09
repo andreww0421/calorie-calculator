@@ -26,8 +26,8 @@ function mapTotalsToNutrition(totals = {}) {
     });
 }
 
-function createLoggedNutritionHistory(days = 7) {
-    return getFoodLogHistory(days)
+function createLoggedNutritionHistory(days = 7, baseDate) {
+    return getFoodLogHistory(days, baseDate)
         .map((entry) => {
             const dailyTotals = summarizeNutrition(entry?.items || []);
             return mapTotalsToNutrition(dailyTotals.totals);
@@ -64,7 +64,7 @@ export function createDashboardNutritionFocusViewModel(state = getAppState(), { 
         nutrition,
         ...buildNutritionFocusModel({
             todayNutrition: nutrition,
-            nutritionHistory: createLoggedNutritionHistory(days),
+            nutritionHistory: createLoggedNutritionHistory(days, resolvedState.selectedDate),
             proteinTarget: macroGoals.protein,
             fiberTarget: 25,
             sodiumLimit: 2300

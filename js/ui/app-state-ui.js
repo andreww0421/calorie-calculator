@@ -13,6 +13,7 @@ import {
 import { setLang, setTheme, updateMealUI } from './settings-ui.js';
 import { closeModal } from './shared-ui.js';
 import { renderAnalysisModalState, syncAnalysisView } from './analysis-ui.js';
+import { getLocalDateString } from '../utils.js';
 
 function setInputValue(id, value) {
     const element = document.getElementById(id);
@@ -29,9 +30,27 @@ function setTextById(id, value) {
 }
 
 function applyDateInputs(state) {
+    const today = getLocalDateString();
+    const dateLabel = getDisplayDateLabel(state.selectedDate, state.curLang);
     setInputValue('current-date', state.selectedDate);
-    setTextById('display-date-text', getDisplayDateLabel(state.selectedDate, state.curLang));
+    setTextById('display-date-text', dateLabel);
     setInputValue('daily-weight-input', state.loggedWeight ?? '');
+
+    const currentDateInput = document.getElementById('current-date');
+    if (currentDateInput) {
+        currentDateInput.max = today;
+    }
+
+    const datePickerButton = document.getElementById('btn-change-log-date');
+    if (datePickerButton) {
+        datePickerButton.setAttribute('aria-label', dateLabel);
+        datePickerButton.setAttribute('title', dateLabel);
+    }
+
+    const nextDateButton = document.getElementById('btn-dashboard-date-next');
+    if (nextDateButton) {
+        nextDateButton.disabled = state.selectedDate >= today;
+    }
 }
 
 function syncProfileGoalPresentation(state) {

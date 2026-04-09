@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { getLocalDateString, shiftLocalDateString } from '../js/utils.js';
 
 function createStorageMock() {
     const data = new Map();
@@ -128,4 +129,39 @@ test('app state snapshots clone nutrition data and preserve backward-compatible 
     assert.equal(state.tempAIResult.correctionHistory[0].type, 'item:add');
     assert.equal(state.profile.region, 'hong-kong');
     assert.equal(state.profile.diningOutFrequency, 'often');
+});
+
+test('createDailyViewModel anchors calorie history to the selected date', async () => {
+    const { createDailyViewModel } = await loadAppStateModule();
+    const today = getLocalDateString();
+    const yesterday = shiftLocalDateString(today, -1);
+    const twoDaysAgo = shiftLocalDateString(today, -2);
+
+    globalThis.localStorage.setItem(`record_${today}`, JSON.stringify([{
+        type: 'snack',
+        name: 'Today Override',
+        nutri: { calories: 999 }
+    }]));
+    globalThis.localStorage.setItem(`record_${yesterday}`, JSON.stringify([{
+        type: 'lunch',
+        name: 'Yesterday Lunch',
+        nutri: { calories: 420 }
+    }]));
+    globalThis.localStorage.setItem(`record_${twoDaysAgo}`, JSON.stringify([{
+        type: 'dinner',
+        name: 'Earlier Dinner',
+        nutri: { calories: 610 }
+    }]));
+
+    const viewModel = createDailyViewModel({
+        selectedDate: yesterday,
+        curLang: 'en',
+        currentGoalType: 'maintain',
+        targetCalories: 2200,
+        profile: { weight: '60' },
+        foodItems: JSON.parse(globalThis.localStorage.getItem(`record_${yesterday}`))
+    });
+
+    const recentCalories = viewModel.calorieHistory.slice(-2).map((entry) => entry.calories);
+    assert.deepEqual(recentCalories, [610, 420]);
 });

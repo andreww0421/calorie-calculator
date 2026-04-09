@@ -9,7 +9,7 @@ import { getAppState } from './app-state.js';
 
 export function createPetViewModel(state = getAppState()) {
     const totals = summarizeNutrition(state?.foodItems || []);
-    const calorieHistory = getFoodCalorieHistory(7);
+    const calorieHistory = getFoodCalorieHistory(7, state?.selectedDate);
     const targetCalories = Number(state?.targetCalories) || 0;
     const weightKg = Math.max(0, Number(state?.profile?.weight) || 0);
     const currentGoalType = state?.currentGoalType || 'lose';
@@ -47,4 +47,3 @@ export function createPetCoachingViewModel(state = getAppState()) {
         coach: viewModel.coach
     };
 }
-

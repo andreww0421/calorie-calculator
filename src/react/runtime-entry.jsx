@@ -59,7 +59,7 @@ function mountDetailSurface() {
         rootElement.dataset.mounted = 'true';
         ReactDOM.createRoot(rootElement).render(
             <React.StrictMode>
-                <DetailSurface />
+                <DetailSurface onClose={() => getUiBridge().closeDetailModal()} />
             </React.StrictMode>
         );
     } catch (error) {

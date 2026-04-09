@@ -10,9 +10,9 @@
 }
 
 .woof-detail__header {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: flex-start;
-    justify-content: space-between;
     gap: 1rem;
 }
 
@@ -46,12 +46,20 @@
 }
 
 .woof-detail__close-button {
-    border: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 1px solid rgba(99, 138, 104, 0.16);
     border-radius: 999px;
-    padding: 0.7rem 1rem;
-    background: #d8e6d8;
+    background: rgba(216, 230, 216, 0.82);
     color: #2c4230;
-    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: 1;
+    font-weight: 500;
+    cursor: pointer;
 }
 
 .woof-detail__summary-grid,
@@ -149,9 +157,5 @@
     .woof-detail__metric-grid,
     .woof-detail__signal-grid {
         grid-template-columns: 1fr;
-    }
-
-    .woof-detail__header {
-        flex-direction: column;
     }
 }

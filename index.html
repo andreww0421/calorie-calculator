@@ -76,6 +76,13 @@
     
     <!-- ==================== DASHBOARD VIEW ==================== -->
     <div id="view-dashboard" class="view-section hidden">
+        <div class="dashboard-date-bar">
+            <button type="button" class="dashboard-date-arrow" id="btn-dashboard-date-prev" aria-label="Previous date">&#x2039;</button>
+            <button type="button" class="dashboard-date-display" id="btn-change-log-date" aria-haspopup="dialog" aria-controls="current-date">
+                <span id="display-date-text">今天</span>
+            </button>
+            <button type="button" class="dashboard-date-arrow" id="btn-dashboard-date-next" aria-label="Next date">&#x203A;</button>
+        </div>
 
         <!-- Weekly Summary Grid -->
         <div class="dashboard-summary-grid" id="dashboard-summary-grid">
@@ -277,6 +284,8 @@
     </div>
 </div>
 
+<input type="date" id="current-date" class="today-meals-date-input dashboard-date-input" max="">
+
 <!-- ==================== BOTTOM NAVIGATION BAR ==================== -->
 <nav class="bottom-nav">
     <a href="#" class="nav-item active" data-target="view-daily">
@@ -332,9 +341,8 @@
 </div>
 
 <div class="modal-overlay" id="detail-modal" style="display:none;">
-    <div class="modal">
+    <div class="modal modal--detail">
         <div class="analysis-result" id="detail-react-root"></div>
-        <button id="btn-detail-close" style="margin-top: 15px; background: #95a5a6;">關閉</button>
     </div>
 </div>
 <div class="modal-overlay" id="favorite-meal-modal" style="display:none;">

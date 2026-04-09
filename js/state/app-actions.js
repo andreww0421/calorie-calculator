@@ -8,6 +8,7 @@ import { saveAppLanguage, saveAppTheme } from '../repositories/settings-reposito
 import { getAppState, refreshAppState } from './app-state.js';
 import { cloneNutrition } from '../domain/nutrition-schema.js';
 import { createOnboardingConfig } from '../domain/profile-domain.js';
+import { clampDateString } from '../utils.js';
 import {
     appendAICorrectionHistory,
     createAICorrectionEntry,
@@ -122,10 +123,11 @@ export function dispatchAppAction(type, payload = {}) {
     }
 
     case 'SET_SELECTED_DATE': {
-        const date = String(payload.date || '');
-        if (!date) {
+        const requestedDate = String(payload.date || '').trim();
+        if (!requestedDate) {
             return refreshAppState({}, { reason: 'date:noop' });
         }
+        const date = clampDateString(requestedDate);
 
         return refreshAppState({
             selectedDate: date,

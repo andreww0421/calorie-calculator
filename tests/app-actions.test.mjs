@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { getLocalDateString, shiftLocalDateString } from '../js/utils.js';
 
 function createStorageMock() {
     const data = new Map();
@@ -203,4 +204,14 @@ test('dispatchAppAction updates language, date, foods, favorites, AI draft, and 
     assert.ok(globalThis.localStorage.getItem('myProfile_v5')?.includes('"goalType":"gain"'));
     assert.ok(globalThis.localStorage.getItem('myProfile_v5')?.includes('"region":"singapore"'));
     assert.ok(globalThis.localStorage.getItem('myProfile_v5')?.includes('"diningOutFrequency":"often"'));
+});
+
+test('dispatchAppAction clamps future selected dates back to today', async () => {
+    const { appActions, appState } = await loadModules();
+    const today = getLocalDateString();
+    const tomorrow = shiftLocalDateString(today, 1);
+
+    appActions.dispatchAppAction('SET_SELECTED_DATE', { date: tomorrow });
+
+    assert.equal(appState.getAppState().selectedDate, today);
 });

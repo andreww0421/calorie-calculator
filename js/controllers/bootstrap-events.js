@@ -26,9 +26,27 @@ import {
     syncManualFoodPresetUI
 } from './record-controller.js';
 import { clearDetailSurfaceState } from '../ui/detail-surface-bridge.js';
+import { clampDateString, shiftLocalDateString } from '../utils.js';
 
 function bindEventListener(id, eventName, handler) {
     document.getElementById(id)?.addEventListener(eventName, handler);
+}
+
+function openSelectedDatePicker() {
+    const input = document.getElementById('current-date');
+    if (!input) return;
+    input.focus?.({ preventScroll: true });
+    if (typeof input.showPicker === 'function') {
+        input.showPicker();
+        return;
+    }
+    input.click();
+}
+
+function shiftSelectedDate(offsetDays) {
+    const { selectedDate } = getAppState();
+    const nextDate = clampDateString(shiftLocalDateString(selectedDate, offsetDays));
+    dispatchAppAction('SET_SELECTED_DATE', { date: nextDate });
 }
 
 export function setupEventListeners() {
@@ -85,16 +103,9 @@ export function setupEventListeners() {
     document.getElementById('btn-food-preset-close')?.addEventListener('click', () => {
         closeModal('food-preset-modal');
     });
-    document.getElementById('btn-change-log-date')?.addEventListener('click', () => {
-        const input = document.getElementById('current-date');
-        if (!input) return;
-        input.focus?.({ preventScroll: true });
-        if (typeof input.showPicker === 'function') {
-            input.showPicker();
-            return;
-        }
-        input.click();
-    });
+    document.getElementById('btn-change-log-date')?.addEventListener('click', openSelectedDatePicker);
+    document.getElementById('btn-dashboard-date-prev')?.addEventListener('click', () => shiftSelectedDate(-1));
+    document.getElementById('btn-dashboard-date-next')?.addEventListener('click', () => shiftSelectedDate(1));
     document.getElementById('food-preset-panel')?.addEventListener('change', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;

@@ -154,7 +154,7 @@ export function buildHomeIslandViewModel(state) {
                 ? islandCopy.mealGroupMeta(todayMeals.length, todayMealCalories)
                 : surfaceCopy.mealDiaryHint,
             kicker: todayDateLabel,
-            actionLabel: islandCopy.changeDate,
+            actionLabel: todayDateLabel,
             dateLabel: todayDateLabel,
             count: todayMeals.length,
             totalCalories: todayMealCalories,

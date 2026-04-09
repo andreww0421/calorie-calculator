@@ -140,12 +140,12 @@ export function updateMealUI() {
     const manualSelect = document.getElementById('manual-type');
     const modalBtns = document.getElementById('modal-meal-buttons');
     const favoriteMealBtns = document.getElementById('favorite-meal-buttons');
-    if (!container || !manualSelect || !modalBtns || !favoriteMealBtns || mealPlan.length === 0) return;
+    if ((!container && !manualSelect && !modalBtns && !favoriteMealBtns) || mealPlan.length === 0) return;
 
-    clearElement(container);
-    clearElement(manualSelect);
-    clearElement(modalBtns);
-    clearElement(favoriteMealBtns);
+    if (container) clearElement(container);
+    if (manualSelect) clearElement(manualSelect);
+    if (modalBtns) clearElement(modalBtns);
+    if (favoriteMealBtns) clearElement(favoriteMealBtns);
 
     const MEAL_ICONS = { breakfast: '\u2600', lunch: '\uD83C\uDF1E', dinner: '\uD83C\uDF19', snack: '\u2B50' };
 
@@ -177,20 +177,28 @@ export function updateMealUI() {
             progressTrack,
             createElement('ul', { className: 'meal-list', attrs: { id: `list-${type}` } })
         ]);
-        container.appendChild(section);
+        if (container) {
+            container.appendChild(section);
+        }
 
-        manualSelect.appendChild(createElement('option', {
-            text: title,
-            attrs: { value: type }
-        }));
+        if (manualSelect) {
+            manualSelect.appendChild(createElement('option', {
+                text: title,
+                attrs: { value: type }
+            }));
+        }
 
-        modalBtns.appendChild(createButton(title, () => {
-            uiActions.confirmAddFood?.(type);
-        }, { className: `meal-btn ${type}` }));
+        if (modalBtns) {
+            modalBtns.appendChild(createButton(title, () => {
+                uiActions.confirmAddFood?.(type);
+            }, { className: `meal-btn ${type}` }));
+        }
 
-        favoriteMealBtns.appendChild(createButton(title, () => {
-            confirmFavoriteMeal(type);
-        }, { className: `meal-btn ${type}` }));
+        if (favoriteMealBtns) {
+            favoriteMealBtns.appendChild(createButton(title, () => {
+                confirmFavoriteMeal(type);
+            }, { className: `meal-btn ${type}` }));
+        }
     });
 
     renderManualFoodPresetPanel({

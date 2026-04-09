@@ -8,6 +8,6 @@ export function saveWeight(date, value) {
     return saveWeightData(date, value);
 }
 
-export function getWeightTrend(days = 30) {
-    return getWeightHistory(days);
+export function getWeightTrend(days = 30, baseDate) {
+    return getWeightHistory(days, baseDate);
 }

@@ -214,7 +214,7 @@ export function createDailyViewModel(state = appState) {
         targetCalories: Number(resolvedState.targetCalories) || 0,
         profileWeight,
         waterTarget: Math.round((profileWeight || 60) * 35),
-        calorieHistory: getFoodCalorieHistory(7),
+        calorieHistory: getFoodCalorieHistory(7, resolvedState.selectedDate),
         foodItems: resolvedState.foodItems,
         totals: totals.totals,
         mealTotals: totals.mealTotals

@@ -64,6 +64,66 @@ body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; b
 .date-control label { white-space: nowrap; margin-bottom: 0; }
 .date-control input { padding: 8px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-color); border-radius: 8px; }
 
+.dashboard-date-bar {
+    position: relative;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.dashboard-date-arrow,
+.dashboard-date-display {
+    border: 1px solid var(--input-border);
+    background: var(--card-bg);
+    color: var(--text-color);
+    box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+.dashboard-date-arrow {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 999px;
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.dashboard-date-display {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 0 18px;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.dashboard-date-display::after {
+    content: '▾';
+    font-size: 0.72rem;
+    opacity: 0.65;
+}
+
+.dashboard-date-arrow:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.dashboard-date-input {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
 .dashboard-header {
     background:
         radial-gradient(circle at top right, rgba(255,255,255,0.18), transparent 30%),

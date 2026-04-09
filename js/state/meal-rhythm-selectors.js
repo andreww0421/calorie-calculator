@@ -13,7 +13,7 @@ export function createMealRhythmViewModel(state = getAppState(), { days = 7 } = 
         goalType
     });
     const insights = buildMealRhythmInsights({
-        dayLogs: getFoodLogHistory(days),
+        dayLogs: getFoodLogHistory(days, resolvedState.selectedDate),
         proteinTarget: macroGoals.protein
     });
 

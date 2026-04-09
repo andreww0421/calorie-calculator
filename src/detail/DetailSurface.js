@@ -85,8 +85,10 @@ export function DetailSurface({
                 ? h('button', {
                     type: 'button',
                     className: 'woof-detail__close-button',
-                    onClick: onClose
-                }, model.closeLabel)
+                    onClick: onClose,
+                    'aria-label': model.closeLabel,
+                    title: model.closeLabel
+                }, '\u00d7')
                 : null
         ),
         h(

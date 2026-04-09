@@ -20,14 +20,15 @@ export function selectNutritionTotals(state = getAppState()) {
 
 export function createDashboardChartsViewModel(state = getAppState(), { range = 7, weightDays = 30 } = {}) {
     const totals = selectNutritionTotals(state);
+    const baseDate = state?.selectedDate;
 
     return {
         totals: totals.totals,
         mealTotals: totals.mealTotals,
-        weeklyCalories: getFoodCalorieHistory(7),
-        calorieTrend: getFoodCalorieHistory(range),
-        proteinTrend: getFoodProteinHistory(range),
-        weightTrend: getWeightTrend(weightDays),
+        weeklyCalories: getFoodCalorieHistory(7, baseDate),
+        calorieTrend: getFoodCalorieHistory(range, baseDate),
+        proteinTrend: getFoodProteinHistory(range, baseDate),
+        weightTrend: getWeightTrend(weightDays, baseDate),
         mealRhythm: createMealRhythmViewModel(state, { days: 7 }),
         nutritionFocus: createDashboardNutritionFocusViewModel(state, { days: 7 })
     };

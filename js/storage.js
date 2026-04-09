@@ -1,5 +1,10 @@
 import { APP_SCHEMA_VERSION, STORAGE_SCHEMA_KEY, USAGE_KEY } from './env.js';
-import { getLocalDateString, safeParseJSON } from './utils.js';
+import {
+    clampDateString,
+    getLocalDateString,
+    safeParseJSON,
+    shiftLocalDateString
+} from './utils.js';
 import { hasMeaningfulNutrition, normalizeNutrition } from './domain/nutrition-schema.js';
 import { createIndexedDbStorageAdapterScaffold } from './storage/indexeddb-storage-adapter.js';
 import { createLocalStorageAdapter } from './storage/local-storage-adapter.js';
@@ -118,6 +123,10 @@ function normalizeWeightKey(key) {
         return true;
     }
     return false;
+}
+
+function resolveHistoryAnchorDate(baseDate = getLocalDateString()) {
+    return clampDateString(String(baseDate || getLocalDateString()));
 }
 
 function migrateLegacyProfileKey() {
@@ -247,13 +256,11 @@ export function loadWeightData(date) {
     return Number.isFinite(weight) && weight > 0 ? weight : null;
 }
 
-export function getWeightHistory(days = 30) {
+export function getWeightHistory(days = 30, baseDate = getLocalDateString()) {
     const history = [];
-    const today = new Date();
+    const anchorDate = resolveHistoryAnchorDate(baseDate);
     for (let i = days - 1; i >= 0; i -= 1) {
-        const d = new Date();
-        d.setDate(today.getDate() - i);
-        const dateStr = getLocalDateString(d);
+        const dateStr = shiftLocalDateString(anchorDate, -i);
         history.push({
             date: dateStr.slice(5),
             weight: loadWeightData(dateStr)
@@ -344,13 +351,11 @@ export async function importData(file) {
     return true;
 }
 
-export function getCalorieHistory(days = 7) {
+export function getCalorieHistory(days = 7, baseDate = getLocalDateString()) {
     const history = [];
-    const today = new Date();
+    const anchorDate = resolveHistoryAnchorDate(baseDate);
     for (let i = days - 1; i >= 0; i -= 1) {
-        const d = new Date();
-        d.setDate(today.getDate() - i);
-        const dateStr = getLocalDateString(d);
+        const dateStr = shiftLocalDateString(anchorDate, -i);
         const dayItems = loadFoodData(dateStr);
         let calories = 0;
         dayItems.forEach((item) => {
@@ -361,13 +366,11 @@ export function getCalorieHistory(days = 7) {
     return history;
 }
 
-export function getProteinHistory(days = 7) {
+export function getProteinHistory(days = 7, baseDate = getLocalDateString()) {
     const history = [];
-    const today = new Date();
+    const anchorDate = resolveHistoryAnchorDate(baseDate);
     for (let i = days - 1; i >= 0; i -= 1) {
-        const d = new Date();
-        d.setDate(today.getDate() - i);
-        const dateStr = getLocalDateString(d);
+        const dateStr = shiftLocalDateString(anchorDate, -i);
         const dayItems = loadFoodData(dateStr);
         let protein = 0;
         dayItems.forEach((item) => {
@@ -378,14 +381,12 @@ export function getProteinHistory(days = 7) {
     return history;
 }
 
-export function getFoodLogHistory(days = 7) {
+export function getFoodLogHistory(days = 7, baseDate = getLocalDateString()) {
     const history = [];
-    const today = new Date();
+    const anchorDate = resolveHistoryAnchorDate(baseDate);
 
     for (let i = days - 1; i >= 0; i -= 1) {
-        const d = new Date();
-        d.setDate(today.getDate() - i);
-        const dateStr = getLocalDateString(d);
+        const dateStr = shiftLocalDateString(anchorDate, -i);
         history.push({
             date: dateStr,
             label: dateStr.slice(5),
