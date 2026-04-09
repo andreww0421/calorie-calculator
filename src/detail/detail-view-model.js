@@ -3,7 +3,28 @@ import { buildNutritionFocusContent } from '../../js/ui/locale-ui.js';
 import { buildNutritionDetailModel } from '../../js/domain/nutrition-presentation-domain.js';
 import { createDashboardNutritionFocusViewModel, createDailyNutritionDetailViewModel } from '../../js/state/nutrition-detail-selectors.js';
 import { getAppState } from '../../js/state/app-state.js';
-import { getDisplayDateLabel, getNutritionUiText } from '../../js/ui/locale-ui.js';
+import { getDisplayDateLabel, getExtraUiText, getNutritionUiText } from '../../js/ui/locale-ui.js';
+
+const DAILY_DETAIL_COPY = Object.freeze({
+    en: Object.freeze({
+        title: 'Nutrition summary',
+        summary: 'A calmer read on today\'s macro balance before you plan the next meal.',
+        detailTitle: 'All 8 nutrients',
+        detailSummary: 'Protein, fat, carbs, sugar, sodium, saturated fat, trans fat, and fiber in one place.'
+    }),
+    'zh-TW': Object.freeze({
+        title: '營養摘要',
+        summary: '先看今天三大營養分布，再往下查看完整八大營養攝取。',
+        detailTitle: '八大營養',
+        detailSummary: '蛋白質、脂肪、碳水、糖、鈉、飽和脂肪、反式脂肪與纖維都整理在這裡。'
+    }),
+    'zh-CN': Object.freeze({
+        title: '营养摘要',
+        summary: '先看今天三大营养分布，再往下查看完整八大营养摄取。',
+        detailTitle: '八大营养',
+        detailSummary: '蛋白质、脂肪、碳水、糖、钠、饱和脂肪、反式脂肪与纤维都整理在这里。'
+    })
+});
 
 function toText(value, fallback = '') {
     if (value === null || value === undefined) return fallback;
@@ -28,6 +49,12 @@ function getFieldLabel(field, lang) {
         transFat: t.trans || 'Trans Fat',
         fiber: t.fiber || 'Fiber'
     })[field] || field;
+}
+
+function getDailyDetailCopy(lang = 'en') {
+    return DAILY_DETAIL_COPY[lang]
+        || DAILY_DETAIL_COPY[String(lang || 'en').split('-')[0]]
+        || DAILY_DETAIL_COPY.en;
 }
 
 function toNutritionDetailCards(detail, lang) {
@@ -57,6 +84,8 @@ function buildDailyDetailSurfaceViewModel(resolvedState) {
     const lang = resolvedState.curLang || 'en';
     const ui = getNutritionUiText(lang).detail;
     const t = getLocaleTranslations(lang);
+    const extra = getExtraUiText(lang);
+    const dailyCopy = getDailyDetailCopy(lang);
     const detail = createDailyNutritionDetailViewModel(resolvedState);
     const focus = createDashboardNutritionFocusViewModel(resolvedState, { days: 7 });
     const focusContent = buildNutritionFocusContent(focus, lang);
@@ -64,29 +93,29 @@ function buildDailyDetailSurfaceViewModel(resolvedState) {
     return {
         kind: 'daily-summary',
         lang,
-        title: ui.overviewTitle || 'Nutrition details',
+        title: dailyCopy.title,
         subtitle: getDisplayDateLabel(resolvedState.selectedDate, lang),
-        summary: ui.overviewSummary || '',
+        summary: dailyCopy.summary,
         closeLabel: t.close || 'Close',
-        detailTitle: ui.sections?.quality?.title || 'Core nutrition',
-        detailSummary: ui.sections?.quality?.summary || 'A clearer look at calories, macros, and nutrient quality.',
+        detailTitle: dailyCopy.detailTitle,
+        detailSummary: dailyCopy.detailSummary,
         detail,
         focus,
         summaryCards: [
+            {
+                label: t.cal || 'Calories',
+                value: detail.nutrition?.calories > 0 ? `${detail.nutrition.calories} kcal` : '--'
+            },
             {
                 label: t.goal || 'Goal',
                 value: detail.targetCalories > 0 ? `${detail.targetCalories} kcal` : '--'
             },
             {
-                label: ui.remainingLabel || 'Remaining',
+                label: extra.remainingLabel || 'Remaining',
                 value: detail.targetCalories > 0 ? `${detail.remainingCalories} kcal` : '--'
-            },
-            {
-                label: t.water || 'Water',
-                value: detail.waterTarget > 0 ? `${detail.waterTarget} ml` : '--'
             }
         ],
-        detailCards: toNutritionDetailCards(detail, lang),
+        detailCards: toNutritionDetailCards(detail, lang).filter((card) => card.field !== 'calories'),
         sectionCards: toNutritionSectionCards(detail, lang, ui),
         focusContent,
         focusSignals: (focus.signals || []).map((signal) => ({

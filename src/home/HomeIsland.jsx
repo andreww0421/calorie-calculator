@@ -17,22 +17,58 @@ function getPetFrameSource(frameKey = 'low') {
     return PET_FRAME_SOURCES[frameKey] || PET_FRAME_SOURCES.low;
 }
 
-function MetricCard({ label, value, detail }) {
-    return (
-        <div className="woof-home__metric-card">
-            <div className="woof-home__metric-value">{value}</div>
-            <div className="woof-home__metric-label">{label}</div>
-            {detail ? <div className="woof-home__metric-detail">{detail}</div> : null}
-        </div>
-    );
+function formatDisplayNumber(value) {
+    const normalized = Math.round((Number(value) || 0) * 10) / 10;
+    return Number.isInteger(normalized) ? String(normalized) : normalized.toFixed(1);
 }
 
-function InsightCard({ label, value, detail }) {
+function MacroDonutChart({ segments, centerLabel, centerValue }) {
+    const radius = 44;
+    const circumference = 2 * Math.PI * radius;
+    const total = segments.reduce((sum, segment) => sum + Math.max(Number(segment.value) || 0, 0), 0);
+    const normalizedSegments = total > 0
+        ? segments
+        : segments.map((segment) => ({
+            ...segment,
+            value: 1,
+            isPlaceholder: true
+        }));
+    const normalizedTotal = total > 0 ? total : normalizedSegments.length;
+    let progress = 0;
+
     return (
-        <div className="woof-home__insight-card">
-            <div className="woof-home__insight-label">{label}</div>
-            <div className="woof-home__insight-value">{value}</div>
-            {detail ? <div className="woof-home__insight-detail">{detail}</div> : null}
+        <div className="woof-home__macro-chart" aria-hidden="true">
+            <svg viewBox="0 0 120 120" className="woof-home__macro-chart-svg" role="presentation">
+                <circle
+                    className="woof-home__macro-chart-track"
+                    cx="60"
+                    cy="60"
+                    r={radius}
+                />
+                {normalizedSegments.map((segment) => {
+                    const value = Math.max(Number(segment.value) || 0, 0);
+                    const dash = (value / normalizedTotal) * circumference;
+                    const circle = (
+                        <circle
+                            key={segment.key}
+                            className="woof-home__macro-chart-segment"
+                            cx="60"
+                            cy="60"
+                            r={radius}
+                            stroke={segment.color}
+                            strokeDasharray={`${dash} ${circumference - dash}`}
+                            strokeDashoffset={-progress}
+                            opacity={segment.isPlaceholder ? 0.24 : 1}
+                        />
+                    );
+                    progress += dash;
+                    return circle;
+                })}
+            </svg>
+            <div className="woof-home__macro-chart-center">
+                <div className="woof-home__macro-chart-label">{centerLabel}</div>
+                <div className="woof-home__macro-chart-value">{centerValue}</div>
+            </div>
         </div>
     );
 }
@@ -45,6 +81,26 @@ function MealRow({ name, calories, portion }) {
                 {portion ? <div className="woof-home__meal-portion">{portion}</div> : null}
             </div>
             <div className="woof-home__meal-calories">{calories > 0 ? `${Math.round(calories)} kcal` : '--'}</div>
+        </div>
+    );
+}
+
+function MacroLegendItem({ segment }) {
+    const displayValue = Number(segment.value) > 0
+        ? `${formatDisplayNumber(segment.value)} ${segment.unit}`
+        : '--';
+
+    return (
+        <div className="woof-home__macro-item">
+            <span
+                className="woof-home__macro-swatch"
+                style={{ '--woof-macro-color': segment.color }}
+                aria-hidden="true"
+            />
+            <div className="woof-home__macro-copy">
+                <div className="woof-home__macro-name">{segment.label}</div>
+                <div className="woof-home__macro-value">{displayValue}</div>
+            </div>
         </div>
     );
 }
@@ -120,14 +176,16 @@ export function HomeIsland({
     onOpenAI = noop,
     onOpenFavorites = noop,
     onOpenTodayMeals = noop,
-    onOpenRhythm = noop,
     onOpenDailySummary = noop
 }) {
     const model = useHomeIslandState();
-    const { copy, hero, quickLog, overview, todayMeals, today, companion } = model;
-    const overviewSignals = overview.signals || [];
+    const { copy, dashboard, hero, quickLog, todayMeals, today, companion } = model;
     const mealGroups = todayMeals.groups || [];
     const hasMeals = todayMeals.count > 0;
+    const dashboardMacros = dashboard.macros || [];
+    const dashboardCalories = dashboard.caloriesValue > 0 ? `${Math.round(dashboard.caloriesValue)} kcal` : '--';
+    const dashboardRemaining = today.targetCalories > 0 ? copy.caloriesRemaining(today.remainingCalories) : '--';
+    const dashboardCenterValue = dashboard.caloriesValue > 0 ? `${Math.round(dashboard.caloriesValue)}` : '--';
 
     return (
         <main className="woof-home" data-surface="home">
@@ -185,49 +243,53 @@ export function HomeIsland({
                 </div>
             </section>
 
-            <section className="woof-home__today" aria-label={copy.today}>
+            <section className="woof-home__nutrition" aria-label={dashboard.title}>
                 <SectionHeader
-                    eyebrow={copy.today}
-                    title={copy.today}
-                    hint={todayMeals.dateLabel || quickLog.summary}
+                    eyebrow={dashboard.nutrientCountLabel}
+                    title={dashboard.title}
+                    hint={dashboard.hint}
                     action={copy.open}
                     onAction={onOpenDailySummary}
                 />
-                <div className="woof-home__metric-grid">
-                    <MetricCard
-                        label={copy.metrics.calories}
-                        value={`${today.calories} / ${today.targetCalories}`}
-                        detail={today.targetCalories > 0 ? copy.caloriesRemaining(today.remainingCalories) : '--'}
-                    />
-                    <MetricCard
-                        label={copy.metrics.protein}
-                        value={`${today.proteinCurrent} / ${today.proteinTarget} g`}
-                        detail={today.proteinRemaining > 0 ? copy.proteinRemaining(today.proteinRemaining) : copy.proteinOnTrack}
-                    />
-                </div>
-                <div className="woof-home__summary-bar" aria-hidden="true">
-                    <div
-                        className="woof-home__summary-bar-fill"
-                        style={{ width: `${Math.min(today.calorieProgressPercent, 100)}%` }}
-                    />
-                </div>
-                {hasMeals ? (
-                    <div className="woof-home__today-meals">
-                        <div className="woof-home__today-meals-header">
-                            <div>
-                                <div className="woof-home__eyebrow">{todayMeals.kicker}</div>
-                                <div className="woof-home__today-meals-title">{todayMeals.title}</div>
+                <button type="button" className="woof-home__nutrition-card" onClick={onOpenDailySummary}>
+                    <div className="woof-home__nutrition-layout">
+                        <MacroDonutChart
+                            segments={dashboardMacros}
+                            centerLabel={dashboard.caloriesLabel}
+                            centerValue={dashboardCenterValue}
+                        />
+                        <div className="woof-home__nutrition-copy">
+                            <div className="woof-home__macro-list">
+                                {dashboardMacros.map((segment) => (
+                                    <MacroLegendItem key={segment.key} segment={segment} />
+                                ))}
                             </div>
-                            <button type="button" className="woof-home__ghost-button woof-home__ghost-button--small" onClick={onOpenTodayMeals}>
-                                {copy.changeDate}
-                            </button>
+                            <div className="woof-home__nutrition-meta">
+                                <span className="woof-home__nutrition-pill">{dashboardCalories}</span>
+                                <span className="woof-home__nutrition-pill">{dashboardRemaining}</span>
+                            </div>
+                            <div className="woof-home__nutrition-cta">
+                                <span>{dashboard.cta}</span>
+                                <span className="woof-home__nutrition-cta-arrow" aria-hidden="true">›</span>
+                            </div>
                         </div>
-                        <p className="woof-home__today-meals-hint">{todayMeals.hint}</p>
-                        <div className="woof-home__meal-group-list">
-                            {mealGroups.map((group) => (
-                                <MealGroupCard key={group.key} group={group} />
-                            ))}
-                        </div>
+                    </div>
+                </button>
+            </section>
+
+            <section className="woof-home__today" aria-label={todayMeals.title}>
+                <SectionHeader
+                    eyebrow={todayMeals.kicker}
+                    title={todayMeals.title}
+                    hint={todayMeals.hint}
+                    action={todayMeals.actionLabel}
+                    onAction={onOpenTodayMeals}
+                />
+                {hasMeals ? (
+                    <div className="woof-home__meal-group-list">
+                        {mealGroups.map((group) => (
+                            <MealGroupCard key={group.key} group={group} />
+                        ))}
                     </div>
                 ) : (
                     <div className="woof-home__empty-state woof-home__today-empty">
@@ -235,26 +297,6 @@ export function HomeIsland({
                         <p className="woof-home__empty-copy">{todayMeals.hint || quickLog.summary}</p>
                     </div>
                 )}
-            </section>
-
-            <section className="woof-home__overview" aria-label={copy.overview}>
-                <SectionHeader
-                    eyebrow={copy.overview}
-                    title={overview.title}
-                    hint={overview.hint}
-                    action={copy.open}
-                    onAction={onOpenRhythm}
-                />
-                <div className="woof-home__signal-grid">
-                    {overviewSignals.map((signal) => (
-                        <InsightCard
-                            key={signal.label}
-                            label={signal.label}
-                            value={signal.value}
-                            detail={signal.detail}
-                        />
-                    ))}
-                </div>
             </section>
         </main>
     );

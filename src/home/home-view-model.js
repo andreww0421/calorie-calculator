@@ -7,10 +7,47 @@ import {
 import { createHomeCompanionViewModel } from '../../js/state/app-selectors.js';
 
 const MEAL_ORDER = ['breakfast', 'lunch', 'dinner', 'snack'];
+const HOME_SURFACE_COPY = Object.freeze({
+    en: Object.freeze({
+        nutritionSummaryTitle: 'Nutrition summary',
+        nutritionSummaryHint: 'See today\'s macro balance at a glance, then open all 8 nutrients.',
+        nutritionSummaryCta: 'Open the full nutrient summary',
+        mealDiaryTitle: 'Meal diary',
+        mealDiaryHint: 'Meals you log stay organized here so Home stays easy to scan.',
+        nutrientCountLabel: '8 nutrients'
+    }),
+    'zh-TW': Object.freeze({
+        nutritionSummaryTitle: '營養摘要',
+        nutritionSummaryHint: '先用圓餅圖看今天三大營養，點開可看完整八大營養。',
+        nutritionSummaryCta: '點開查看完整八大營養',
+        mealDiaryTitle: '餐點日記',
+        mealDiaryHint: '記錄過的餐點會整理在這裡，首頁不用變成表單。',
+        nutrientCountLabel: '八大營養'
+    }),
+    'zh-CN': Object.freeze({
+        nutritionSummaryTitle: '营养摘要',
+        nutritionSummaryHint: '先用圆饼图看今天三大营养，点开可看完整八大营养。',
+        nutritionSummaryCta: '点开查看完整八大营养',
+        mealDiaryTitle: '饮食日记',
+        mealDiaryHint: '记录过的餐点会整理在这里，首页不用变成表单。',
+        nutrientCountLabel: '八大营养'
+    })
+});
 
 function toSafeText(value, fallback = '') {
     if (value === null || value === undefined) return fallback;
     return String(value);
+}
+
+function roundDisplayValue(value, digits = 1) {
+    const factor = 10 ** digits;
+    return Math.round((Number(value) || 0) * factor) / factor;
+}
+
+function getHomeSurfaceCopy(lang = 'en') {
+    return HOME_SURFACE_COPY[lang]
+        || HOME_SURFACE_COPY[String(lang || 'en').split('-')[0]]
+        || HOME_SURFACE_COPY.en;
 }
 
 function getMealTypeLabel(type, lang) {
@@ -43,6 +80,7 @@ export function buildHomeIslandViewModel(state) {
     const t = getLocaleTranslations(companion.lang);
     const homeCopy = buildHomeCompanionContent(companion, companion.lang);
     const islandCopy = getHomeUiCopy(companion.lang);
+    const surfaceCopy = getHomeSurfaceCopy(companion.lang);
     const heroStats = homeCopy.hero?.stats || [];
     const heroMeta = homeCopy.hero?.meta || [];
 
@@ -63,6 +101,11 @@ export function buildHomeIslandViewModel(state) {
     }).filter((item) => item.name || item.calories > 0);
 
     const todayMealGroups = buildTodayMealGroups(todayMeals, companion.lang, islandCopy.emptyMeal);
+    const todayDateLabel = getDisplayDateLabel(state.selectedDate, companion.lang);
+    const todayMealCalories = todayMeals.reduce((sum, item) => sum + item.calories, 0);
+    const proteinValue = roundDisplayValue(companion.daily?.totals?.pro, 1);
+    const fatValue = roundDisplayValue(companion.daily?.totals?.fat, 1);
+    const carbValue = roundDisplayValue(companion.daily?.totals?.carb, 1);
 
     return {
         companion: {
@@ -106,12 +149,51 @@ export function buildHomeIslandViewModel(state) {
             }))
         },
         todayMeals: {
-            title: toSafeText(homeCopy.logHub?.todayMealsTitle, islandCopy.today),
-            hint: toSafeText(homeCopy.logHub?.todayMealsHint, ''),
-            kicker: toSafeText(homeCopy.logHub?.todayMealsKicker, islandCopy.today),
-            dateLabel: getDisplayDateLabel(state.selectedDate, companion.lang),
+            title: surfaceCopy.mealDiaryTitle,
+            hint: todayMeals.length > 0
+                ? islandCopy.mealGroupMeta(todayMeals.length, todayMealCalories)
+                : surfaceCopy.mealDiaryHint,
+            kicker: todayDateLabel,
+            actionLabel: islandCopy.changeDate,
+            dateLabel: todayDateLabel,
             count: todayMeals.length,
+            totalCalories: todayMealCalories,
             groups: todayMealGroups
+        },
+        dashboard: {
+            title: surfaceCopy.nutritionSummaryTitle,
+            hint: surfaceCopy.nutritionSummaryHint,
+            cta: surfaceCopy.nutritionSummaryCta,
+            nutrientCountLabel: surfaceCopy.nutrientCountLabel,
+            caloriesLabel: t.cal || islandCopy.metrics?.calories || 'Calories',
+            caloriesValue: Number(companion.daily?.totals?.cal) || 0,
+            remainingCalories: Number(companion.remainingCalories) || 0,
+            macros: [
+                {
+                    key: 'protein',
+                    label: t.pro || 'Protein',
+                    shortLabel: t.pro || 'Protein',
+                    value: proteinValue,
+                    unit: 'g',
+                    color: '#57a56d'
+                },
+                {
+                    key: 'fat',
+                    label: t.fat || 'Fat',
+                    shortLabel: t.fat || 'Fat',
+                    value: fatValue,
+                    unit: 'g',
+                    color: '#f0b95d'
+                },
+                {
+                    key: 'carbohydrate',
+                    label: t.carb || 'Carb',
+                    shortLabel: t.carb || 'Carb',
+                    value: carbValue,
+                    unit: 'g',
+                    color: '#79aef7'
+                }
+            ]
         },
         today: {
             calories: Number(companion.daily?.totals?.cal) || 0,
