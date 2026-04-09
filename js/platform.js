@@ -146,6 +146,7 @@ export async function initializeTurnstileWidget(selector = TURNSTILE_WIDGET_SELE
                     callback: (token) => {
                         turnstileState.isExecuting = false;
                         turnstileState.lastToken = String(token || '');
+                        window.onTurnstileSuccess?.(turnstileState.lastToken);
                     },
                     'expired-callback': () => {
                         turnstileState.isExecuting = false;
@@ -208,7 +209,14 @@ export function refreshTurnstile(selector = TURNSTILE_WIDGET_SELECTOR) {
     executeTurnstile(selector);
 }
 
-export function registerTurnstileCallbacks({ onTimeout, onError } = {}) {
+export function registerTurnstileCallbacks({ onSuccess, onTimeout, onError } = {}) {
+    window.onTurnstileSuccess = (token) => {
+        turnstileState.isExecuting = false;
+        turnstileState.lastToken = String(token || '');
+        if (typeof onSuccess === 'function') onSuccess(turnstileState.lastToken);
+        return true;
+    };
+
     window.onTurnstileTimeout = () => {
         turnstileState.isExecuting = false;
         turnstileState.lastToken = '';

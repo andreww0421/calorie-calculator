@@ -22,6 +22,8 @@ import { trackAiAnalysisFailed, trackAiAnalysisStarted } from '../analytics/prod
 
 const isDev = isDevMode();
 let cooldownTimer = null;
+let pendingAnalysisRequest = null;
+let isResumingPendingAnalysis = false;
 
 function setAnalysisFlow(flow, reason = 'analysis:state') {
     dispatchAppAction('SET_ANALYSIS_FLOW', { flow, reason });
@@ -38,6 +40,54 @@ function readAnalysisInputs() {
         textDesc: textOnlyInput ? textOnlyInput.value.trim() : '',
         imageDesc: imageDescInput ? imageDescInput.value.trim() : ''
     };
+}
+
+function createAnalysisRequestSnapshot({ file = null, textDesc = '', imageDesc = '' } = {}) {
+    return {
+        file: file || null,
+        textDesc: String(textDesc || ''),
+        imageDesc: String(imageDesc || ''),
+        source: file ? 'image' : (textDesc || imageDesc ? 'text' : 'none')
+    };
+}
+
+function matchesAnalysisRequestInputs(request, { file = null, textDesc = '', imageDesc = '' } = {}) {
+    if (!request) return false;
+    return request.file === (file || null)
+        && request.textDesc === String(textDesc || '')
+        && request.imageDesc === String(imageDesc || '');
+}
+
+function clearPendingAnalysisRequest() {
+    pendingAnalysisRequest = null;
+}
+
+function storePendingAnalysisRequest(request) {
+    pendingAnalysisRequest = request
+        ? {
+            file: request.file || null,
+            textDesc: String(request.textDesc || ''),
+            imageDesc: String(request.imageDesc || ''),
+            source: String(request.source || 'none')
+        }
+        : null;
+}
+
+function discardPendingAnalysisRequestIfStale(inputs = readAnalysisInputs()) {
+    if (!pendingAnalysisRequest) return false;
+    if (matchesAnalysisRequestInputs(pendingAnalysisRequest, inputs)) return false;
+    clearPendingAnalysisRequest();
+    return true;
+}
+
+function clearAnalysisSoftError(inputs = readAnalysisInputs(), reason = 'analysis:ready') {
+    const hasContent = Boolean(inputs.file || inputs.textDesc || inputs.imageDesc);
+    setAnalysisFlow({
+        status: hasContent ? 'ready' : 'idle',
+        source: inputs.file ? 'image' : (inputs.textDesc || inputs.imageDesc ? 'text' : 'none'),
+        isSoftError: false,
+        lastError: ''
+    }, reason);
 }
 
 function resetAnalysisInputs() {
@@ -133,14 +183,119 @@ function syncTurnstileAvailability(errorCode = '') {
     }, 'analysis:turnstile-ready');
 }
 
+function runAnalysisRequest(request) {
+    if (request.file) {
+        const finalDesc = request.imageDesc + (request.textDesc ? ` ${request.textDesc}` : '');
+        return toBase64(request.file)
+            .then((base64) => callCloudflareAI(base64, finalDesc, request.file.type || 'image/jpeg'));
+    }
+
+    return callCloudflareAIText(request.textDesc);
+}
+
+function shouldTrackAnalysisFailure(error) {
+    return String(error?.message || '') !== 'Turnstile_Pending';
+}
+
+async function executeAnalysisRequest(request, translations) {
+    let isSoftError = false;
+    let keepPendingRequest = false;
+
+    try {
+        const result = await runAnalysisRequest(request);
+        if (result) {
+            incrementUsageCount();
+            dispatchAppAction('SET_TEMP_AI_RESULT', {
+                result: buildAnalysisResultPayload(result),
+                saved: false,
+                openModal: true
+            });
+        }
+    } catch (error) {
+        const trackFailure = shouldTrackAnalysisFailure(error);
+        if (!trackFailure) {
+            storePendingAnalysisRequest(request);
+            keepPendingRequest = true;
+        } else {
+            clearPendingAnalysisRequest();
+            reportControllerError('Analysis Error', error);
+        }
+
+        const feedback = buildAIErrorFeedback(error, translations);
+        isSoftError = feedback.isSoftError;
+
+        if (trackFailure) {
+            trackAiAnalysisFailed({
+                source: request.source,
+                lang: getAppState().curLang,
+                error: error?.message || feedback.message,
+                isSoftError: feedback.isSoftError
+            });
+        }
+
+        setAnalysisFlow({
+            status: feedback.isSoftError ? 'ready' : 'error',
+            isSoftError: feedback.isSoftError,
+            lastError: feedback.message
+        }, 'analysis:error');
+        showToast(feedback.message, feedback.type);
+    } finally {
+        if (isSoftError) {
+            if (!keepPendingRequest) {
+                clearPendingAnalysisRequest();
+            }
+            applyUsageLimitState();
+            return;
+        }
+
+        clearPendingAnalysisRequest();
+        resetAnalysisInputs();
+        startCooldown();
+    }
+}
+
+async function resumePendingAnalysisRequestIfReady() {
+    if (isResumingPendingAnalysis || !pendingAnalysisRequest) return false;
+
+    const currentInputs = readAnalysisInputs();
+    if (!matchesAnalysisRequestInputs(pendingAnalysisRequest, currentInputs)) {
+        clearPendingAnalysisRequest();
+        clearAnalysisSoftError(currentInputs, 'analysis:resume-discarded');
+        return false;
+    }
+
+    const request = pendingAnalysisRequest;
+    clearPendingAnalysisRequest();
+    isResumingPendingAnalysis = true;
+
+    try {
+        setAnalysisFlow({
+            status: 'analyzing',
+            source: request.source,
+            cooldownRemaining: 0,
+            isSoftError: false,
+            lastError: ''
+        }, 'analysis:resume');
+        await executeAnalysisRequest(request, getTranslations());
+        return true;
+    } finally {
+        isResumingPendingAnalysis = false;
+    }
+}
+
 export function setupTurnstileHandlers() {
     registerTurnstileCallbacks({
+        onSuccess: () => {
+            syncTurnstileAvailability();
+            void resumePendingAnalysisRequestIfReady();
+        },
         onTimeout: () => {
             console.warn('Turnstile token expired. Refreshing widget.');
             refreshTurnstile();
         },
         onError: (errorCode) => {
             console.error(`Turnstile failed to initialize (${errorCode || 'unknown'}).`);
+            clearPendingAnalysisRequest();
             markTurnstileUnavailable(errorCode || 'TURNSTILE_UNAVAILABLE');
             syncTurnstileAvailability(errorCode);
         }
@@ -170,9 +325,11 @@ export function tryCloseAnalysisModal() {
 
 export function syncAnalysisInputState() {
     const state = getAppState();
-    const { file, textDesc, imageDesc } = readAnalysisInputs();
+    const inputs = readAnalysisInputs();
+    const { file, textDesc, imageDesc } = inputs;
     const hasContent = Boolean(file || textDesc || imageDesc);
     const source = file ? 'image' : (textDesc || imageDesc ? 'text' : 'none');
+    const clearedPendingRequest = discardPendingAnalysisRequestIfStale(inputs);
 
     if (['analyzing', 'recalculating', 'cooldown'].includes(state.analysisFlow?.status)) {
         return;
@@ -181,7 +338,7 @@ export function syncAnalysisInputState() {
     setAnalysisFlow({
         status: hasContent ? 'ready' : 'idle',
         source,
-        lastError: hasContent ? state.analysisFlow?.lastError || '' : '',
+        lastError: hasContent && !clearedPendingRequest ? state.analysisFlow?.lastError || '' : '',
         isSoftError: false
     }, 'analysis:input');
 }
@@ -207,6 +364,7 @@ export function handleFileSelect(input) {
     if (textDescEl) textDescEl.value = '';
     if (textOnlyGroup) textOnlyGroup.style.display = 'none';
     if (descGroup) descGroup.style.display = 'block';
+    clearPendingAnalysisRequest();
 
     setAnalysisFlow({
         status: 'ready',
@@ -252,79 +410,29 @@ export function startAnalysis() {
     const state = getAppState();
     if (['analyzing', 'recalculating', 'cooldown'].includes(state.analysisFlow?.status)) return;
 
-    const { file, textDesc, imageDesc } = readAnalysisInputs();
+    const inputs = readAnalysisInputs();
+    const request = createAnalysisRequestSnapshot(inputs);
     const t = getTranslations();
 
-    if (!file && !textDesc) {
+    if (!request.file && !request.textDesc) {
         showToast(t.alertSelImgOrText || 'Please select an image or enter a description.', 'error');
         return;
     }
     if (!applyUsageLimitState(true)) return;
+    clearPendingAnalysisRequest();
 
     setAnalysisFlow({
         status: 'analyzing',
-        source: file ? 'image' : 'text',
+        source: request.source,
         cooldownRemaining: 0,
         isSoftError: false,
         lastError: ''
     }, 'analysis:start');
     trackAiAnalysisStarted({
-        source: file ? 'image' : 'text',
+        source: request.source,
         lang: state.curLang,
-        hasImage: Boolean(file),
-        hasText: Boolean(textDesc)
+        hasImage: Boolean(request.file),
+        hasText: Boolean(request.textDesc)
     });
-
-    let isSoftError = false;
-    const handleResult = (result) => {
-        if (!result) return;
-        incrementUsageCount();
-        dispatchAppAction('SET_TEMP_AI_RESULT', {
-            result: buildAnalysisResultPayload(result),
-            saved: false,
-            openModal: true
-        });
-    };
-
-    const handleError = (error) => {
-        reportControllerError('Analysis Error', error);
-        const feedback = buildAIErrorFeedback(error, t);
-        isSoftError = feedback.isSoftError;
-        trackAiAnalysisFailed({
-            source: file ? 'image' : 'text',
-            lang: state.curLang,
-            error: error?.message || feedback.message,
-            isSoftError: feedback.isSoftError
-        });
-        setAnalysisFlow({
-            status: feedback.isSoftError ? 'ready' : 'error',
-            isSoftError: feedback.isSoftError,
-            lastError: feedback.message
-        }, 'analysis:error');
-        showToast(feedback.message, feedback.type);
-    };
-
-    const handleFinally = () => {
-        if (isSoftError) {
-            applyUsageLimitState();
-            return;
-        }
-
-        resetAnalysisInputs();
-        startCooldown();
-    };
-
-    if (file) {
-        const finalDesc = imageDesc + (textDesc ? ` ${textDesc}` : '');
-        toBase64(file)
-            .then((base64) => callCloudflareAI(base64, finalDesc, file.type || 'image/jpeg'))
-            .then(handleResult)
-            .catch(handleError)
-            .finally(handleFinally);
-    } else {
-        callCloudflareAIText(textDesc)
-            .then(handleResult)
-            .catch(handleError)
-            .finally(handleFinally);
-    }
+    void executeAnalysisRequest(request, t);
 }

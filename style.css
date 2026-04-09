@@ -327,6 +327,9 @@ body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; b
 .dashboard-header[data-progress-state="over"] .summary-pill { background: rgba(255, 234, 167, 0.28); }
 .dashboard-header[data-progress-state="over"] .summary-status { color: #fff9d6; }
 .quick-start-card {
+    display: grid;
+    gap: 14px;
+    align-items: start;
     background: linear-gradient(135deg, rgba(76, 175, 125, 0.1), rgba(124, 111, 212, 0.08));
     border: 1px solid rgba(76, 175, 125, 0.18);
     border-radius: 20px;
@@ -337,23 +340,39 @@ body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; b
 .quick-start-eyebrow,
 .ai-guide-eyebrow { font-size: 0.78em; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--primary-dark); opacity: 0.9; }
 .quick-start-title,
-.ai-guide-title { margin-top: 8px; font-size: 1.2em; font-weight: 700; color: var(--text-color); }
+.ai-guide-title { margin-top: 0; font-size: 1.2em; font-weight: 700; color: var(--text-color); }
 .quick-start-copy,
-.ai-guide-copy { margin-top: 8px; line-height: 1.6; color: var(--text-color); opacity: 0.82; }
-.onboarding-card { margin-bottom: 6px; }
+.ai-guide-copy { margin-top: 0; line-height: 1.6; color: var(--text-color); opacity: 0.82; }
+.onboarding-card {
+    margin-bottom: 6px;
+    text-align: center;
+    justify-items: center;
+}
+.onboarding-card .quick-start-title,
+.onboarding-card .quick-start-copy {
+    max-width: 30ch;
+}
 .onboarding-meta {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 0;
+    align-items: stretch;
+}
+.onboarding-meta--missing {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 14px;
+    justify-content: center;
+    margin-top: 0;
 }
-.onboarding-meta--missing { margin-top: 10px; }
 .onboarding-missing-chip {
     background: rgba(255, 245, 230, 0.92);
     border-color: rgba(243, 156, 18, 0.18);
 }
 .onboarding-cta {
-    margin-top: 14px;
+    width: min(100%, 420px);
+    margin-top: 0;
     padding: 11px 14px;
     border-radius: 12px;
     background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
@@ -389,12 +408,18 @@ body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; b
     margin-top: 10px;
 }
 .coach-stat-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
     padding: 7px 11px;
     border-radius: 999px;
     background: rgba(255,255,255,0.58);
     border: 1px solid rgba(76, 175, 125, 0.14);
     font-size: 0.86em;
     color: var(--text-color);
+    text-align: center;
+    line-height: 1.4;
 }
 .rhythm-card[hidden] { display: none !important; }
 .rhythm-card {
@@ -1809,4 +1834,28 @@ body:not(.app-ready) .container { animation: appReveal 0.15s ease-out forwards; 
 .react-home-enabled #home-react-root {
     display: block;
     margin-bottom: var(--spacing-lg);
+}
+
+@media (max-width: 760px) {
+    .onboarding-card {
+        justify-items: stretch;
+        text-align: left;
+    }
+
+    .onboarding-card .quick-start-title,
+    .onboarding-card .quick-start-copy {
+        max-width: none;
+    }
+
+    .onboarding-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .onboarding-meta--missing {
+        justify-content: flex-start;
+    }
+
+    .onboarding-cta {
+        width: 100%;
+    }
 }
