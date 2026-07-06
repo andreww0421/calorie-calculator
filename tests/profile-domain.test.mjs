@@ -27,16 +27,16 @@ test('normalizeProfileMetrics sanitizes profile inputs', () => {
         activity: 1.375,
         goalType: 'gain',
         mealMode: '3',
-        region: '',
+        region: 'taiwan',
         diningOutFrequency: 'sometimes',
         preferredPresetRegion: 'taiwan'
     });
 });
 
-test('createOnboardingConfig tracks missing onboarding inputs and completion state', () => {
+test('createOnboardingConfig auto-resolves region and tracks required profile inputs', () => {
     const incomplete = createOnboardingConfig({
         gender: 'female',
-        age: '31',
+        age: '',
         height: '165',
         weight: '61.2',
         activity: '1.375',
@@ -51,18 +51,18 @@ test('createOnboardingConfig tracks missing onboarding inputs and completion sta
         activity: '1.375',
         goalType: 'gain',
         mealMode: '3',
-        region: 'hong-kong',
         diningOutFrequency: 'often'
     }, 'zh-TW');
 
     assert.equal(incomplete.isComplete, false);
-    assert.deepEqual(incomplete.missingFields, ['region']);
+    assert.deepEqual(incomplete.missingFields, ['basicProfile']);
     assert.equal(complete.isComplete, true);
     assert.deepEqual(complete.missingFields, []);
-    assert.equal(complete.preferredPresetRegion, 'hong-kong');
+    assert.equal(complete.region, 'taiwan');
+    assert.equal(complete.preferredPresetRegion, 'taiwan');
 });
 
-test('hasCompletedOnboarding requires explicit region for backward-compatible profiles', () => {
+test('hasCompletedOnboarding does not require an explicit region', () => {
     assert.equal(hasCompletedOnboarding({
         gender: 'female',
         age: '31',
@@ -70,17 +70,6 @@ test('hasCompletedOnboarding requires explicit region for backward-compatible pr
         weight: '61.2',
         activity: '1.375',
         goalType: 'maintain',
-        diningOutFrequency: 'sometimes'
-    }, 'zh-TW'), false);
-
-    assert.equal(hasCompletedOnboarding({
-        gender: 'female',
-        age: '31',
-        height: '165',
-        weight: '61.2',
-        activity: '1.375',
-        goalType: 'maintain',
-        region: 'taiwan',
         diningOutFrequency: 'sometimes'
     }, 'zh-TW'), true);
 });

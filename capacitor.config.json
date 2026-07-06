@@ -1,0 +1,9 @@
+{
+  "appId": "com.jtwen.woofcal",
+  "appName": "Woof Cal",
+  "webDir": "dist-capacitor",
+  "server": {
+    "iosScheme": "capacitor",
+    "hostname": "localhost"
+  }
+}

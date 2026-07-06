@@ -16,13 +16,95 @@ export const dashboardChartRenderer = Object.freeze({
 });
 
 let chartsInitialized = false;
+let macroSnapshotHistory = [];
+let calorieTrendHistory = [];
+let proteinTrendHistory = [];
+let weightTrendHistory = [];
+let selectedMacroSnapshotDate = '';
 
-function getWeeklyCalories(state = getAppState()) {
-    const history = createDashboardChartsViewModel(state).weeklyCalories;
-    return {
-        labels: history.map((item) => item.date),
-        data: history.map((item) => item.calories)
-    };
+function roundDisplayValue(value, digits = 1) {
+    const factor = 10 ** digits;
+    return Math.round((Number(value) || 0) * factor) / factor;
+}
+
+function setCaption(id, text = '') {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = String(text ?? '').replaceAll(' 路 ', ' | ');
+    }
+}
+
+function formatTrendCaption(entry, field, unit = '') {
+    if (!entry) return '';
+    const label = entry.date || entry.label || '--';
+    const value = roundDisplayValue(entry?.[field], field === 'weight' ? 1 : 1);
+    return `${label} · ${value}${unit}`;
+}
+
+function formatMacroDateCaption(entry) {
+    if (!entry) return '';
+    const label = entry.label || String(entry.date || '').slice(5) || '--';
+    return `${label} · ${Math.round(Number(entry.calories) || 0)} kcal`;
+}
+
+function formatMacroHint(entry, texts = getTexts()) {
+    if (!entry) return '';
+    const label = entry.label || String(entry.date || '').slice(5) || '--';
+    const protein = roundDisplayValue(entry.protein, 1);
+    const fat = roundDisplayValue(entry.fat, 1);
+    const carb = roundDisplayValue(entry.carb, 1);
+    return `${label} · ${texts.pro || 'Protein'} ${protein}g · ${texts.fat || 'Fat'} ${fat}g · ${texts.carb || 'Carbs'} ${carb}g`;
+}
+
+function getLatestHistoryEntry(history = []) {
+    if (!Array.isArray(history) || history.length === 0) return null;
+    return history[history.length - 1] || null;
+}
+
+function resolveSelectedMacroEntry(history = macroSnapshotHistory) {
+    if (!Array.isArray(history) || history.length === 0) return null;
+    return history.find((entry) => entry.date === selectedMacroSnapshotDate) || history[history.length - 1] || null;
+}
+
+function syncTrendCaptions() {
+    setCaption('calTrendHoverValue', formatTrendCaption(getLatestHistoryEntry(calorieTrendHistory), 'calories', ' kcal'));
+    setCaption('proteinTrendHoverValue', formatTrendCaption(getLatestHistoryEntry(proteinTrendHistory), 'protein', 'g'));
+    setCaption('weightTrendHoverValue', formatTrendCaption(getLatestHistoryEntry(weightTrendHistory), 'weight', ' kg'));
+}
+
+function syncMacroFocus(entry = resolveSelectedMacroEntry()) {
+    if (!macroChart) return;
+
+    const protein = Math.max(Number(entry?.protein) || 0, 0);
+    const fat = Math.max(Number(entry?.fat) || 0, 0);
+    const carb = Math.max(Number(entry?.carb) || 0, 0);
+    const total = protein + fat + carb;
+    const texts = getTexts();
+
+    macroChart.data.labels = [texts.pro, texts.fat, texts.carb];
+    macroChart.data.datasets[0].data = total === 0 ? [1, 1, 1] : [protein, fat, carb];
+    macroChart.data.datasets[0].backgroundColor = total === 0
+        ? ['#ddd8f6', '#f9dfb3', '#d6f0df']
+        : ['#5db27d', '#ff9a6b', '#7a6fe0'];
+    macroChart.data.datasets[0].placeholder = total === 0;
+    macroChart.update();
+
+    setCaption('macroChartDate', formatMacroDateCaption(entry));
+    setCaption('weeklyChartHint', formatMacroHint(entry, texts));
+}
+
+function syncMacroSelection(history = macroSnapshotHistory) {
+    const selectedEntry = resolveSelectedMacroEntry(history);
+    selectedMacroSnapshotDate = selectedEntry?.date || '';
+
+    if (weeklyChart?.options?.interaction) {
+        weeklyChart.options.interaction.selectedIndex = history.findIndex((entry) => entry.date === selectedMacroSnapshotDate);
+    }
+
+    syncMacroFocus(selectedEntry);
+    if (weeklyChart) {
+        weeklyChart.update();
+    }
 }
 
 export function buildWeightTrendPreview(weightHistory, {
@@ -68,20 +150,15 @@ export async function initCharts() {
         return false;
     }
 
-    const ChartConstructor = LocalChart;
-    if (chartsInitialized) {
-        return true;
-    }
+    const texts = getTexts();
 
-    const t = getTexts();
-
-    macroChart = new ChartConstructor(macroCanvas.getContext('2d'), {
+    macroChart = new LocalChart(macroCanvas.getContext('2d'), {
         type: 'doughnut',
         data: {
-            labels: [t.pro, t.fat, t.carb],
+            labels: [texts.pro, texts.fat, texts.carb],
             datasets: [{
                 data: [1, 1, 1],
-                backgroundColor: ['#e0e0e0', '#e0e0e0', '#e0e0e0'],
+                backgroundColor: ['#ddd8f6', '#f9dfb3', '#d6f0df'],
                 placeholder: true,
                 borderWidth: 2,
                 borderColor: 'var(--card-bg)'
@@ -91,21 +168,61 @@ export async function initCharts() {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom', labels: { color: getComputedStyle(document.body).getPropertyValue('--text-color') } }
+                legend: { display: false }
             }
         }
     });
 
-    const weeklyData = getWeeklyCalories();
-    weeklyChart = new ChartConstructor(weeklyCanvas.getContext('2d'), {
+    weeklyChart = new LocalChart(weeklyCanvas.getContext('2d'), {
         type: 'bar',
         data: {
-            labels: weeklyData.labels,
+            labels: [],
+            items: [],
+            datasets: [
+                { label: texts.pro, data: [], backgroundColor: '#5db27d', borderRadius: 8 },
+                { label: texts.fat, data: [], backgroundColor: '#ff9a6b', borderRadius: 8 },
+                { label: texts.carb, data: [], backgroundColor: '#7a6fe0', borderRadius: 8 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-color') } },
+                y: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-color') } }
+            },
+            plugins: { legend: { display: false } },
+            interaction: {
+                mode: 'group',
+                selectedIndex: -1,
+                onHover: ({ payload }) => {
+                    if (payload) setCaption('weeklyChartHint', formatMacroHint(payload));
+                },
+                onLeave: () => {
+                    setCaption('weeklyChartHint', formatMacroHint(resolveSelectedMacroEntry()));
+                },
+                onSelect: ({ payload }) => {
+                    if (!payload) return;
+                    selectedMacroSnapshotDate = payload.date || '';
+                    syncMacroSelection();
+                }
+            }
+        }
+    });
+
+    calTrendChart = new LocalChart(calTrendCanvas.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: [],
+            items: [],
             datasets: [{
-                label: t.cal,
-                data: weeklyData.data,
-                backgroundColor: '#74b9ff',
-                borderRadius: 8
+                label: texts.cal,
+                data: [],
+                borderColor: '#ff9a6b',
+                backgroundColor: 'rgba(255, 154, 107, 0.18)',
+                borderWidth: 3,
+                tension: 0.35,
+                fill: true
             }]
         },
         options: {
@@ -115,19 +232,30 @@ export async function initCharts() {
                 x: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-color') } },
                 y: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-color') } }
             },
-            plugins: { legend: { display: false } }
+            interaction: {
+                onHover: ({ payload }) => {
+                    if (payload) setCaption('calTrendHoverValue', formatTrendCaption(payload, 'calories', ' kcal'));
+                },
+                onLeave: () => {
+                    setCaption('calTrendHoverValue', formatTrendCaption(getLatestHistoryEntry(calorieTrendHistory), 'calories', ' kcal'));
+                },
+                onSelect: ({ payload }) => {
+                    if (payload) setCaption('calTrendHoverValue', formatTrendCaption(payload, 'calories', ' kcal'));
+                }
+            }
         }
     });
 
-    calTrendChart = new ChartConstructor(calTrendCanvas.getContext('2d'), {
+    proteinTrendChart = new LocalChart(proteinTrendCanvas.getContext('2d'), {
         type: 'line',
         data: {
             labels: [],
+            items: [],
             datasets: [{
-                label: t.cal,
+                label: texts.pro,
                 data: [],
-                borderColor: '#ff7675',
-                backgroundColor: 'rgba(255, 118, 117, 0.15)',
+                borderColor: '#5db27d',
+                backgroundColor: 'rgba(93, 178, 125, 0.18)',
                 borderWidth: 3,
                 tension: 0.35,
                 fill: true
@@ -139,19 +267,31 @@ export async function initCharts() {
             scales: {
                 x: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-color') } },
                 y: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-color') } }
+            },
+            interaction: {
+                onHover: ({ payload }) => {
+                    if (payload) setCaption('proteinTrendHoverValue', formatTrendCaption(payload, 'protein', 'g'));
+                },
+                onLeave: () => {
+                    setCaption('proteinTrendHoverValue', formatTrendCaption(getLatestHistoryEntry(proteinTrendHistory), 'protein', 'g'));
+                },
+                onSelect: ({ payload }) => {
+                    if (payload) setCaption('proteinTrendHoverValue', formatTrendCaption(payload, 'protein', 'g'));
+                }
             }
         }
     });
 
-    proteinTrendChart = new ChartConstructor(proteinTrendCanvas.getContext('2d'), {
+    weightChart = new LocalChart(weightCanvas.getContext('2d'), {
         type: 'line',
         data: {
             labels: [],
+            items: [],
             datasets: [{
-                label: t.pro,
+                label: texts.weight,
                 data: [],
-                borderColor: '#00b894',
-                backgroundColor: 'rgba(0, 184, 148, 0.15)',
+                borderColor: '#6358c8',
+                backgroundColor: 'rgba(122, 111, 224, 0.16)',
                 borderWidth: 3,
                 tension: 0.35,
                 fill: true
@@ -163,31 +303,17 @@ export async function initCharts() {
             scales: {
                 x: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-color') } },
                 y: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-color') } }
-            }
-        }
-    });
-
-    weightChart = new ChartConstructor(weightCanvas.getContext('2d'), {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: t.weight,
-                data: [],
-                borderColor: '#a29bfe',
-                backgroundColor: 'rgba(162, 155, 254, 0.12)',
-                borderWidth: 3,
-                tension: 0.35,
-                fill: true,
-                spanGaps: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-color') } },
-                y: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-color') } }
+            },
+            interaction: {
+                onHover: ({ payload }) => {
+                    if (payload) setCaption('weightTrendHoverValue', formatTrendCaption(payload, 'weight', ' kg'));
+                },
+                onLeave: () => {
+                    setCaption('weightTrendHoverValue', formatTrendCaption(getLatestHistoryEntry(weightTrendHistory), 'weight', ' kg'));
+                },
+                onSelect: ({ payload }) => {
+                    if (payload) setCaption('weightTrendHoverValue', formatTrendCaption(payload, 'weight', ' kg'));
+                }
             }
         }
     });
@@ -199,20 +325,24 @@ export async function initCharts() {
 }
 
 export function updateTrendCharts(days, chartData = createDashboardChartsViewModel(getAppState(), { range: days })) {
-    const calorieHistory = chartData.calorieTrend;
-    const proteinHistory = chartData.proteinTrend;
+    calorieTrendHistory = Array.isArray(chartData.calorieTrend) ? chartData.calorieTrend : [];
+    proteinTrendHistory = Array.isArray(chartData.proteinTrend) ? chartData.proteinTrend : [];
 
     if (calTrendChart) {
-        calTrendChart.data.labels = calorieHistory.map((item) => item.date);
-        calTrendChart.data.datasets[0].data = calorieHistory.map((item) => item.calories);
+        calTrendChart.data.labels = calorieTrendHistory.map((item) => item.date);
+        calTrendChart.data.items = calorieTrendHistory;
+        calTrendChart.data.datasets[0].data = calorieTrendHistory.map((item) => item.calories);
         calTrendChart.update();
     }
 
     if (proteinTrendChart) {
-        proteinTrendChart.data.labels = proteinHistory.map((item) => item.date);
-        proteinTrendChart.data.datasets[0].data = proteinHistory.map((item) => item.protein);
+        proteinTrendChart.data.labels = proteinTrendHistory.map((item) => item.date);
+        proteinTrendChart.data.items = proteinTrendHistory;
+        proteinTrendChart.data.datasets[0].data = proteinTrendHistory.map((item) => item.protein);
         proteinTrendChart.update();
     }
+
+    syncTrendCaptions();
 }
 
 export function updateChartTheme() {
@@ -231,37 +361,51 @@ export function updateChartTheme() {
     });
 }
 
-export function updateCharts(totalNutri, chartData = createDashboardChartsViewModel(getAppState())) {
-    if (!macroChart) return;
+export function updateCharts(totalNutri, chartData = createDashboardChartsViewModel(getAppState(), { range: dashboardChartRange })) {
+    if (!macroChart || !weeklyChart) return;
 
-    const protein = Number(totalNutri.pro) || 0;
-    const fat = Number(totalNutri.fat) || 0;
-    const carb = Number(totalNutri.carb) || 0;
-    const sum = protein + fat + carb;
+    const texts = getTexts();
+    macroSnapshotHistory = Array.isArray(chartData.macroSnapshot) ? chartData.macroSnapshot : [];
 
-    macroChart.data.datasets[0].data = sum === 0 ? [1, 1, 1] : [protein, fat, carb];
-    macroChart.data.datasets[0].backgroundColor = sum === 0
-        ? ['#e0e0e0', '#e0e0e0', '#e0e0e0']
-        : ['#55efc4', '#ffeaa7', '#74b9ff'];
-    macroChart.data.datasets[0].placeholder = sum === 0;
-    macroChart.update();
+    weeklyChart.data.labels = macroSnapshotHistory.map((item) => item.label);
+    weeklyChart.data.items = macroSnapshotHistory;
+    weeklyChart.data.datasets[0].label = texts.pro;
+    weeklyChart.data.datasets[0].data = macroSnapshotHistory.map((item) => item.protein);
+    weeklyChart.data.datasets[1].label = texts.fat;
+    weeklyChart.data.datasets[1].data = macroSnapshotHistory.map((item) => item.fat);
+    weeklyChart.data.datasets[2].label = texts.carb;
+    weeklyChart.data.datasets[2].data = macroSnapshotHistory.map((item) => item.carb);
 
-    const weeklyData = {
-        labels: chartData.weeklyCalories.map((item) => item.date),
-        data: chartData.weeklyCalories.map((item) => item.calories)
-    };
-    if (weeklyChart) {
-        weeklyChart.data.labels = weeklyData.labels;
-        weeklyChart.data.datasets[0].data = weeklyData.data;
-        weeklyChart.update();
+    if (!selectedMacroSnapshotDate && macroSnapshotHistory.length > 0) {
+        selectedMacroSnapshotDate = macroSnapshotHistory[macroSnapshotHistory.length - 1].date || '';
     }
+
+    if (macroSnapshotHistory.length > 0) {
+        syncMacroSelection(macroSnapshotHistory);
+        return;
+    }
+
+    syncMacroFocus({
+        date: '',
+        label: '',
+        protein: Number(totalNutri.pro) || 0,
+        fat: Number(totalNutri.fat) || 0,
+        carb: Number(totalNutri.carb) || 0,
+        calories: Number(totalNutri.cal) || 0
+    });
 }
 
 export function updateWeightChart(weightHistory = createDashboardChartsViewModel(getAppState()).weightTrend) {
     if (!weightChart) return;
-    weightChart.data.labels = weightHistory.map((item) => item.date);
-    weightChart.data.datasets[0].data = weightHistory.map((item) => item.weight);
+    weightTrendHistory = Array.isArray(weightHistory) ? weightHistory.map((item) => ({
+        ...item,
+        weight: Number(item?.weight) || 0
+    })) : [];
+    weightChart.data.labels = weightTrendHistory.map((item) => item.date);
+    weightChart.data.items = weightTrendHistory;
+    weightChart.data.datasets[0].data = weightTrendHistory.map((item) => item.weight);
     weightChart.update();
+    setCaption('weightTrendHoverValue', formatTrendCaption(getLatestHistoryEntry(weightTrendHistory), 'weight', ' kg'));
 }
 
 export function previewWeightChart(previewWeight, {
@@ -276,9 +420,12 @@ export function previewWeightChart(previewWeight, {
 }
 
 export function updateMacroChartLanguage(translations) {
-    if (!macroChart) return;
+    if (!macroChart || !weeklyChart) return;
     macroChart.data.labels = [translations.pro, translations.fat, translations.carb];
-    macroChart.update();
+    weeklyChart.data.datasets[0].label = translations.pro;
+    weeklyChart.data.datasets[1].label = translations.fat;
+    weeklyChart.data.datasets[2].label = translations.carb;
+    syncMacroSelection(macroSnapshotHistory);
 }
 
 export async function ensureDashboardChartsReady() {

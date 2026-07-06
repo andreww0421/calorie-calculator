@@ -5,32 +5,33 @@ import {
     getDisplayDateLabel
 } from '../../js/ui/locale-ui.js';
 import { createHomeCompanionViewModel } from '../../js/state/app-selectors.js';
+import { getLocalDateString } from '../../js/utils.js';
 
 const MEAL_ORDER = ['breakfast', 'lunch', 'dinner', 'snack'];
 const HOME_SURFACE_COPY = Object.freeze({
     en: Object.freeze({
         nutritionSummaryTitle: 'Nutrition summary',
-        nutritionSummaryHint: 'See today\'s macro balance at a glance, then open all 8 nutrients.',
-        nutritionSummaryCta: 'Open the full nutrient summary',
+        nutritionSummaryHint: 'See today\'s macro balance at a glance, then open all 8 nutrient details.',
+        nutritionSummaryCta: 'Open the full nutrition summary',
         mealDiaryTitle: 'Meal diary',
         mealDiaryHint: 'Meals you log stay organized here so Home stays easy to scan.',
         nutrientCountLabel: '8 nutrients'
     }),
     'zh-TW': Object.freeze({
         nutritionSummaryTitle: '營養摘要',
-        nutritionSummaryHint: '先用圓餅圖看今天三大營養，點開可看完整八大營養。',
-        nutritionSummaryCta: '點開查看完整八大營養',
+        nutritionSummaryHint: '先快速看今天的三大營養素，再打開完整 8 項營養資訊。',
+        nutritionSummaryCta: '查看完整營養摘要',
         mealDiaryTitle: '餐點日記',
-        mealDiaryHint: '記錄過的餐點會整理在這裡，首頁不用變成表單。',
-        nutrientCountLabel: '八大營養'
+        mealDiaryHint: '今天記錄的餐點都整理在這裡，讓首頁保持乾淨好讀。',
+        nutrientCountLabel: '8 項營養'
     }),
     'zh-CN': Object.freeze({
         nutritionSummaryTitle: '营养摘要',
-        nutritionSummaryHint: '先用圆饼图看今天三大营养，点开可看完整八大营养。',
-        nutritionSummaryCta: '点开查看完整八大营养',
-        mealDiaryTitle: '饮食日记',
-        mealDiaryHint: '记录过的餐点会整理在这里，首页不用变成表单。',
-        nutrientCountLabel: '八大营养'
+        nutritionSummaryHint: '先快速看今天的三大营养素，再打开完整 8 项营养信息。',
+        nutritionSummaryCta: '查看完整营养摘要',
+        mealDiaryTitle: '餐点日记',
+        mealDiaryHint: '今天记录的餐点都整理在这里，让首页保持干净好读。',
+        nutrientCountLabel: '8 项营养'
     })
 });
 
@@ -53,6 +54,18 @@ function getHomeSurfaceCopy(lang = 'en') {
 function getMealTypeLabel(type, lang) {
     const t = getLocaleTranslations(lang);
     return t?.meals?.[type] || type || '';
+}
+
+function getFavoriteActionLabel(lang) {
+    if (lang === 'zh-TW') return '加入常吃';
+    if (lang === 'zh-CN') return '加入常吃';
+    return 'Save favorite';
+}
+
+function getDeleteActionLabel(lang) {
+    if (lang === 'zh-TW') return '刪除餐點';
+    if (lang === 'zh-CN') return '删除餐点';
+    return 'Delete meal';
 }
 
 function buildTodayMealGroups(items, lang, emptyText) {
@@ -84,24 +97,28 @@ export function buildHomeIslandViewModel(state) {
     const heroStats = homeCopy.hero?.stats || [];
     const heroMeta = homeCopy.hero?.meta || [];
 
-    const todayMeals = (companion.daily?.foodItems || []).map((item, index) => {
-        const nutri = item?.nutri || item?.nutrition || {};
-        const calories = Number(nutri?.calories ?? nutri?.cal ?? 0) || 0;
-        const mealType = String(item?.type || 'snack');
+    const todayMeals = (companion.daily?.foodItems || [])
+        .map((item, index) => {
+            const nutri = item?.nutri || item?.nutrition || {};
+            const calories = Number(nutri?.calories ?? nutri?.cal ?? 0) || 0;
+            const mealType = String(item?.type || 'snack');
 
-        return {
-            id: `${mealType}-${index}-${String(item?.name || 'meal')}`.replace(/\s+/g, '-').toLowerCase(),
-            name: toSafeText(item?.name || item?.foodName, ''),
-            mealType,
-            mealTypeLabel: getMealTypeLabel(mealType, companion.lang),
-            calories,
-            portion: toSafeText(item?.weight || item?.portion || '', ''),
-            hint: calories > 0 ? `${Math.round(calories)} kcal` : t?.txtNoData || ''
-        };
-    }).filter((item) => item.name || item.calories > 0);
+            return {
+                id: `${mealType}-${index}-${String(item?.name || 'meal')}`.replace(/\s+/g, '-').toLowerCase(),
+                sourceIndex: index,
+                name: toSafeText(item?.name || item?.foodName, ''),
+                mealType,
+                mealTypeLabel: getMealTypeLabel(mealType, companion.lang),
+                calories,
+                portion: toSafeText(item?.weight || item?.portion || '', ''),
+                hint: calories > 0 ? `${Math.round(calories)} kcal` : t?.txtNoData || ''
+            };
+        })
+        .filter((item) => item.name || item.calories > 0);
 
     const todayMealGroups = buildTodayMealGroups(todayMeals, companion.lang, islandCopy.emptyMeal);
     const todayDateLabel = getDisplayDateLabel(state.selectedDate, companion.lang);
+    const maxDate = getLocalDateString();
     const todayMealCalories = todayMeals.reduce((sum, item) => sum + item.calories, 0);
     const proteinValue = roundDisplayValue(companion.daily?.totals?.pro, 1);
     const fatValue = roundDisplayValue(companion.daily?.totals?.fat, 1);
@@ -112,10 +129,37 @@ export function buildHomeIslandViewModel(state) {
             ...companion,
             pet: {
                 ...companion.pet,
-                resolvedMessage: toSafeText(t?.[companion.pet?.messageKey], '') || toSafeText(companion.pet?.messageKey, '')
+                resolvedMessage: toSafeText(t?.[companion.pet?.messageKey], '') || toSafeText(companion.pet?.messageKey, ''),
+                equipped: companion.pet?.equipped || {}
             }
         },
-        copy: islandCopy,
+        petStageCopy: {
+            pet: islandCopy.pet || 'Companion',
+            bondLabel: toSafeText(islandCopy.petStage?.bondLabel, t?.petBondLabel || 'Bond'),
+            energyLabel: toSafeText(islandCopy.petStage?.energyLabel, t?.petEnergyLabel || 'Energy'),
+            streakLabel: toSafeText(islandCopy.petStage?.streakLabel, t?.petStreakLabel || 'Streak'),
+            dayUnit: toSafeText(islandCopy.petStage?.dayUnit, t?.petDayUnit || 'd'),
+            petTapLabel: toSafeText(islandCopy.petStage?.tapLabel, t?.petTapLabel || 'Interact with your companion')
+        },
+        resolveDialogText: (key) => toSafeText(t?.[key], ''),
+        copy: {
+            ...islandCopy,
+            favoriteActionLabel: getFavoriteActionLabel(companion.lang),
+            deleteActionLabel: getDeleteActionLabel(companion.lang),
+            appName: toSafeText(islandCopy.appName, 'Woof Cal'),
+            screenTitle: toSafeText(islandCopy.screenTitle, islandCopy.today || 'Today'),
+            dailyCaloriesTitle: toSafeText(islandCopy.dailyCaloriesTitle, 'Daily calories'),
+            remainingLabel: toSafeText(islandCopy.remainingLabel, 'Remaining'),
+            macroFocusEyebrow: toSafeText(islandCopy.macroFocusEyebrow, '3 macro focus'),
+            macroFocusTitle: toSafeText(islandCopy.macroFocusTitle, 'Macros'),
+            macroFocusHint: toSafeText(islandCopy.macroFocusHint, ''),
+            mealDiaryEyebrow: toSafeText(islandCopy.mealDiaryEyebrow, surfaceCopy.mealDiaryTitle),
+            previousDate: toSafeText(islandCopy.previousDate, 'Previous date'),
+            nextDate: toSafeText(islandCopy.nextDate, 'Next date'),
+            headlineEmpty: toSafeText(islandCopy.headlineEmpty, 'Start your first meal'),
+            headlineProgress: toSafeText(islandCopy.headlineProgress, 'Nice momentum today'),
+            headlineComplete: toSafeText(islandCopy.headlineComplete, 'Great progress today')
+        },
         hero: {
             eyebrow: toSafeText(homeCopy.hero?.eyebrow, ''),
             title: toSafeText(homeCopy.hero?.title, ''),
@@ -153,9 +197,15 @@ export function buildHomeIslandViewModel(state) {
             hint: todayMeals.length > 0
                 ? islandCopy.mealGroupMeta(todayMeals.length, todayMealCalories)
                 : surfaceCopy.mealDiaryHint,
-            kicker: todayDateLabel,
+            kicker: toSafeText(homeCopy.logHub?.todayMealsKicker, islandCopy.today),
             actionLabel: todayDateLabel,
             dateLabel: todayDateLabel,
+            dateControl: {
+                value: state.selectedDate,
+                label: todayDateLabel,
+                max: maxDate,
+                nextDisabled: state.selectedDate >= maxDate
+            },
             count: todayMeals.length,
             totalCalories: todayMealCalories,
             groups: todayMealGroups
@@ -203,6 +253,10 @@ export function buildHomeIslandViewModel(state) {
             proteinCurrent: Number(companion.proteinCurrent) || 0,
             proteinTarget: Number(companion.proteinTarget) || 0,
             proteinRemaining: Number(companion.proteinRemaining) || 0,
+            fatCurrent: Number(fatValue) || 0,
+            fatTarget: Number(companion.fatTarget) || 0,
+            carbCurrent: Number(carbValue) || 0,
+            carbTarget: Number(companion.carbTarget) || 0,
             loggedMeals: Number(companion.mealCoverage?.loggedMeals) || 0,
             plannedMeals: Number(companion.mealCoverage?.plannedMeals) || 0,
             nextMealType: getMealTypeLabel(companion.mealCoverage?.nextMealType, companion.lang),

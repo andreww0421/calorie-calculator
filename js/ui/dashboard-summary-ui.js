@@ -1,10 +1,8 @@
 import { getAppState } from '../state/app-state.js';
 import {
-    createDashboardChartsViewModel,
     createDashboardNutritionFocusViewModel,
     createMealRhythmViewModel
 } from '../state/app-selectors.js';
-import { createPetViewModel } from '../state/pet-selectors.js';
 import { trackRhythmSummaryViewed } from '../analytics/product-events.js';
 import { createElement, clearElement } from './dom-ui.js';
 import { buildDailyCoaching } from '../domain/nutrition-domain.js';
@@ -13,20 +11,6 @@ import {
     buildMealRhythmContent,
     buildNutritionFocusContent
 } from './locale-ui.js';
-
-function setTextById(id, value) {
-    const element = document.getElementById(id);
-    if (element) {
-        element.innerText = value;
-    }
-}
-
-function setWidthById(id, value) {
-    const element = document.getElementById(id);
-    if (element) {
-        element.style.width = value;
-    }
-}
 
 function calculateAverage(entries = [], field) {
     const activeEntries = entries.filter((entry) => Number(entry?.[field]) > 0);
@@ -112,27 +96,6 @@ export function renderCoachCard(viewModel) {
     }
 }
 
-export function renderDashboardSummary(state = getAppState()) {
-    const chartData = createDashboardChartsViewModel(state, { range: 7 });
-    const targetCalories = Number(state?.targetCalories) || 0;
-    const pet = createPetViewModel(state);
-    const metrics = buildDashboardSummaryMetrics(chartData, targetCalories, pet);
-
-    [
-        ['dash-avg-cal', metrics.averageCalories > 0 ? `${metrics.averageCalories}` : '--'],
-        ['dash-on-target', `${metrics.onTargetDays}/7`],
-        ['dash-avg-protein', metrics.averageProtein > 0 ? `${metrics.averageProtein}g` : '--'],
-        ['dash-streak', String(metrics.streak)],
-        ['pet-stats-level', `Lv.${metrics.level}`]
-    ].forEach(([id, value]) => setTextById(id, value));
-
-    [
-        ['pet-stat-xp-fill', metrics.xpWidth],
-        ['pet-stat-energy-fill', metrics.energyWidth],
-        ['pet-stat-bond-fill', metrics.bondWidth]
-    ].forEach(([id, value]) => setWidthById(id, value));
-}
-
 function renderMealRhythmCard(cardId, state = getAppState(), variant = 'home') {
     const card = document.getElementById(cardId);
     if (!card) return;
@@ -187,7 +150,7 @@ export function trackVisibleRhythmSummaryViews(state = getAppState()) {
     const rhythm = createMealRhythmViewModel(state, { days: 7 });
     const surfaces = [
         ['home', document.getElementById('view-daily')],
-        ['dashboard', document.getElementById('view-dashboard')]
+        ['stats', document.getElementById('view-stats')]
     ];
 
     surfaces.forEach(([surface, element]) => {

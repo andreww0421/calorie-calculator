@@ -1,6 +1,7 @@
 import { captureDiagnostic } from '../diagnostics.js';
 import { getLocaleTranslations } from '../locales/index.js';
 import { getAppState } from '../state/app-state.js';
+import { getDefaultProfileRegion } from '../domain/profile-domain.js';
 
 export function getTranslations() {
     return getLocaleTranslations(getAppState().curLang);
@@ -15,6 +16,7 @@ export function reportControllerError(scope, error, extra = {}) {
 }
 
 export function readProfileForm() {
+    const state = getAppState();
     return {
         gender: document.getElementById('gender').value,
         age: document.getElementById('age').value,
@@ -23,7 +25,7 @@ export function readProfileForm() {
         activity: document.getElementById('activity').value,
         mealMode: document.getElementById('meal-mode').value,
         goalType: document.getElementById('goal-type')?.value || 'lose',
-        region: document.getElementById('region')?.value || '',
+        region: String(state.profile?.region || '').trim() || getDefaultProfileRegion(state.curLang),
         diningOutFrequency: document.getElementById('dining-out-frequency')?.value || 'sometimes'
     };
 }
@@ -38,9 +40,6 @@ export function applyProfileToForm(profile) {
     if (profile.mealMode) document.getElementById('meal-mode').value = profile.mealMode;
     if (profile.goalType && document.getElementById('goal-type')) {
         document.getElementById('goal-type').value = profile.goalType;
-    }
-    if (document.getElementById('region')) {
-        document.getElementById('region').value = profile.region || '';
     }
     if (document.getElementById('dining-out-frequency')) {
         document.getElementById('dining-out-frequency').value = profile.diningOutFrequency || 'sometimes';

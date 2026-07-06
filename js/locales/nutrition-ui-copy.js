@@ -1,8 +1,5 @@
 import zhTWNutritionUiCopy from './nutrition-ui-copy-zh-TW.js';
 import zhCNNutritionUiCopy from './nutrition-ui-copy-zh-CN.js';
-import jaNutritionUiCopy from './nutrition-ui-copy-ja.js';
-import koNutritionUiCopy from './nutrition-ui-copy-ko.js';
-import arNutritionUiCopy from './nutrition-ui-copy-ar.js';
 
 export const nutritionUiCopyCatalog = {
     en: {
@@ -55,10 +52,7 @@ export const nutritionUiCopyCatalog = {
         }
     },
     'zh-TW': zhTWNutritionUiCopy,
-    'zh-CN': zhCNNutritionUiCopy,
-    ja: jaNutritionUiCopy,
-    ko: koNutritionUiCopy,
-    ar: arNutritionUiCopy
+    'zh-CN': zhCNNutritionUiCopy
 };
 
 export function getNutritionUiCopy(lang = 'en') {

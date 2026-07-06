@@ -2,7 +2,13 @@ function mergeDeep(base, override) {
     const output = { ...base };
 
     Object.entries(override || {}).forEach(([key, value]) => {
-        if (value && typeof value === 'object' && !Array.isArray(value) && typeof base[key] === 'object' && base[key] !== null) {
+        if (
+            value
+            && typeof value === 'object'
+            && !Array.isArray(value)
+            && typeof base[key] === 'object'
+            && base[key] !== null
+        ) {
             output[key] = mergeDeep(base[key], value);
             return;
         }
@@ -13,51 +19,64 @@ function mergeDeep(base, override) {
 }
 
 function formatKcal(value) {
-    const safeValue = Number(value) || 0;
-    return `${Math.round(safeValue)} kcal`;
+    return `${Math.round(Number(value) || 0)} kcal`;
 }
 
 const en = {
-    heroEyebrowEmpty: 'Woof Cal companion',
-    heroEyebrowActive: 'Today with your pup',
-    heroTitleEmpty: 'Log your first meal today',
-    heroTitleActive: ({ loggedMeals, plannedMeals }) => `${loggedMeals}/${plannedMeals} meal moments are already in today`,
-    heroSummaryBase: 'Common foods, favorites, and AI stay close at hand when you want a lighter log.',
-    heroSummaryActive: 'Keep the next entry light and consistent so the rest of the day stays easy to review.',
-    heroActionLog: 'Add a meal',
+    heroEyebrowEmpty: 'Companion check-in',
+    heroEyebrowActive: 'Today with your companion',
+    heroTitleEmpty: 'Start your first meal today',
+    heroTitleActive: ({ loggedMeals, plannedMeals }) => `${loggedMeals}/${plannedMeals} meal moments logged today`,
+    heroSummaryBase: 'Keep the companion card as the hero so Home stays easy to scan, not form-heavy.',
+    heroSummaryActive: 'You already have momentum. Keep the next log small, clear, and easy to review.',
+    heroActionLog: 'Add meal',
     heroActionCommonFoods: 'Common foods',
     heroActionManual: 'Manual entry',
     heroActionFavorites: 'Favorites',
+    headlineEmpty: 'Start your first meal',
+    headlineProgress: 'Nice momentum today',
+    headlineComplete: 'Great progress today',
+    dailyCaloriesTitle: 'Daily calories',
+    remainingLabel: 'Remaining',
+    macroFocusEyebrow: '3 macro focus',
+    macroFocusTitle: 'Macros',
+    macroFocusHint: 'Open the nutrition summary to review all 8 nutrient fields.',
+    mealDiaryEyebrow: 'Meal diary',
+    previousDate: 'Previous date',
+    nextDate: 'Next date',
+    appName: 'Woof Cal',
+    screenTitle: 'Today',
     logHubTitle: 'Log today\'s meals',
-    logHubCopyEmpty: 'Choose a quick path first. Common foods and favorites stay close, while detailed editing moves to a secondary flow.',
-    logHubCopyActive: 'Keep logging easy from here, and leave detailed editing for the secondary flow when you need it.',
+    logHubCopyEmpty: 'Choose the fastest path first, then keep detailed editing in the secondary flow.',
+    logHubCopyActive: 'Keep logging easy here, then open the deeper flow only when you need detailed edits.',
     logHubFavoritesButton: 'Favorites',
-    logHubFavoritesCopy: 'Pick from foods you already save often.',
-    logHubManualButton: 'Manual entry',
-    logHubManualCopy: 'Use this only when you need to type a custom food or nutrition.',
+    logHubFavoritesCopy: 'Pick from foods you save often.',
+    logHubManualButton: 'Add food',
+    logHubManualCopy: 'Open Add and start directly with AI photo analysis.',
     mealListTitle: 'Today\'s meals',
     commonFoodsTitle: 'Common foods',
-    commonFoodsHint: 'Choose a familiar dining-out item first. Open more options only when you want to adjust portions or add-ons.',
+    commonFoodsHint: 'Start from a familiar meal and adjust only when you need to.',
     commonFoodsMeta: (regionLabel) => `${regionLabel} suggestions`,
-    commonFoodsButton: 'Add this food to today',
+    commonFoodsButton: 'Add this meal to today',
+    commonFoodsAdvancedButton: 'Use this in manual entry',
     manualAdvancedTitle: 'Advanced manual entry',
     manualModalTitle: 'Manual meal entry',
-    manualModalHint: 'Use this when you want to type a custom food or adjust detailed nutrition yourself.',
+    manualModalHint: 'Use this when you need a custom food or full nutrition details.',
     todayMealsKicker: 'Daily diary',
     todayMealsTitle: 'Today\'s meals',
-    todayMealsHint: 'Today\'s meals stay visible here without turning Home into a form.',
+    todayMealsHint: 'Keep today visible here without turning Home into a form.',
     overviewTitle: 'Today at a glance',
-    overviewHint: 'Tap for the full nutrition details',
+    overviewHint: 'Open the full nutrition summary',
     signals: {
         protein: 'Protein pace',
         meals: 'Meal rhythm'
     },
-    signalProteinToGoal: (remaining) => `${remaining}g to today\'s goal`,
-    signalProteinOnTrack: 'Protein is on track today',
-    signalMealsEmpty: 'One meal log is enough to start today\'s rhythm.',
+    signalProteinToGoal: (remaining) => `${remaining}g to goal`,
+    signalProteinOnTrack: 'Protein is on track',
+    signalMealsEmpty: 'Log the first meal to start today\'s rhythm.',
     signalMealsActive: (loggedMeals, plannedMeals, nextMealLabel) => (
         loggedMeals < plannedMeals && nextMealLabel
-            ? `${loggedMeals}/${plannedMeals} key meal moments logged. ${nextMealLabel} can be the next anchor.`
+            ? `${loggedMeals}/${plannedMeals} logged. ${nextMealLabel} is the next anchor.`
             : `${loggedMeals} meal moments logged today.`
     ),
     statLabels: {
@@ -65,19 +84,26 @@ const en = {
         meals: 'Meals',
         protein: 'Protein'
     },
+    petStage: {
+        bondLabel: 'Bond',
+        energyLabel: 'Energy',
+        streakLabel: 'Streak',
+        dayUnit: 'd',
+        tapLabel: 'Interact with your companion'
+    },
     formatDayCount: (value) => `${value}d`,
     formatMealCoverage: (loggedMeals, plannedMeals) => `${loggedMeals}/${plannedMeals}`,
     formatProteinPace: (current, target) => target > 0 ? `${current}/${target}g` : `${current}g`,
     quickActions: 'Quick actions',
     today: 'Today',
-    overview: 'Daily signals',
+    overview: 'Signals',
     pet: 'Companion status',
     progress: 'Progress',
-    companion: 'Log your first meal today',
+    companion: 'Start your first meal today',
     quickLog: 'Quick logging',
-    summary: 'A calm read on today, with quick actions close by.',
+    summary: 'A calmer read on today, with the next action close by.',
     open: 'Open',
-    changeDate: 'Date',
+    changeDate: 'Change date',
     statusOnTrack: 'On track',
     statusKeepGoing: 'Keep going',
     emptyMeal: 'Nothing logged yet',
@@ -93,52 +119,72 @@ const en = {
 };
 
 const zhTW = mergeDeep(en, {
-    heroEyebrowEmpty: 'Woof Cal 陪你開始',
-    heroEyebrowActive: '今天和狗狗一起記錄',
+    heroEyebrowEmpty: '陪伴狀態',
+    heroEyebrowActive: '今天和汪卡一起記錄',
     heroTitleEmpty: '先記下今天的第一餐',
-    heroTitleActive: ({ loggedMeals, plannedMeals }) => `今天已經記錄 ${loggedMeals}/${plannedMeals} 個餐次`,
-    heroSummaryBase: '常吃食物、收藏和 AI 都會放在順手的位置，讓你可以用更輕的方式記錄。',
-    heroSummaryActive: '下一筆維持輕量和一致，今天其餘時段就更容易整理。',
-    heroActionLog: '新增一餐',
-    heroActionCommonFoods: '常見外食',
+    heroTitleActive: ({ loggedMeals, plannedMeals }) => `今天已記錄 ${loggedMeals}/${plannedMeals} 次餐食`,
+    heroSummaryBase: '把寵物卡放回首頁主角，首頁只保留最重要的進度與下一步，不再像一張大表單。',
+    heroSummaryActive: '你今天已經有節奏了。下一筆只要維持簡潔，回顧就會更輕鬆。',
+    heroActionLog: '新增餐點',
+    heroActionCommonFoods: '常用餐點',
     heroActionManual: '手動輸入',
-    heroActionFavorites: '收藏',
-    logHubTitle: '記錄今天的餐點',
-    logHubCopyEmpty: '先選一條快速入口。常見外食與收藏都會放在前面，詳細編輯則移到次要流程。',
-    logHubCopyActive: '這裡維持快速記錄，細部編輯留給需要的時候再打開。',
-    logHubFavoritesButton: '收藏',
-    logHubFavoritesCopy: '從你常存的食物裡快速選一個。',
-    logHubManualButton: '手動輸入',
-    logHubManualCopy: '只有在要輸入自訂食物或營養細節時才打開。',
-    mealListTitle: '今天的餐次',
-    commonFoodsTitle: '常見外食',
-    commonFoodsHint: '先選熟悉的外食餐點，只有需要調整份量或加料時再打開更多選項。',
+    heroActionFavorites: '常吃收藏',
+    headlineEmpty: '先開始今天第一餐',
+    headlineProgress: '今天節奏不錯',
+    headlineComplete: '今天進度很穩',
+    dailyCaloriesTitle: '今日熱量',
+    remainingLabel: '剩餘',
+    macroFocusEyebrow: '三大營養重點',
+    macroFocusTitle: '三大營養素',
+    macroFocusHint: '打開營養摘要即可查看完整 8 項營養資訊。',
+    mealDiaryEyebrow: '餐點日記',
+    previousDate: '前一天',
+    nextDate: '後一天',
+    screenTitle: '今天',
+    logHubTitle: '記錄今天的飲食',
+    logHubCopyEmpty: '先用最快的入口開始，把細節編輯留給下一步。',
+    logHubCopyActive: '這裡維持快速記錄，真的需要細修時再往後走。',
+    logHubFavoritesButton: '常吃收藏',
+    logHubFavoritesCopy: '從你常吃的食物裡快速加入。',
+    logHubManualButton: '新增食物',
+    logHubManualCopy: '前往新增介面，直接使用 AI 照片分析食物。',
+    mealListTitle: '今天吃了什麼',
+    commonFoodsTitle: '常用餐點',
+    commonFoodsHint: '先從熟悉的餐點開始，再按需要微調。',
     commonFoodsMeta: (regionLabel) => `${regionLabel} 推薦`,
     commonFoodsButton: '直接加入今天',
+    commonFoodsAdvancedButton: '改用手動輸入微調',
     manualAdvancedTitle: '進階手動輸入',
-    manualModalTitle: '手動輸入',
-    manualModalHint: '需要自訂食物或手動調整營養時，再到這裡輸入。',
-    todayMealsKicker: '今日日記',
-    todayMealsTitle: '今天的餐次',
-    todayMealsHint: '今天吃過的內容會整理在這裡，不會讓首頁變成表單。',
-    overviewTitle: '今天先看這兩項',
-    overviewHint: '點開可看完整營養',
+    manualModalTitle: '手動新增餐點',
+    manualModalHint: '當你需要完整自訂食物與營養內容時再使用。',
+    todayMealsKicker: '飲食日記',
+    todayMealsTitle: '今天的餐點',
+    todayMealsHint: '今天吃過的內容都整理在這裡，首頁保持乾淨好讀。',
+    overviewTitle: '今天先看這些',
+    overviewHint: '點開即可查看完整營養摘要',
     signals: {
         protein: '蛋白質節奏',
         meals: '餐次節奏'
     },
-    signalProteinToGoal: (remaining) => `距離今天目標還差 ${remaining}g`,
-    signalProteinOnTrack: '今天的蛋白質節奏還不錯',
-    signalMealsEmpty: '先記下第一餐，就能開始建立今天的節奏。',
+    signalProteinToGoal: (remaining) => `距離目標還差 ${remaining}g`,
+    signalProteinOnTrack: '蛋白質攝取節奏正常',
+    signalMealsEmpty: '記下第一餐，就能開始建立今天的節奏。',
     signalMealsActive: (loggedMeals, plannedMeals, nextMealLabel) => (
         loggedMeals < plannedMeals && nextMealLabel
-            ? `已記錄 ${loggedMeals}/${plannedMeals} 個餐次。下一個可以先記 ${nextMealLabel}。`
-            : `今天已記錄 ${loggedMeals} 個餐次。`
+            ? `已記錄 ${loggedMeals}/${plannedMeals} 次餐食，下一步可先安排 ${nextMealLabel}。`
+            : `今天已記錄 ${loggedMeals} 次餐食。`
     ),
     statLabels: {
         streak: '連續',
         meals: '餐次',
         protein: '蛋白質'
+    },
+    petStage: {
+        bondLabel: '羈絆',
+        energyLabel: '能量',
+        streakLabel: '連續',
+        dayUnit: '天',
+        tapLabel: '和夥伴互動'
     },
     quickActions: '快速操作',
     today: '今天',
@@ -147,65 +193,90 @@ const zhTW = mergeDeep(en, {
     progress: '進度',
     companion: '先記下今天的第一餐',
     quickLog: '快速記錄',
-    summary: '先看今天的重點，再用簡單的方式把餐點記下來。',
+    summary: '先看今天的進度，再用最輕的方式記下下一餐。',
     open: '查看',
-    changeDate: '日期',
-    statusOnTrack: '節奏正常',
-    statusKeepGoing: '繼續維持',
+    changeDate: '選擇日期',
+    statusOnTrack: '節奏穩定',
+    statusKeepGoing: '繼續保持',
     emptyMeal: '還沒有記錄',
     caloriesRemaining: (remaining = 0) => `還剩 ${Number(remaining) || 0} kcal`,
-    proteinRemaining: (remaining = 0) => `還差 ${Number(remaining) || 0}g`,
-    proteinOnTrack: '今天的蛋白質節奏正常',
+    proteinRemaining: (remaining = 0) => `蛋白質還差 ${Number(remaining) || 0}g`,
+    proteinOnTrack: '蛋白質表現穩定',
+    metrics: {
+        calories: '熱量',
+        protein: '蛋白質',
+        meals: '餐次'
+    },
     mealGroupMeta: (count, totalCalories) => `${Number(count) || 0} 項 / ${formatKcal(totalCalories)}`
 });
 
 const zhCN = mergeDeep(en, {
-    heroEyebrowEmpty: 'Woof Cal 陪你开始',
-    heroEyebrowActive: '今天和狗狗一起记录',
+    heroEyebrowEmpty: '陪伴状态',
+    heroEyebrowActive: '今天和汪卡一起记录',
     heroTitleEmpty: '先记下今天的第一餐',
-    heroTitleActive: ({ loggedMeals, plannedMeals }) => `今天已经记录 ${loggedMeals}/${plannedMeals} 个餐次`,
-    heroSummaryBase: '常吃食物、收藏和 AI 都会放在顺手的位置，让你可以用更轻的方式记录。',
-    heroSummaryActive: '下一笔维持轻量和一致，今天其余时段就更容易整理。',
-    heroActionLog: '新增一餐',
-    heroActionCommonFoods: '常见外食',
+    heroTitleActive: ({ loggedMeals, plannedMeals }) => `今天已记录 ${loggedMeals}/${plannedMeals} 次餐食`,
+    heroSummaryBase: '把宠物卡放回首页主角，首页只保留最重要的进度与下一步，不再像一张大表单。',
+    heroSummaryActive: '你今天已经有节奏了。下一笔只要保持简洁，回顾就会更轻松。',
+    heroActionLog: '新增餐点',
+    heroActionCommonFoods: '常用餐点',
     heroActionManual: '手动输入',
-    heroActionFavorites: '收藏',
-    logHubTitle: '记录今天的餐点',
-    logHubCopyEmpty: '先选一条快速入口。常见外食与收藏都会放在前面，详细编辑则移到次要流程。',
-    logHubCopyActive: '这里维持快速记录，细部编辑留给需要的时候再打开。',
-    logHubFavoritesButton: '收藏',
-    logHubFavoritesCopy: '从你常存的食物里快速选一个。',
-    logHubManualButton: '手动输入',
-    logHubManualCopy: '只有在要输入自定义食物或营养细节时才打开。',
-    mealListTitle: '今天的餐次',
-    commonFoodsTitle: '常见外食',
-    commonFoodsHint: '先选熟悉的外食餐点，只有需要调整份量或加料时再打开更多选项。',
+    heroActionFavorites: '常吃收藏',
+    headlineEmpty: '先开始今天第一餐',
+    headlineProgress: '今天节奏不错',
+    headlineComplete: '今天进度很稳',
+    dailyCaloriesTitle: '今日热量',
+    remainingLabel: '剩余',
+    macroFocusEyebrow: '三大营养重点',
+    macroFocusTitle: '三大营养素',
+    macroFocusHint: '打开营养摘要即可查看完整 8 项营养信息。',
+    mealDiaryEyebrow: '餐点日记',
+    previousDate: '前一天',
+    nextDate: '后一天',
+    screenTitle: '今天',
+    logHubTitle: '记录今天的饮食',
+    logHubCopyEmpty: '先用最快的入口开始，把细节编辑留到下一步。',
+    logHubCopyActive: '这里保持快速记录，真的需要细调时再往后走。',
+    logHubFavoritesButton: '常吃收藏',
+    logHubFavoritesCopy: '从你常吃的食物里快速加入。',
+    logHubManualButton: '新增食物',
+    logHubManualCopy: '前往新增界面，直接使用 AI 照片分析食物。',
+    mealListTitle: '今天吃了什么',
+    commonFoodsTitle: '常用餐点',
+    commonFoodsHint: '先从熟悉的餐点开始，再按需要微调。',
     commonFoodsMeta: (regionLabel) => `${regionLabel} 推荐`,
     commonFoodsButton: '直接加入今天',
+    commonFoodsAdvancedButton: '改用手动输入微调',
     manualAdvancedTitle: '进阶手动输入',
-    manualModalTitle: '手动输入',
-    manualModalHint: '需要自定义食物或手动调整营养时，再到这里输入。',
-    todayMealsKicker: '今日日记',
-    todayMealsTitle: '今天的餐次',
-    todayMealsHint: '今天吃过的内容会整理在这里，不会让首页变成表单。',
-    overviewTitle: '今天先看这两项',
-    overviewHint: '点开可看完整营养',
+    manualModalTitle: '手动新增餐点',
+    manualModalHint: '当你需要完整自定义食物与营养内容时再使用。',
+    todayMealsKicker: '饮食日记',
+    todayMealsTitle: '今天的餐点',
+    todayMealsHint: '今天吃过的内容都整理在这里，首页保持干净好读。',
+    overviewTitle: '今天先看这些',
+    overviewHint: '点开即可查看完整营养摘要',
     signals: {
         protein: '蛋白质节奏',
         meals: '餐次节奏'
     },
-    signalProteinToGoal: (remaining) => `距离今天目标还差 ${remaining}g`,
-    signalProteinOnTrack: '今天的蛋白质节奏还不错',
-    signalMealsEmpty: '先记下第一餐，就能开始建立今天的节奏。',
+    signalProteinToGoal: (remaining) => `距离目标还差 ${remaining}g`,
+    signalProteinOnTrack: '蛋白质摄取节奏正常',
+    signalMealsEmpty: '记下第一餐，就能开始建立今天的节奏。',
     signalMealsActive: (loggedMeals, plannedMeals, nextMealLabel) => (
         loggedMeals < plannedMeals && nextMealLabel
-            ? `已记录 ${loggedMeals}/${plannedMeals} 个餐次。下一個可以先记 ${nextMealLabel}。`
-            : `今天已记录 ${loggedMeals} 个餐次。`
+            ? `已记录 ${loggedMeals}/${plannedMeals} 次餐食，下一步可先安排 ${nextMealLabel}。`
+            : `今天已记录 ${loggedMeals} 次餐食。`
     ),
     statLabels: {
         streak: '连续',
         meals: '餐次',
         protein: '蛋白质'
+    },
+    petStage: {
+        bondLabel: '羁绊',
+        energyLabel: '能量',
+        streakLabel: '连续',
+        dayUnit: '天',
+        tapLabel: '和伙伴互动'
     },
     quickActions: '快速操作',
     today: '今天',
@@ -214,92 +285,31 @@ const zhCN = mergeDeep(en, {
     progress: '进度',
     companion: '先记下今天的第一餐',
     quickLog: '快速记录',
-    summary: '先看今天的重点，再用简单的方式把餐点记下来。',
+    summary: '先看今天的进度，再用最轻的方式记下下一餐。',
     open: '查看',
-    changeDate: '日期',
-    statusOnTrack: '节奏正常',
-    statusKeepGoing: '继续维持',
+    changeDate: '选择日期',
+    statusOnTrack: '节奏稳定',
+    statusKeepGoing: '继续保持',
     emptyMeal: '还没有记录',
     caloriesRemaining: (remaining = 0) => `还剩 ${Number(remaining) || 0} kcal`,
-    proteinRemaining: (remaining = 0) => `还差 ${Number(remaining) || 0}g`,
-    proteinOnTrack: '今天的蛋白质节奏正常',
+    proteinRemaining: (remaining = 0) => `蛋白质还差 ${Number(remaining) || 0}g`,
+    proteinOnTrack: '蛋白质表现稳定',
+    metrics: {
+        calories: '热量',
+        protein: '蛋白质',
+        meals: '餐次'
+    },
     mealGroupMeta: (count, totalCalories) => `${Number(count) || 0} 项 / ${formatKcal(totalCalories)}`
 });
 
-const ja = mergeDeep(en, {
-    heroEyebrowEmpty: 'Woof Cal と一緒にスタート',
-    heroEyebrowActive: '今日は愛犬と記録',
-    heroTitleEmpty: 'まずは今日の最初の食事を記録',
-    heroTitleActive: ({ loggedMeals, plannedMeals }) => `今日は ${loggedMeals}/${plannedMeals} 個の食事が記録済み`,
-    heroSummaryBase: 'よく食べるもの、保存した食品、AI をすぐ使える場所に置いて、軽く記録できます。',
-    heroActionLog: '食事を追加',
-    heroActionCommonFoods: 'よく使う外食',
-    heroActionManual: '手動入力',
-    heroActionFavorites: 'お気に入り',
-    logHubTitle: '今日の食事を記録',
-    commonFoodsTitle: 'よく使う外食',
-    commonFoodsHint: 'まずは馴染みのある外食を選び、量や追加だけ必要な時に調整します。',
-    overviewTitle: '今日はこの2つを先に確認',
-    signals: {
-        protein: 'たんぱく質の流れ',
-        meals: '食事リズム'
-    }
-});
-
-const ko = mergeDeep(en, {
-    heroEyebrowEmpty: 'Woof Cal과 함께 시작',
-    heroEyebrowActive: '오늘은 반려견과 함께 기록',
-    heroTitleEmpty: '오늘 첫 끼부터 기록해 보세요',
-    heroTitleActive: ({ loggedMeals, plannedMeals }) => `오늘은 ${loggedMeals}/${plannedMeals} 끼를 기록했어요`,
-    heroSummaryBase: '자주 먹는 음식, 즐겨찾기, AI를 바로 쓸 수 있는 위치에 두어 가볍게 기록할 수 있습니다.',
-    heroActionLog: '식사 추가',
-    heroActionCommonFoods: '자주 먹는 외식',
-    heroActionManual: '수동 입력',
-    heroActionFavorites: '즐겨찾기',
-    logHubTitle: '오늘의 식사 기록',
-    commonFoodsTitle: '자주 먹는 외식',
-    commonFoodsHint: '익숙한 외식부터 고르고, 양이나 추가 재료는 필요할 때만 조정하세요.',
-    overviewTitle: '오늘은 이 두 가지를 먼저',
-    signals: {
-        protein: '단백질 흐름',
-        meals: '식사 리듬'
-    }
-});
-
-const ar = mergeDeep(en, {
-    direction: 'rtl',
-    heroEyebrowEmpty: 'ابدأ مع Woof Cal',
-    heroEyebrowActive: 'اليوم مع رفيقك',
-    heroTitleEmpty: 'سجّل أول وجبة اليوم',
-    heroTitleActive: ({ loggedMeals, plannedMeals }) => `تم تسجيل ${loggedMeals}/${plannedMeals} لحظات وجبات اليوم`,
-    heroSummaryBase: 'ضع الأطعمة الشائعة والمفضلة والذكاء الاصطناعي في متناول يدك لتسجيل أخف وأسهل.',
-    heroActionLog: 'أضف وجبة',
-    heroActionCommonFoods: 'أطعمة شائعة',
-    heroActionManual: 'إدخال يدوي',
-    heroActionFavorites: 'المفضلة',
-    logHubTitle: 'سجّل وجبات اليوم',
-    commonFoodsTitle: 'أطعمة شائعة',
-    commonFoodsHint: 'ابدأ بعنصر مألوف من الأكل خارج المنزل، وغيّر الكمية أو الإضافات عند الحاجة فقط.',
-    overviewTitle: 'اليوم بنظرة سريعة',
-    signals: {
-        protein: 'وتيرة البروتين',
-        meals: 'إيقاع الوجبات'
-    }
-});
-
-export const homeUiCopyCatalog = {
+const catalog = {
     en,
     'zh-TW': zhTW,
-    'zh-CN': zhCN,
-    ja,
-    ko,
-    ar
+    'zh-CN': zhCN
 };
 
 export function getHomeUiCopy(lang = 'en') {
-    return homeUiCopyCatalog[lang] || homeUiCopyCatalog[String(lang || 'en').split('-')[0]] || homeUiCopyCatalog.en;
-}
-
-export function hasHomeUiCopy(lang = 'en') {
-    return Boolean(homeUiCopyCatalog[lang] || homeUiCopyCatalog[String(lang || 'en').split('-')[0]]);
+    return catalog[lang]
+        || catalog[String(lang || 'en').split('-')[0]]
+        || catalog.en;
 }

@@ -66,9 +66,9 @@ async function setInputValue(client, selector, value) {
 async function getActiveViewState(client) {
   return client.evaluate(`(() => ({
     daily: document.getElementById('view-daily')?.classList.contains('active-view') || false,
-    dashboard: document.getElementById('view-dashboard')?.classList.contains('active-view') || false,
-    ai: document.getElementById('view-ai')?.classList.contains('active-view') || false,
-    settings: document.getElementById('view-settings')?.classList.contains('active-view') || false
+    dashboard: document.getElementById('view-stats')?.classList.contains('active-view') || false,
+    ai: document.getElementById('view-add')?.classList.contains('active-view') || false,
+    settings: document.getElementById('view-profile')?.classList.contains('active-view') || false
   }))()`);
 }
 
@@ -436,21 +436,23 @@ async function run() {
     `);
 
     if (!URL_ARG) {
-      const onboardingState = await client.evaluate(`
+      const dailyState = await client.evaluate(`
         (() => ({
           onboardingVisible: !document.getElementById('onboarding-card').hidden,
-          coachTitle: document.getElementById('txt-coach-title')?.innerText?.trim() || '',
-          coachHeadline: document.getElementById('coach-headline')?.innerText?.trim() || '',
+          companionLabel: document.querySelector('#home-react-root .woof-home__motivation-badge')?.innerText?.trim() || '',
+          companionHeadline: document.querySelector('#home-react-root .woof-home__motivation-title')?.innerText?.trim() || '',
+          companionSummary: document.querySelector('#home-react-root .woof-home__motivation-summary')?.innerText?.trim() || '',
           goalProgressPresent: Boolean(document.getElementById('goal-insights-card'))
         }))()
       `);
-      if (!onboardingState.onboardingVisible) {
+      if (!dailyState.onboardingVisible) {
         results.push('Onboarding card is already completed on initial load');
       }
-      assert(Boolean(onboardingState.coachTitle), 'Coach card should render a title.');
-      assert(Boolean(onboardingState.coachHeadline), 'Coach card should render a headline.');
-      assert(!onboardingState.goalProgressPresent, 'Goal progress card should not render on the daily view.');
-      results.push('Coach card renders on the daily view');
+      assert(Boolean(dailyState.companionLabel), 'Companion status should render a label.');
+      assert(Boolean(dailyState.companionHeadline), 'Companion status should render a headline.');
+      assert(Boolean(dailyState.companionSummary), 'Companion status should render a summary.');
+      assert(!dailyState.goalProgressPresent, 'Goal progress card should not render on the daily view.');
+      results.push('Companion status renders on the daily view');
 
       const deferredChartState = await client.evaluate(`typeof window.Chart === 'function'`);
       assert(!deferredChartState, 'Chart.js should stay unloaded until the dashboard is opened.');
@@ -472,9 +474,9 @@ async function run() {
           regionVisible: Boolean(document.querySelector('#view-daily #food-preset-region')),
           manualFieldsOnHome: Boolean(document.querySelector('#view-daily #manual-name')),
           dailySummaryCompatPresent: Boolean(document.getElementById('daily-summary-compat')),
-          todayHint: document.querySelector('#home-react-root .woof-home__today .woof-home__section-hint')?.innerText?.trim() || '',
-          overviewHint: document.querySelector('#home-react-root .woof-home__overview .woof-home__section-hint')?.innerText?.trim() || '',
-          companionStatus: document.querySelector('#home-react-root .woof-home__pet-status')?.innerText?.trim() || '',
+          diaryTitle: document.querySelector('#home-react-root .woof-home__today .woof-home__section-title')?.innerText?.trim() || '',
+          dashboardTitle: document.querySelector('#home-react-root .woof-home__dashboard-head-title')?.innerText?.trim() || '',
+          companionStatus: document.querySelector('#home-react-root .woof-home__motivation-title')?.innerText?.trim() || '',
           launcherCount: document.querySelectorAll('#home-log-modal .home-log-launcher-card').length
         }))()
       `);
@@ -483,12 +485,12 @@ async function run() {
       assert(!homeQuickState.regionVisible, 'Home should not expose the preset region selector.');
       assert(!homeQuickState.manualFieldsOnHome, 'Home should not expose advanced manual input fields.');
       assert(!homeQuickState.dailySummaryCompatPresent, 'Home should not expose the legacy daily summary compatibility block.');
-      assert(Boolean(homeQuickState.todayHint), 'React Home should expose a visible today hint.');
-      assert(Boolean(homeQuickState.overviewHint), 'React Home should expose a visible overview hint.');
+      assert(Boolean(homeQuickState.diaryTitle), 'React Home should expose a visible meal diary title.');
+      assert(Boolean(homeQuickState.dashboardTitle), 'React Home should expose a visible daily summary title.');
       assert(Boolean(homeQuickState.companionStatus), 'React Home should expose a companion status.');
-      assert(homeQuickState.launcherCount === 3, `Home log modal should contain 3 logging entry actions, got ${homeQuickState.launcherCount}.`);
+      assert(homeQuickState.launcherCount === 2, `Home log modal should contain 2 focused logging entry actions, got ${homeQuickState.launcherCount}.`);
 
-      await client.evaluate(`document.querySelector('#home-react-root .woof-home__action-button--primary')?.click()`);
+      await client.evaluate(`document.querySelector('#home-react-root .woof-home__motivation-action')?.click()`);
       await delay(200);
       const logHubState = await client.evaluate(`
         (() => ({
@@ -499,7 +501,7 @@ async function run() {
         }))()
       `);
       assert(logHubState.open, 'Home log hub should open from the primary hero action.');
-      assert(logHubState.launcherCount === 3, `Log hub should show 3 lightweight action cards, got ${logHubState.launcherCount}.`);
+      assert(logHubState.launcherCount === 2, `Log hub should show 2 lightweight action cards, got ${logHubState.launcherCount}.`);
       assert(!logHubState.regionVisible, 'Log hub should not expose region selection.');
       assert(logHubState.shortcutCount === 0, 'Log hub should not show inline common-food quick shortcuts anymore.');
 
@@ -508,27 +510,44 @@ async function run() {
       const bridgeLogHubState = await client.evaluate(`
         (() => ({
           open: document.getElementById('home-log-modal').style.display === 'flex',
-          launcherCount: document.querySelectorAll('#home-log-modal .home-log-launcher-card').length
+          launcherCount: document.querySelectorAll('#home-log-modal .home-log-launcher-card').length,
+          addFoodLabel: document.getElementById('btn-home-log-manual-label')?.innerText?.trim() || ''
         }))()
       `);
       assert(bridgeLogHubState.open, 'Home log hub should stay reachable after quick-log interactions.');
-      assert(bridgeLogHubState.launcherCount === 3, 'Home log hub should keep the same three actions after opening.');
-      await client.evaluate(`document.getElementById('btn-home-log-close')?.click()`);
-      await delay(200);
+      assert(bridgeLogHubState.launcherCount === 2, 'Home log hub should keep the same two actions after opening.');
+      assert(bridgeLogHubState.addFoodLabel === '新增食物', `Expected the add-food launcher label, got ${bridgeLogHubState.addFoodLabel}.`);
+      await client.evaluate(`document.getElementById('btn-home-log-manual')?.click()`);
+      await delay(300);
+      const addFoodRouteState = await client.evaluate(`(() => ({
+        addViewActive: document.getElementById('view-add')?.classList.contains('active-view') || false,
+        photoModeActive: document.querySelector('[data-add-mode="photo"]')?.classList.contains('is-active') || false,
+        photoPanelVisible: Boolean(document.getElementById('add-panel-photo'))
+      }))()`);
+      assert(addFoodRouteState.addViewActive, 'Add food launcher should navigate to the add view.');
+      assert(addFoodRouteState.photoModeActive, 'Add food launcher should activate AI photo analysis mode.');
+      assert(addFoodRouteState.photoPanelVisible, 'Add food launcher should render the AI photo analysis panel.');
+      await client.evaluate(`(async () => {
+        const ui = await import('./js/ui.js');
+        const appShell = await import('./js/ui/app-shell-ui.js');
+        appShell.setAddMode('photo');
+        ui.switchView('view-daily');
+      })()`);
+      await delay(300);
 
       const dashboardState = await client.evaluate(`
         (() => ({
-          heroActionCount: document.querySelectorAll('#home-react-root .woof-home__action-button').length,
-          summarySignalCount: document.querySelectorAll('#home-react-root .woof-home__overview .woof-home__insight-card').length,
-          petSrc: document.querySelector('#home-react-root .woof-home__pet-image')?.getAttribute('src') || '',
-          petLoaded: (document.querySelector('#home-react-root .woof-home__pet-image')?.naturalWidth || 0) > 0
+          quickLogActionCount: document.querySelectorAll('#home-react-root .woof-home__motivation-action, #home-react-root .woof-home__diary-action').length,
+          macroProgressCount: document.querySelectorAll('#home-react-root .woof-home__dashboard-card .woof-home__macro-progress-row').length,
+          petSrc: document.querySelector('#home-react-root .woof-pet__sprite--base')?.getAttribute('src') || '',
+          petLoaded: (document.querySelector('#home-react-root .woof-pet__sprite--base')?.naturalWidth || 0) > 0
         }))()
       `);
-      assert(dashboardState.heroActionCount === 3, `Home companion hero should show 3 quick actions, got ${dashboardState.heroActionCount}.`);
-      assert(dashboardState.summarySignalCount >= 2, `React Home overview should show at least 2 insight cards, got ${dashboardState.summarySignalCount}.`);
+      assert(dashboardState.quickLogActionCount === 2, `Home should show 2 contextual quick-log actions, got ${dashboardState.quickLogActionCount}.`);
+      assert(dashboardState.macroProgressCount === 3, `React Home daily summary should show 3 macro progress rows, got ${dashboardState.macroProgressCount}.`);
       assert(dashboardState.petLoaded, `Pet image failed to load: ${dashboardState.petSrc}`);
       assert(/dog_animation\/dog_[a-z]+\.gif$/i.test(dashboardState.petSrc), `Pet image should point to a bundled gif, got ${dashboardState.petSrc}.`);
-      results.push('Companion hero and lighter summary render correctly');
+      results.push('Companion stage and daily summary render correctly');
 
       await client.evaluate(`window.__woofUiBridge?.openDailySummaryDetail?.()`);
       await delay(300);
@@ -536,16 +555,16 @@ async function run() {
         (() => ({
           open: document.getElementById('detail-modal').style.display === 'flex',
           reactVisible: !document.getElementById('detail-react-root')?.hidden,
-          summaryCount: document.querySelectorAll('#detail-react-root .woof-detail__summary-card').length,
-          sectionCount: document.querySelectorAll('#detail-react-root .woof-detail__section').length,
-          signalCount: document.querySelectorAll('#detail-react-root .woof-detail__signal-card').length
+          heroStatCount: document.querySelectorAll('#detail-react-root .woof-detail__hero-stat').length,
+          sectionCount: document.querySelectorAll('#detail-react-root .woof-detail__section-block').length,
+          focusCount: document.querySelectorAll('#detail-react-root .woof-detail__focus-card').length
         }))()
       `);
       assert(dailySummaryModal.open, 'Daily summary card did not open the detail modal.');
       assert(dailySummaryModal.reactVisible, 'Daily summary detail should render from the React detail surface.');
-      assert(dailySummaryModal.summaryCount === 3, `Daily summary detail should show 3 summary cards, got ${dailySummaryModal.summaryCount}.`);
-      assert(dailySummaryModal.sectionCount === 2, `Daily summary detail should show 2 nutrition sections, got ${dailySummaryModal.sectionCount}.`);
-      assert(dailySummaryModal.signalCount === 3, `Daily summary detail should show 3 weekly focus signals, got ${dailySummaryModal.signalCount}.`);
+      assert(dailySummaryModal.heroStatCount === 3, `Daily summary detail should show 3 hero stats, got ${dailySummaryModal.heroStatCount}.`);
+      assert(dailySummaryModal.sectionCount >= 3, `Daily summary detail should show at least 3 report sections, got ${dailySummaryModal.sectionCount}.`);
+      assert(dailySummaryModal.focusCount === 3, `Daily summary detail should show 3 weekly focus signals, got ${dailySummaryModal.focusCount}.`);
       results.push('Daily summary card opens the full nutrition modal');
       await client.evaluate(`document.getElementById('btn-detail-close').click()`);
 
@@ -560,10 +579,10 @@ async function run() {
             { name: 'Omelette', weight: '1 serving' }
           ],
           nutri: {
-            calories: 420,
-            protein: 24,
-            fat: 16,
-            carbohydrate: 38,
+            calories: 22345,
+            protein: 345,
+            fat: 3456,
+            carbohydrate: 234,
             sugar: 10,
             sodium: 780,
             saturatedFat: 4,
@@ -579,18 +598,78 @@ async function run() {
           reactVisible: !document.getElementById('detail-react-root')?.hidden,
           legacyContentExists: Boolean(document.getElementById('detail-content')),
           legacyTitleExists: Boolean(document.getElementById('detail-modal-title-wrap')),
-          summaryCount: document.querySelectorAll('#detail-react-root .woof-detail__summary-card').length,
-          sectionCount: document.querySelectorAll('#detail-react-root .woof-detail__section').length,
-          focusVisible: Boolean(document.querySelector('#detail-react-root .woof-detail__panel--focus'))
+          heroStatCount: document.querySelectorAll('#detail-react-root .woof-detail__hero-stat').length,
+          metricFirstRowCount: (() => {
+            const cards = [...document.querySelectorAll('#detail-react-root .woof-detail__hero-stat')];
+            const firstTop = cards[0]?.getBoundingClientRect().top ?? 0;
+            return cards.filter((card) => Math.abs(card.getBoundingClientRect().top - firstTop) < 2).length;
+          })(),
+          clippedMetricCount: [...document.querySelectorAll('#detail-react-root .woof-detail__hero-value')]
+            .filter((node) => {
+              const card = node.closest('.woof-detail__hero-stat');
+              return node.scrollWidth > node.clientWidth + 1
+                || node.getBoundingClientRect().right > card.getBoundingClientRect().right - 8;
+            }).length,
+          metricUnits: [...document.querySelectorAll('#detail-react-root .woof-detail__hero-unit')]
+            .map((node) => node.textContent.trim()),
+          maxUnitAlignmentDelta: Math.max(...[...document.querySelectorAll('#detail-react-root .woof-detail__hero-value')]
+            .map((node) => {
+              const number = node.querySelector('.woof-detail__hero-number');
+              const unit = node.querySelector('.woof-detail__hero-unit');
+              return unit ? Math.abs(number.getBoundingClientRect().bottom - unit.getBoundingClientRect().bottom) : 0;
+            })),
+          metricAccentCount: document.querySelectorAll('#detail-react-root .woof-detail__metric-accent').length,
+          sectionCount: document.querySelectorAll('#detail-react-root .woof-detail__section-block').length,
+          focusVisible: Boolean(document.querySelector('#detail-react-root .woof-detail__section-block--focus'))
         }))()
       `);
       assert(itemDetailModal.open, 'Item detail should open the detail modal.');
       assert(itemDetailModal.reactVisible, 'Item detail should render from the React detail surface.');
       assert(!itemDetailModal.legacyContentExists, 'Item detail should not expose the legacy detail content.');
       assert(!itemDetailModal.legacyTitleExists, 'Item detail should not expose the legacy modal title wrapper.');
-      assert(itemDetailModal.summaryCount === 3, `Item detail should show 3 summary cards, got ${itemDetailModal.summaryCount}.`);
-      assert(itemDetailModal.sectionCount === 2, `Item detail should show 2 nutrition sections, got ${itemDetailModal.sectionCount}.`);
+      assert(itemDetailModal.heroStatCount === 4, `Item detail should show 4 hero stats, got ${itemDetailModal.heroStatCount}.`);
+      assert(itemDetailModal.metricFirstRowCount === 2, `Item detail should use a readable 2-column metric grid, got ${itemDetailModal.metricFirstRowCount}.`);
+      assert(itemDetailModal.clippedMetricCount === 0, `Desktop metric values should not clip, got ${itemDetailModal.clippedMetricCount} clipped values.`);
+      assert(JSON.stringify(itemDetailModal.metricUnits) === JSON.stringify(['kcal', 'g', 'g', 'g']), `Metric units should render correctly, got ${JSON.stringify(itemDetailModal.metricUnits)}.`);
+      assert(itemDetailModal.maxUnitAlignmentDelta <= 4, `Desktop units should align to the number baseline, delta ${itemDetailModal.maxUnitAlignmentDelta}px.`);
+      assert(itemDetailModal.metricAccentCount === 0, 'Metric cards should not render decorative underlines.');
+      assert(itemDetailModal.sectionCount >= 4, `Item detail should show at least 4 report sections, got ${itemDetailModal.sectionCount}.`);
       assert(!itemDetailModal.focusVisible, 'Item detail should not show the weekly focus panel.');
+      await client.send('Emulation.setDeviceMetricsOverride', {
+        width: 375,
+        height: 812,
+        deviceScaleFactor: 1,
+        mobile: true
+      });
+      await delay(250);
+      const mobileMetricState = await client.evaluate(`(() => ({
+        viewportWidth: window.innerWidth,
+        metricFirstRowCount: (() => {
+          const cards = [...document.querySelectorAll('#detail-react-root .woof-detail__hero-stat')];
+          const firstTop = cards[0]?.getBoundingClientRect().top ?? 0;
+          return cards.filter((card) => Math.abs(card.getBoundingClientRect().top - firstTop) < 2).length;
+        })(),
+        clippedMetricCount: [...document.querySelectorAll('#detail-react-root .woof-detail__hero-value')]
+          .filter((node) => {
+            const card = node.closest('.woof-detail__hero-stat');
+            return node.scrollWidth > node.clientWidth + 1
+              || node.getBoundingClientRect().right > card.getBoundingClientRect().right - 8;
+          }).length,
+        maxUnitAlignmentDelta: Math.max(...[...document.querySelectorAll('#detail-react-root .woof-detail__hero-value')]
+          .map((node) => {
+            const number = node.querySelector('.woof-detail__hero-number');
+            const unit = node.querySelector('.woof-detail__hero-unit');
+            return unit ? Math.abs(number.getBoundingClientRect().bottom - unit.getBoundingClientRect().bottom) : 0;
+          })),
+        horizontalOverflow: document.documentElement.scrollWidth - window.innerWidth
+      }))()`);
+      assert(mobileMetricState.viewportWidth === 375, `Expected a 375px mobile viewport, got ${mobileMetricState.viewportWidth}.`);
+      assert(mobileMetricState.metricFirstRowCount === 1, `Mobile metric grid should use one compact row per metric, got ${mobileMetricState.metricFirstRowCount} cards on the first row.`);
+      assert(mobileMetricState.clippedMetricCount === 0, `Mobile metric values should not clip, got ${mobileMetricState.clippedMetricCount} clipped values.`);
+      assert(mobileMetricState.maxUnitAlignmentDelta <= 4, `Mobile units should align to the number baseline, delta ${mobileMetricState.maxUnitAlignmentDelta}px.`);
+      assert(mobileMetricState.horizontalOverflow <= 1, `Mobile detail should not overflow horizontally by ${mobileMetricState.horizontalOverflow}px.`);
+      await client.send('Emulation.clearDeviceMetricsOverride');
+      await delay(250);
       results.push('Item detail routes through the React detail surface');
       await client.evaluate(`document.getElementById('btn-detail-close').click()`);
 
@@ -599,14 +678,14 @@ async function run() {
       const dashboardViewState = await getActiveViewState(client);
       assert(dashboardViewState.dashboard, 'Dashboard view should remain reachable from the React home shell.');
       const dashboardSurface = await client.evaluate(`(() => ({
-        chartCanvasCount: document.querySelectorAll('#view-dashboard canvas').length,
-        rhythmCardVisible: !document.getElementById('dashboard-rhythm-card')?.hidden,
-        nutritionFocusVisible: !document.getElementById('dashboard-nutrition-focus-card')?.hidden,
+        chartCanvasCount: document.querySelectorAll('#view-stats canvas').length,
+        chartCardCount: document.querySelectorAll('#stats-react-root .stats-chart-card').length,
+        summaryVisible: Boolean(document.querySelector('#stats-react-root .stats-summary-card')),
         chart7Active: document.getElementById('btn-chart-7d')?.classList.contains('active-range') || false
       }))()`);
       assert(dashboardSurface.chartCanvasCount >= 5, `Dashboard should keep its chart canvases mounted, got ${dashboardSurface.chartCanvasCount}.`);
-      assert(dashboardSurface.rhythmCardVisible, 'Dashboard rhythm card should remain visible.');
-      assert(dashboardSurface.nutritionFocusVisible, 'Dashboard nutrition focus card should remain visible.');
+      assert(dashboardSurface.chartCardCount >= 4, `Dashboard should show at least 4 chart cards, got ${dashboardSurface.chartCardCount}.`);
+      assert(dashboardSurface.summaryVisible, 'Dashboard summary card should remain visible.');
       assert(dashboardSurface.chart7Active, 'Dashboard should default to the 7-day chart range.');
       results.push('Dashboard/charts view remains usable');
 
@@ -669,11 +748,11 @@ async function run() {
       assert(returnedHomeViewState.daily, 'Should be able to navigate back to the daily/home view from settings.');
       const returnedHomeSurface = await client.evaluate(`(() => ({
         reactHomeMounted: document.getElementById('view-daily')?.classList.contains('react-home-enabled') || false,
-        heroActionCount: document.querySelectorAll('#home-react-root .woof-home__action-button').length,
+        quickLogActionCount: document.querySelectorAll('#home-react-root .woof-home__motivation-action, #home-react-root .woof-home__diary-action').length,
         todayVisible: Boolean(document.querySelector('#home-react-root .woof-home__today'))
       }))()`);
       assert(returnedHomeSurface.reactHomeMounted, 'Home React island should remain mounted after navigation back from settings.');
-      assert(returnedHomeSurface.heroActionCount === 3, 'Home quick actions should remain available after navigating back from settings.');
+      assert(returnedHomeSurface.quickLogActionCount === 2, 'Home quick-log actions should remain available after navigating back from settings.');
       assert(returnedHomeSurface.todayVisible, 'Home summary surface should remain visible after navigation back from settings.');
       results.push('Navigation back to the daily view remains usable');
 
@@ -684,25 +763,25 @@ async function run() {
             .reduce((sum, item) => sum + Number(item?.nutri?.calories || item?.nutri?.cal || 0), 0);
         })()
       `);
-      const nextDate = await client.evaluate(`
+      const previousDate = await client.evaluate(`
         (() => {
           const d = new Date();
-          d.setDate(d.getDate() + 1);
+          d.setDate(d.getDate() - 1);
           const y = d.getFullYear();
           const m = String(d.getMonth() + 1).padStart(2, '0');
           const day = String(d.getDate()).padStart(2, '0');
           return \`\${y}-\${m}-\${day}\`;
         })()
       `);
-      const switchedForward = await client.evaluate(`
+      const switchedAway = await client.evaluate(`
         (async () => {
           const actionModule = await import('./js/state/app-actions.js');
-          actionModule.dispatchAppAction('SET_SELECTED_DATE', { date: '${nextDate}' });
+          actionModule.dispatchAppAction('SET_SELECTED_DATE', { date: '${previousDate}' });
           return window.__woofAppStateBridge?.getAppState?.()?.selectedDate || '';
         })()
       `);
       await delay(300);
-      assert(switchedForward === nextDate, `Could not switch date forward. Value became ${switchedForward}`);
+      assert(switchedAway === previousDate, `Could not switch to the previous date. Value became ${switchedAway}`);
       assert(
         (await client.evaluate(`
           (() => {
@@ -734,7 +813,7 @@ async function run() {
           selectedDate: window.__woofAppStateBridge?.getAppState?.()?.selectedDate || '',
           localStorageKeys: Object.keys(localStorage).sort(),
           todayRecord: localStorage.getItem('record_${today}'),
-          tomorrowRecord: localStorage.getItem('record_${nextDate}')
+          previousRecord: localStorage.getItem('record_${previousDate}')
         }))()
       `);
       assert(
@@ -753,27 +832,28 @@ async function run() {
       await exerciseRealAiFlow(client, results, { requireResult: true });
     }
 
-    const themeBefore = await client.evaluate(`document.documentElement.getAttribute('data-theme')`);
-    await client.evaluate(`document.getElementById('btn-toggle-theme-setting').click()`);
-    await delay(300);
-    const themeAfter = await client.evaluate(`document.documentElement.getAttribute('data-theme')`);
-    results.push(`Theme toggle reachable (${themeBefore || 'unset'} -> ${themeAfter || 'unset'})`);
-
     await client.evaluate(`
       document.getElementById('btn-open-lang-setting').click();
       document.querySelector('.lang-option[data-lang="en"]').click();
     `);
     await delay(600);
-    const englishNavLabel = await client.evaluate(`document.getElementById('nav-settings')?.innerText || ''`);
-    assert(Boolean(englishNavLabel), 'Language switch should keep the settings nav label readable.');
+    const englishNavLabel = await client.evaluate(`document.getElementById('txt-nav-profile')?.innerText || ''`);
+    assert(Boolean(englishNavLabel), 'English switch should keep the profile nav label readable.');
     await client.evaluate(`
       document.getElementById('btn-open-lang-setting').click();
-      document.querySelector('.lang-option[data-lang="ar"]').click();
+      document.querySelector('.lang-option[data-lang="zh-CN"]').click();
     `);
     await delay(600);
-    const arabicNavLabel = await client.evaluate(`document.getElementById('nav-settings')?.innerText || ''`);
-    assert(Boolean(arabicNavLabel), 'Arabic language switch should keep the settings nav label readable.');
-    results.push('Language switch commands execute without throwing');
+    const simplifiedChineseNavLabel = await client.evaluate(`document.getElementById('txt-nav-profile')?.innerText || ''`);
+    assert(Boolean(simplifiedChineseNavLabel), 'Simplified Chinese switch should keep the profile nav label readable.');
+    await client.evaluate(`
+      document.getElementById('btn-open-lang-setting').click();
+      document.querySelector('.lang-option[data-lang="zh-TW"]').click();
+    `);
+    await delay(600);
+    const traditionalChineseNavLabel = await client.evaluate(`document.getElementById('txt-nav-profile')?.innerText || ''`);
+    assert(Boolean(traditionalChineseNavLabel), 'Traditional Chinese switch should keep the profile nav label readable.');
+    results.push('English, Simplified Chinese, and Traditional Chinese switches execute without throwing');
 
     const swSupported = await client.evaluate(`'serviceWorker' in navigator`);
     results.push(`Service worker supported: ${swSupported}`);

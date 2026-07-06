@@ -12,10 +12,11 @@ export function getDefaultProfileRegion(lang = 'zh-TW') {
 }
 
 export function normalizeProfilePreferences(profile = {}, lang = 'zh-TW') {
+    const region = String(profile.region || '').trim() || getDefaultProfileRegion(lang);
     return {
-        region: String(profile.region || '').trim(),
+        region,
         diningOutFrequency: String(profile.diningOutFrequency || 'sometimes').trim() || 'sometimes',
-        preferredPresetRegion: String(profile.region || '').trim() || getDefaultProfileRegion(lang)
+        preferredPresetRegion: region
     };
 }
 
@@ -39,10 +40,6 @@ export function normalizeProfileMetrics(profile = {}, lang = 'zh-TW') {
 export function createOnboardingConfig(profile = {}, lang = 'zh-TW') {
     const normalized = normalizeProfileMetrics(profile, lang);
     const missingFields = [];
-
-    if (!normalized.region) {
-        missingFields.push('region');
-    }
 
     if (!normalized.age || !normalized.height || !normalized.weight || !normalized.activity) {
         missingFields.push('basicProfile');

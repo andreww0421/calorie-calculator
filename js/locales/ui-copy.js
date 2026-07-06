@@ -1,8 +1,5 @@
 import zhTWUiCopy from './ui-copy-zh-TW.js';
 import zhCNUiCopy from './ui-copy-zh-CN.js';
-import jaUiCopy from './ui-copy-ja.js';
-import koUiCopy from './ui-copy-ko.js';
-import arUiCopy from './ui-copy-ar.js';
 
 export const uiCopyCatalog = {
     en: {
@@ -124,8 +121,5 @@ export const uiCopyCatalog = {
         }
     },
     'zh-TW': zhTWUiCopy,
-    'zh-CN': zhCNUiCopy,
-    ja: jaUiCopy,
-    ko: koUiCopy,
-    ar: arUiCopy
+    'zh-CN': zhCNUiCopy
 };

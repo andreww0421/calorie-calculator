@@ -21,7 +21,7 @@ const baseEn = Object.freeze({
     },
     onboardingEyebrow: 'Asia-first setup',
     onboardingTitle: 'Complete your dining profile',
-    onboardingBody: 'Set your region, goal, and dining-out habits so presets and daily targets match how you actually eat.',
+    onboardingBody: 'Complete your basic profile, goal, and dining-out habits so daily targets match how you actually eat.',
     onboardingButton: 'Finish setup',
     onboardingRegionValue: 'Region not set',
     onboardingMissing: {
@@ -55,7 +55,7 @@ const zhTW = Object.freeze({
     },
     onboardingEyebrow: 'Asia-first 設定',
     onboardingTitle: '完成你的飲食設定',
-    onboardingBody: '設定地區、目標與外食習慣後，系統會更準確地帶入在地餐點預設與每日目標。',
+    onboardingBody: '完成基本資料、目標與外食習慣後，系統會更準確地計算每日目標。',
     onboardingButton: '前往完成設定',
     onboardingRegionValue: '尚未設定地區',
     onboardingMissing: {
@@ -89,7 +89,7 @@ const zhCN = Object.freeze({
     },
     onboardingEyebrow: 'Asia-first 设置',
     onboardingTitle: '完成你的饮食设置',
-    onboardingBody: '设置地区、目标和外食习惯后，系统会更准确地带入在地餐点预设与每日目标。',
+    onboardingBody: '完成基础资料、目标和外食习惯后，系统会更准确地计算每日目标。',
     onboardingButton: '前往完成设置',
     onboardingRegionValue: '尚未设置地区',
     onboardingMissing: {
@@ -123,7 +123,7 @@ const ja = Object.freeze({
     },
     onboardingEyebrow: 'Asia-first 設定',
     onboardingTitle: '食事プロフィールを完成させる',
-    onboardingBody: '地域、目標、外食頻度を設定すると、プリセットと1日の目標が実際の食生活に合いやすくなります。',
+    onboardingBody: '基本プロフィール、目標、外食頻度を設定すると、1日の目標が実際の食生活に合いやすくなります。',
     onboardingButton: '設定を完了',
     onboardingRegionValue: '地域が未設定です',
     onboardingMissing: {
@@ -157,7 +157,7 @@ const ko = Object.freeze({
     },
     onboardingEyebrow: 'Asia-first 설정',
     onboardingTitle: '식사 프로필을 완성하세요',
-    onboardingBody: '지역, 목표, 외식 습관을 설정하면 식사 프리셋과 일일 목표가 실제 식생활에 더 잘 맞습니다.',
+    onboardingBody: '기본 프로필, 목표, 외식 습관을 설정하면 일일 목표가 실제 식생활에 더 잘 맞습니다.',
     onboardingButton: '설정 완료',
     onboardingRegionValue: '지역이 아직 설정되지 않았습니다',
     onboardingMissing: {
@@ -191,7 +191,7 @@ const ar = Object.freeze({
     },
     onboardingEyebrow: 'إعداد Asia-first',
     onboardingTitle: 'أكمل ملفك الغذائي',
-    onboardingBody: 'حدد المنطقة والهدف وعادات الأكل خارج المنزل حتى تتوافق الاقتراحات والأهداف اليومية مع أسلوب أكلك الفعلي.',
+    onboardingBody: 'أكمل ملفك الأساسي والهدف وعادات الأكل خارج المنزل حتى تتوافق الأهداف اليومية مع أسلوب أكلك الفعلي.',
     onboardingButton: 'إكمال الإعداد',
     onboardingRegionValue: 'لم يتم تحديد المنطقة بعد',
     onboardingMissing: {
