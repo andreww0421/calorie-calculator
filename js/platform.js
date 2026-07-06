@@ -62,7 +62,7 @@ function loadTurnstileScript() {
     if (instance) return Promise.resolve(instance);
     if (turnstileScriptPromise) return turnstileScriptPromise;
 
-    turnstileScriptPromise = new Promise((resolve, reject) => {
+    const loadPromise = new Promise((resolve, reject) => {
         if (typeof document === 'undefined') {
             resolve(null);
             return;
@@ -70,8 +70,18 @@ function loadTurnstileScript() {
 
         const existingScript = document.querySelector('script[data-turnstile-loader="true"]');
         if (existingScript) {
-            existingScript.addEventListener('load', () => resolve(getTurnstileInstance()), { once: true });
-            existingScript.addEventListener('error', () => reject(new Error('TURNSTILE_SCRIPT_LOAD_FAILED')), { once: true });
+            existingScript.addEventListener('load', () => {
+                const loadedInstance = getTurnstileInstance();
+                if (loadedInstance) {
+                    resolve(loadedInstance);
+                    return;
+                }
+                reject(new Error('TURNSTILE_SCRIPT_LOAD_FAILED'));
+            }, { once: true });
+            existingScript.addEventListener('error', () => {
+                existingScript.remove();
+                reject(new Error('TURNSTILE_SCRIPT_LOAD_FAILED'));
+            }, { once: true });
             return;
         }
 
@@ -80,15 +90,40 @@ function loadTurnstileScript() {
         script.async = true;
         script.defer = true;
         script.dataset.turnstileLoader = 'true';
-        script.onload = () => resolve(getTurnstileInstance());
-        script.onerror = () => reject(new Error('TURNSTILE_SCRIPT_LOAD_FAILED'));
+        script.onload = () => {
+            const loadedInstance = getTurnstileInstance();
+            if (loadedInstance) {
+                resolve(loadedInstance);
+                return;
+            }
+            script.remove();
+            reject(new Error('TURNSTILE_SCRIPT_LOAD_FAILED'));
+        };
+        script.onerror = () => {
+            script.remove();
+            reject(new Error('TURNSTILE_SCRIPT_LOAD_FAILED'));
+        };
         document.head.appendChild(script);
+    });
+
+    turnstileScriptPromise = loadPromise.catch((error) => {
+        turnstileScriptPromise = null;
+        throw error;
     });
 
     return turnstileScriptPromise;
 }
 
 export function markTurnstileUnavailable(reason = 'TURNSTILE_UNAVAILABLE') {
+    const instance = getTurnstileInstance();
+    if (instance && turnstileState.widgetId !== null) {
+        try {
+            instance.remove(turnstileState.widgetId);
+        } catch {}
+    }
+
+    turnstileInitPromise = null;
+    turnstileState.widgetId = null;
     turnstileState.unavailableReason = String(reason || 'TURNSTILE_UNAVAILABLE');
     turnstileState.lastErrorCode = String(reason || 'TURNSTILE_UNAVAILABLE');
     turnstileState.initialized = false;
@@ -113,6 +148,11 @@ export function getTurnstileStatus() {
 }
 
 export async function initializeTurnstileWidget(selector = TURNSTILE_WIDGET_SELECTOR) {
+    if (!isAllowedTurnstileHostname()) {
+        markTurnstileUnavailable('TURNSTILE_UNSUPPORTED_DOMAIN');
+        return getTurnstileStatus();
+    }
+
     if (!turnstileInitPromise) {
         turnstileInitPromise = (async () => {
             await waitForDomReady();
@@ -120,11 +160,6 @@ export async function initializeTurnstileWidget(selector = TURNSTILE_WIDGET_SELE
             const container = getTurnstileContainer(selector);
             if (!container) {
                 markTurnstileUnavailable('TURNSTILE_CONTAINER_MISSING');
-                return getTurnstileStatus();
-            }
-
-            if (!isAllowedTurnstileHostname()) {
-                markTurnstileUnavailable('TURNSTILE_UNSUPPORTED_DOMAIN');
                 return getTurnstileStatus();
             }
 
@@ -165,12 +200,17 @@ export async function initializeTurnstileWidget(selector = TURNSTILE_WIDGET_SELE
         });
     }
 
-    return turnstileInitPromise;
+    const currentInitPromise = turnstileInitPromise;
+    const status = await currentInitPromise;
+    if (!status.initialized && turnstileInitPromise === currentInitPromise) {
+        turnstileInitPromise = null;
+    }
+    return status;
 }
 
 export function getTurnstileToken(selector = TURNSTILE_WIDGET_SELECTOR) {
     const instance = getTurnstileInstance();
-    if (!instance) return null;
+    if (!instance || !turnstileState.initialized || turnstileState.widgetId === null) return null;
     try {
         const token = instance.getResponse(getTurnstileHandle(selector)) || null;
         turnstileState.lastToken = token || '';
@@ -182,7 +222,7 @@ export function getTurnstileToken(selector = TURNSTILE_WIDGET_SELECTOR) {
 
 export function resetTurnstile(selector = TURNSTILE_WIDGET_SELECTOR) {
     const instance = getTurnstileInstance();
-    if (!instance || turnstileState.unavailableReason) return;
+    if (!instance || !turnstileState.initialized || turnstileState.widgetId === null || turnstileState.unavailableReason) return;
     turnstileState.isExecuting = false;
     turnstileState.lastToken = '';
     try {
@@ -192,7 +232,13 @@ export function resetTurnstile(selector = TURNSTILE_WIDGET_SELECTOR) {
 
 export function executeTurnstile(selector = TURNSTILE_WIDGET_SELECTOR) {
     const instance = getTurnstileInstance();
-    if (!instance || turnstileState.unavailableReason || turnstileState.isExecuting) return false;
+    if (
+        !instance
+        || !turnstileState.initialized
+        || turnstileState.widgetId === null
+        || turnstileState.unavailableReason
+        || turnstileState.isExecuting
+    ) return false;
     turnstileState.isExecuting = true;
     try {
         instance.execute(getTurnstileHandle(selector));
