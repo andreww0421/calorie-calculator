@@ -2,8 +2,8 @@ import { calculateProfilePlan } from '../domain/profile-domain.js';
 import { getLocaleTranslations } from '../locales/index.js';
 import { createDailyViewModel } from '../state/app-state.js';
 import { renderListAndStats } from './charts-ui.js';
+import { syncAddMealTypeSelect } from './app-shell-ui.js';
 import { openFavModal } from './favorites-ui.js';
-import { renderManualFoodPresetPanel } from './food-preset-ui.js';
 import { getDisplayDateLabel, getGoalUiText } from './locale-ui.js';
 import {
     renderOnboardingCard,
@@ -29,12 +29,18 @@ function setTextById(id, value) {
     }
 }
 
+function isReactIslandMounted(rootId) {
+    return document.getElementById(rootId)?.dataset.mounted === 'true';
+}
+
 function applyDateInputs(state) {
     const today = getLocalDateString();
     const dateLabel = getDisplayDateLabel(state.selectedDate, state.curLang);
     setInputValue('current-date', state.selectedDate);
     setTextById('display-date-text', dateLabel);
-    setInputValue('daily-weight-input', state.loggedWeight ?? '');
+    if (!isReactIslandMounted('stats-react-root')) {
+        setInputValue('daily-weight-input', state.loggedWeight ?? '');
+    }
 
     const currentDateInput = document.getElementById('current-date');
     if (currentDateInput) {
@@ -146,20 +152,7 @@ export function syncAppStateUI(state, previousState, meta = {}) {
 
     if (shouldSyncMealPlan) {
         updateMealUI();
-        if (reason === 'profile:apply') {
-            renderManualFoodPresetPanel({
-                surface: 'modal',
-                actionMode: 'quick-add',
-                showRegionSelect: false,
-                showRegionMeta: false,
-                showSecondaryAction: true,
-                selection: {
-                    region: state.profile?.region || '',
-                    presetId: '',
-                    modifiers: {}
-                }
-            });
-        }
+        syncAddMealTypeSelect();
         syncProfileGoalPresentation(state);
     }
 

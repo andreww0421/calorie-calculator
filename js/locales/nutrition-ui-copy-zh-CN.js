@@ -1,15 +1,15 @@
 const zhCNNutritionUiCopy = {
     detail: {
-        overviewTitle: '营养快览',
-        overviewSummary: '先用清楚的方式看懂这餐，再决定接下来怎么调整。',
+        overviewTitle: '营养快照',
+        overviewSummary: '在决定下一步之前，先用更平静的方式看这餐的营养轮廓。',
         sections: {
             quality: {
-                title: '营养重点',
-                summary: '这些数值最容易影响饱足感、口味与整体平衡。'
+                title: '质量信号',
+                summary: '这些营养通常最能影响饱足感与整体平衡。'
             },
             fatDetails: {
                 title: '脂肪细节',
-                summary: '补充看看脂肪来源与组成，帮助你更快判断这餐的油脂负担。'
+                summary: '多一点脂肪质量的信息，但不把画面变复杂。'
             }
         }
     },
@@ -17,28 +17,28 @@ const zhCNNutritionUiCopy = {
         title: '营养焦点',
         subtitle: '今天 + 最近 7 天',
         headlines: {
-            start_logging: '先记几餐，营养节奏才会开始清楚',
+            start_logging: '记录几餐后，完整的营养故事才会开始出现',
             protein: '今天最值得补的是蛋白质',
-            fiber: '今天最容易拉回来的，是纤维',
-            sodium: '下一餐清淡一点，整天会更平衡',
+            fiber: '纤维还可以再拉高一点',
+            sodium: '下一餐清淡一点会更平衡',
             balanced: '今天目前的营养分配算稳'
         },
         summaries: {
-            start_logging: '有几餐记录之后，这张卡会开始显示蛋白质、纤维和钠的节奏。',
-            protein: (days) => `和最近 ${days} 天相比，今天最值得先补的是蛋白质。`,
-            fiber: (days) => `和最近 ${days} 天相比，今天最容易微调的是纤维。`,
-            sodium: (days) => `今天的钠比最近 ${days} 天的节奏再高一些，下一餐清淡些会更舒服。`,
-            balanced: (days) => `和最近 ${days} 天相比，今天目前的营养分配算平衡。`
+            start_logging: '多几条记录后，这张卡就会开始读出蛋白质、纤维与钠的模式。',
+            protein: (days) => `和最近 ${days} 天相比，今天最值得优先补的是蛋白质。`,
+            fiber: (days) => `和最近 ${days} 天相比，纤维是最容易先补齐的一块。`,
+            sodium: (days) => `和最近 ${days} 天相比，今天的钠有点偏高。`,
+            balanced: (days) => `和最近 ${days} 天相比，今天目前的营养节奏算稳。`
         },
         signalLabels: {
             protein: '蛋白质节奏',
-            fiber: '纤维补位',
+            fiber: '纤维支持',
             sodium: '钠平衡'
         },
         signalDetails: {
-            protein: ({ average }) => average > 0 ? `近 7 天平均 ${average}g` : '再多记几天就能看到节奏',
-            fiber: ({ average }) => average > 0 ? `近 7 天平均 ${average}g` : '再多记几天就能看到节奏',
-            sodium: ({ average }) => average > 0 ? `近 7 天平均 ${average}mg` : '再多记几天就能看到节奏'
+            protein: ({ average }) => average > 0 ? `7 天平均 ${average}g` : '先积累几条记录再看节奏',
+            fiber: ({ average }) => average > 0 ? `7 天平均 ${average}g` : '先积累几条记录再看节奏',
+            sodium: ({ average }) => average > 0 ? `7 天平均 ${average}mg` : '先积累几条记录再看节奏'
         },
         signalValue: {
             protein: ({ current, target }) => target > 0 ? `${current}/${target}g` : `${current}g`,

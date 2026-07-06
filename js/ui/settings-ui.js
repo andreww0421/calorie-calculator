@@ -3,10 +3,9 @@ import { dispatchAppAction } from '../state/app-actions.js';
 import { getAppState } from '../state/app-state.js';
 import { createButton, createElement, clearElement } from './dom-ui.js';
 import { getTexts, uiActions, toggleFabMenu } from './shared-ui.js';
-import { renderManualFoodPresetPanel } from './food-preset-ui.js';
 import { updateChartTheme, updateMacroChartLanguage } from './charts-ui.js';
-import { confirmFavoriteMeal } from './favorites-ui.js';
 import { getDisplayDateLabel, getExtraUiText, getGoalUiText } from './locale-ui.js';
+import { getHomeUiCopy } from '../locales/home-ui-copy.js';
 import { getMealPlan } from '../domain/nutrition-domain.js';
 
 const TEXT_BINDINGS = [
@@ -59,13 +58,8 @@ const TEXT_BINDINGS = [
     ['txt-modal-ask', ({ t }) => t.modalAsk],
     ['btn-cancel', ({ t }) => t.btnCancel],
     ['txt-fav-title', ({ t }) => t.favTitle],
-    ['btn-fav-close', ({ t }) => t.btnClose],
-    ['txt-fav-meal-title', ({ t }) => t.favTitle],
-    ['txt-fav-meal-ask', ({ t }) => t.favTitle],
-    ['btn-fav-meal-close', ({ t }) => t.btnCancel],
     ['menu-import-setting', ({ t }) => t.menuImport],
     ['menu-export-setting', ({ t }) => t.menuExport],
-    ['menu-theme-setting', ({ t }) => t.menuTheme],
     ['menu-lang-setting', ({ t }) => t.menuLang],
     ['txt-lang-title', ({ t }) => t.langTitle],
     ['btn-lang-cancel', ({ t }) => t.langCancel],
@@ -74,9 +68,14 @@ const TEXT_BINDINGS = [
     ['txt-weight-chart-title', ({ t }) => t.weightChartTitle],
     ['txt-text-ai-label', ({ t }) => t.textAiLabel],
     ['txt-app-settings-title', ({ t }) => t.appSettingsTitle],
-    ['nav-daily', ({ t }) => t.navDaily],
-    ['nav-dashboard', ({ t }) => t.navDashboard],
-    ['nav-settings', ({ t }) => t.navSettings],
+    ['txt-profile-targets-title', ({ t }) => t.profileTargetsTitle],
+    ['txt-history-eyebrow', ({ t }) => t.historyEyebrow],
+    ['txt-history-title', ({ t }) => t.historyTitle],
+    ['txt-nav-home', ({ t }) => t.navHome],
+    ['txt-nav-add', ({ t }) => t.navAdd],
+    ['txt-nav-history', ({ t }) => t.navHistory],
+    ['txt-nav-stats', ({ t }) => t.navStats],
+    ['txt-nav-profile', ({ t }) => t.navProfile],
     ['txt-tdee-unit', ({ t }) => t.txtTdeeUnit],
     ['txt-cal-trend-title', ({ t }) => t.chartCalTrend],
     ['txt-protein-trend-title', ({ t }) => t.chartProteinTrend],
@@ -92,7 +91,19 @@ const TEXT_BINDINGS = [
     ['txt-ai-guide-copy', ({ extra }) => extra.aiGuideBody],
     ['txt-ai-guide-tip-1', ({ extra }) => extra.aiGuideTip1],
     ['txt-ai-guide-tip-2', ({ extra }) => extra.aiGuideTip2],
-    ['txt-ai-guide-tip-3', ({ extra }) => extra.aiGuideTip3]
+    ['txt-ai-guide-tip-3', ({ extra }) => extra.aiGuideTip3],
+    ['txt-home-log-modal-title', ({ homeCopy }) => homeCopy.logHubTitle],
+    ['txt-home-log-modal-copy', ({ homeCopy }) => homeCopy.logHubCopyEmpty],
+    ['btn-home-log-favorites-label', ({ homeCopy }) => homeCopy.logHubFavoritesButton],
+    ['txt-home-log-favorites-copy', ({ homeCopy }) => homeCopy.logHubFavoritesCopy],
+    ['btn-home-log-manual-label', ({ homeCopy }) => homeCopy.logHubManualButton],
+    ['txt-home-log-manual-copy', ({ homeCopy }) => homeCopy.logHubManualCopy]
+];
+
+const ATTRIBUTE_BINDINGS = [
+    ['btn-fav-close', 'aria-label', ({ t }) => t.btnClose],
+    ['btn-fav-meal-close', 'aria-label', ({ t }) => t.btnClose],
+    ['btn-home-log-close', 'aria-label', ({ t }) => t.btnClose]
 ];
 
 const PLACEHOLDER_BINDINGS = [
@@ -139,13 +150,11 @@ export function updateMealUI() {
     const container = document.getElementById('meal-sections-container');
     const manualSelect = document.getElementById('manual-type');
     const modalBtns = document.getElementById('modal-meal-buttons');
-    const favoriteMealBtns = document.getElementById('favorite-meal-buttons');
-    if ((!container && !manualSelect && !modalBtns && !favoriteMealBtns) || mealPlan.length === 0) return;
+    if ((!container && !manualSelect && !modalBtns) || mealPlan.length === 0) return;
 
     if (container) clearElement(container);
     if (manualSelect) clearElement(manualSelect);
     if (modalBtns) clearElement(modalBtns);
-    if (favoriteMealBtns) clearElement(favoriteMealBtns);
 
     const MEAL_ICONS = { breakfast: '\u2600', lunch: '\uD83C\uDF1E', dinner: '\uD83C\uDF19', snack: '\u2B50' };
 
@@ -193,20 +202,17 @@ export function updateMealUI() {
                 uiActions.confirmAddFood?.(type);
             }, { className: `meal-btn ${type}` }));
         }
-
-        if (favoriteMealBtns) {
-            favoriteMealBtns.appendChild(createButton(title, () => {
-                confirmFavoriteMeal(type);
-            }, { className: `meal-btn ${type}` }));
-        }
     });
+}
 
-    renderManualFoodPresetPanel({
-        surface: 'modal',
-        actionMode: 'quick-add',
-        showRegionSelect: false,
-        showSecondaryAction: true,
-        showRegionMeta: false
+function applyAttributeBindings(bindings, context) {
+    bindings.forEach(([id, attribute, resolver]) => {
+        const el = document.getElementById(id);
+        const value = resolver(context);
+        if (el && value) {
+            el.setAttribute(attribute, value);
+            if (attribute === 'aria-label') el.setAttribute('title', value);
+        }
     });
 }
 
@@ -228,7 +234,7 @@ export function setTheme(theme, options = {}) {
 
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-        metaThemeColor.setAttribute('content', theme === 'dark' ? '#0F1117' : '#FAFBF8');
+        metaThemeColor.setAttribute('content', theme === 'dark' ? '#17172a' : '#7A6FE0');
     }
 }
 
@@ -242,7 +248,8 @@ export function setLang(lang) {
     const t = getLocaleTranslations(lang);
     const extra = getExtraUiText(lang);
     const goalUi = getGoalUiText(lang);
-    const context = { t, extra, goalUi };
+    const homeCopy = getHomeUiCopy(lang);
+    const context = { t, extra, goalUi, homeCopy };
     document.title = extra.metaTitle || t.appTitle || 'Woof Cal';
     document.documentElement.lang = lang;
     document.documentElement.dir = extra.direction || 'ltr';
@@ -276,5 +283,6 @@ export function setLang(lang) {
     if (navAiBadge) navAiBadge.innerText = t.navAi || 'AI';
 
     applyPlaceholderBindings(PLACEHOLDER_BINDINGS, context);
+    applyAttributeBindings(ATTRIBUTE_BINDINGS, context);
     updateMacroChartLanguage(t);
 }

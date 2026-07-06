@@ -19,7 +19,7 @@
     <meta name="twitter:image" content="https://andreww0421.github.io/calorie-calculator/calorie_icon.png">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://andreww0421.github.io https://challenges.cloudflare.com; connect-src 'self' https://woof-cal-worker.jtwen12345us.workers.dev https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#FAFBF8">
+    <meta name="theme-color" content="#7A6FE0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="apple-touch-icon" href="calorie_icon.png">
@@ -74,127 +74,43 @@
 
     </div>
     
-    <!-- ==================== DASHBOARD VIEW ==================== -->
-    <div id="view-dashboard" class="view-section hidden">
-        <div class="dashboard-date-bar">
-            <button type="button" class="dashboard-date-arrow" id="btn-dashboard-date-prev" aria-label="Previous date">&#x2039;</button>
-            <button type="button" class="dashboard-date-display" id="btn-change-log-date" aria-haspopup="dialog" aria-controls="current-date">
-                <span id="display-date-text">今天</span>
-            </button>
-            <button type="button" class="dashboard-date-arrow" id="btn-dashboard-date-next" aria-label="Next date">&#x203A;</button>
-        </div>
-
-        <!-- Weekly Summary Grid -->
-        <div class="dashboard-summary-grid" id="dashboard-summary-grid">
-            <div class="dash-tile"><div class="dash-tile-icon">&#x1F525;</div><div class="dash-tile-body"><div class="dash-tile-val" id="dash-avg-cal">--</div><div class="dash-tile-label" id="dash-avg-cal-label">平均熱量</div></div></div>
-            <div class="dash-tile"><div class="dash-tile-icon">&#x1F4C6;</div><div class="dash-tile-body"><div class="dash-tile-val" id="dash-streak">0</div><div class="dash-tile-label" id="dash-streak-label">連續打卡</div></div></div>
-            <div class="dash-tile"><div class="dash-tile-icon">&#x2705;</div><div class="dash-tile-body"><div class="dash-tile-val" id="dash-on-target">0/7</div><div class="dash-tile-label" id="dash-on-target-label">達標天數</div></div></div>
-            <div class="dash-tile"><div class="dash-tile-icon">&#x1F4AA;</div><div class="dash-tile-body"><div class="dash-tile-val" id="dash-avg-protein">--</div><div class="dash-tile-label" id="dash-avg-protein-label">平均蛋白質</div></div></div>
-        </div>
-
-        <!-- Pet Stats Card -->
-        <div class="card pet-stats-card" id="pet-stats-card">
-            <div class="pet-stats-header"><span class="pet-stats-title">夥伴狀態</span><span class="pet-stats-level" id="pet-stats-level">Lv.1</span></div>
-            <div class="pet-stats-bars">
-                <div class="pet-stat-row"><span class="pet-stat-lbl">XP</span><div class="pet-stat-track"><div class="pet-stat-fill pet-stat-fill--xp" id="pet-stat-xp-fill"></div></div></div>
-                <div class="pet-stat-row"><span class="pet-stat-lbl">Energy</span><div class="pet-stat-track"><div class="pet-stat-fill pet-stat-fill--energy" id="pet-stat-energy-fill"></div></div></div>
-                <div class="pet-stat-row"><span class="pet-stat-lbl">Bond</span><div class="pet-stat-track"><div class="pet-stat-fill pet-stat-fill--bond" id="pet-stat-bond-fill"></div></div></div>
-            </div>
-        </div>
-
-        <div class="card rhythm-card rhythm-card--dashboard" id="dashboard-rhythm-card" hidden></div>
-        <div class="card nutrition-focus-card" id="dashboard-nutrition-focus-card" hidden></div>
-        <div class="coach-card card" id="daily-coach-card">
-            <div class="coach-status-bar" id="coach-status-bar"></div>
-            <div class="coach-header">
-                <div class="quick-start-eyebrow" id="txt-coach-title">今日教練建議</div>
-                <div class="coach-headline" id="coach-headline">從第一餐開始建立今天的節奏</div>
-                <div class="coach-summary" id="coach-summary">先記下第一餐，儀表板和 AI 建議就會開始發揮作用。</div>
-            </div>
-            <ul class="coach-tip-list" id="coach-tips"></ul>
-            <div class="coach-weekly-block">
-                <div class="coach-weekly-title" id="coach-weekly-title">近 7 天節奏</div>
-                <div class="coach-weekly-stats" id="coach-weekly-stats"></div>
-            </div>
-        </div>
-
-        <!-- Charts: Macros -->
-        <div class="dash-section-label" id="txt-chart-title">Nutrition Analysis</div>
-        <div class="card">
-            <div class="chart-grid">
-                <div class="chart-container" style="height:200px;"><canvas id="macroChart"></canvas></div>
-                <div class="chart-container" style="height:200px;"><canvas id="weeklyChart"></canvas></div>
-            </div>
-        </div>
-        
-        <!-- Charts: Trends -->
-        <div class="dash-section-label" id="txt-cal-trend-title">Calorie Intake Trend</div>
-        <div class="card">
-            <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
-                <div class="chart-range-toggle">
-                    <button id="btn-chart-7d" class="range-btn active-range">7D</button>
-                    <button id="btn-chart-30d" class="range-btn">30D</button>
-                </div>
-            </div>
-            <div class="chart-container" style="height:200px;"><canvas id="calTrendChart"></canvas></div>
-        </div>
-        <div class="card">
-            <h3 id="txt-protein-trend-title" style="margin:0 0 10px;">Protein Intake Trend</h3>
-            <div class="chart-container" style="height:200px;"><canvas id="proteinTrendChart"></canvas></div>
-        </div>
-
-        <!-- Weight (combined input + chart) -->
-        <div class="dash-section-label">體重趨勢</div>
-        <div class="card">
-            <span id="txt-weight-chart-title" hidden></span>
-            <div class="weight-input-inline">
-                <input type="number" id="daily-weight-input" placeholder="今日體重 (kg)" step="0.1">
-                <button id="btn-save-weight" class="weight-save-btn"><span id="txt-weight-title">儲存</span></button>
-            </div>
-            <div class="chart-container" style="height:200px;"><canvas id="weightChart"></canvas></div>
-        </div>
+    <!-- ==================== ADD VIEW ==================== -->
+    <div id="view-add" class="view-section hidden">
+        <div id="add-react-root" class="add-react-root" aria-live="polite"></div>
     </div>
 
-    <!-- ==================== AI VIEW ==================== -->
-    <div id="view-ai" class="view-section hidden">
-        <div class="card">
-            <h2 style="color: var(--accent-color);" id="txt-ai-title">AI Analysis</h2>
-            <div class="ai-guide-card" id="ai-guide-card">
-                <div class="ai-guide-eyebrow" id="txt-ai-guide-eyebrow">AI Tips</div>
-                <div class="ai-guide-title" id="txt-ai-guide-title">Get faster, cleaner AI results</div>
-                <div class="ai-guide-copy" id="txt-ai-guide-copy">Clear photos and a little extra context help the nutrition analysis stay more accurate.</div>
-                <ul class="ai-guide-list">
-                    <li id="txt-ai-guide-tip-1">Keep the meal visible and avoid blocking the plate</li>
-                    <li id="txt-ai-guide-tip-2">Add brand names or key ingredients when they matter</li>
-                    <li id="txt-ai-guide-tip-3">Edit ingredients before recalculating if the result looks off</li>
-                </ul>
+    <!-- ==================== HISTORY VIEW ==================== -->
+    <div id="view-history" class="view-section hidden">
+        <div class="surface-heading surface-heading--with-date">
+            <div>
+                <div class="surface-heading__eyebrow" id="txt-history-eyebrow">每日回顧</div>
+                <h1 class="surface-heading__title" id="txt-history-title">歷史紀錄</h1>
             </div>
-            <div style="text-align: center;">
-                <input type="file" id="image-upload" accept="image/*" style="display: none;">
-                <button class="btn-ai" id="btn-take-photo">1. 拍照 / 選擇圖片</button>
-                
-                <div id="ai-text-only-group" style="margin-top: 15px; text-align: left;">
-                    <label id="txt-text-ai-label">或直接輸入文字描述：</label>
-                    <textarea id="ai-text-desc" rows="3" style="width:100%; padding:10px; border-radius:10px; margin-top:5px;" placeholder="例如：一碗牛肉麵、滷蛋、還有一份燙青菜..."></textarea>
-                </div>
-
-                <div id="ai-desc-group" style="display:none; margin-top: 15px;">
-                    <textarea id="ai-desc" rows="2" style="width:100%; padding:10px; border-radius:10px;" placeholder="補充圖片說明..."></textarea>
-                </div>
-                
-                <div id="turnstile-widget" aria-hidden="true"></div>
-                <div id="turnstile-status-note" class="ai-status-note" hidden></div>
-                <button id="analyze-btn" class="btn-analyze" style="display:inline-block; margin-top:15px; width:100%;"><span id="txt-analyze-btn">2. 送出分析（圖片或文字）</span></button>
+            <div class="dashboard-date-bar history-date-bar">
+                <button type="button" class="dashboard-date-arrow" id="btn-dashboard-date-prev" aria-label="Previous date">&#x2039;</button>
+                <label class="dashboard-date-display dashboard-date-display--picker" id="btn-change-log-date">
+                    <span id="display-date-text">今天</span>
+                    <span class="dashboard-date-caret" aria-hidden="true">&#x25BE;</span>
+                    <input type="date" id="current-date" class="dashboard-date-input" max="">
+                </label>
+                <button type="button" class="dashboard-date-arrow" id="btn-dashboard-date-next" aria-label="Next date">&#x203A;</button>
             </div>
-            <div class="loading-spinner" id="ai-loading"><span id="txt-ai-loading">AI 正在分析食物營養，請稍候...</span></div>
-            <img id="image-preview">
         </div>
+
+        <div id="history-react-root" class="history-react-root" aria-live="polite"></div>
     </div>
 
-    <!-- ==================== SETTINGS VIEW ==================== -->
-    <div id="view-settings" class="view-section hidden">
-        <div class="card">
-            <h3 id="txt-settings-title">⚙️ 個人資料設定</h3>
+    <!-- ==================== STATS VIEW ==================== -->
+    <div id="view-stats" class="view-section hidden">
+        <div id="stats-react-root" class="stats-react-root" aria-live="polite"></div>
+    </div>
+
+    <!-- ==================== PROFILE VIEW ==================== -->
+    <div id="view-profile" class="view-section hidden">
+        <div id="profile-react-root" class="profile-react-root" aria-live="polite"></div>
+
+        <div class="card profile-form-card">
+            <h3 id="txt-profile-targets-title">個人營養目標</h3>
             <div class="settings-list">
                 <div class="settings-item">
                     <label id="lbl-gender">性別</label>
@@ -211,7 +127,6 @@
                     <label id="lbl-height">身高 (cm)</label>
                     <input type="number" id="height" placeholder="170" class="settings-input">
                 </div>
-            
                 <div class="settings-item">
                     <label id="lbl-weight">目標/基準體重 (kg)</label>
                     <input type="number" id="weight" placeholder="60" class="settings-input">
@@ -234,10 +149,6 @@
                     </select>
                 </div>
                 <div class="settings-item">
-                    <label id="lbl-region">地區</label>
-                    <select id="region"></select>
-                </div>
-                <div class="settings-item">
                     <label id="lbl-dining-out-frequency">外食頻率</label>
                     <select id="dining-out-frequency"></select>
                 </div>
@@ -251,9 +162,7 @@
                     </select>
                 </div>
             </div>
-            
-            <button id="btn-calc" style="margin-top: 15px;">💾 儲存並更新</button>
-            
+            <button id="btn-calc" type="button" style="margin-top: 15px;">儲存設定</button>
             <div id="goal-result" class="goal-section">
                 <span id="txt-res-tdee">TDEE</span> <span id="txt-tdee-unit" style="font-size:0.8em; opacity:0.8;">(總消耗熱量)</span>：<span id="tdee-val">0</span> kcal<br>
                 <span id="txt-res-target">建議目標</span>：<span id="target-cal-val">0</span> kcal
@@ -264,10 +173,6 @@
         <div class="card app-settings">
              <h3 id="txt-app-settings-title">App 設定</h3>
              <div class="settings-list">
-                 <div class="settings-item clickable" id="btn-toggle-theme-setting">
-                     <span id="menu-theme-setting">外觀設定</span>
-                     <span class="chevron">></span>
-                 </div>
                  <div class="settings-item clickable" id="btn-open-lang-setting">
                      <span id="menu-lang-setting">語言設定</span>
                      <span class="chevron">></span>
@@ -284,27 +189,29 @@
     </div>
 </div>
 
-<input type="date" id="current-date" class="today-meals-date-input dashboard-date-input" max="">
-
 <!-- ==================== BOTTOM NAVIGATION BAR ==================== -->
 <nav class="bottom-nav">
     <a href="#" class="nav-item active" data-target="view-daily">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-        <span id="nav-daily">首頁</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 10v10h14V10"/></svg>
+        <span id="txt-nav-home">今天</span>
     </a>
-    <a href="#" class="nav-item" data-target="view-dashboard">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-        <span id="nav-dashboard">洞察</span>
-    </a>
-    <a href="#" class="nav-item nav-ai" data-target="view-ai">
-        <div class="nav-ai-button">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
-            <span class="ai-badge">AI</span>
+    <a href="#" class="nav-item nav-item--add" data-target="view-add">
+        <div class="nav-add-button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
         </div>
+        <span id="txt-nav-add">新增</span>
     </a>
-    <a href="#" class="nav-item" data-target="view-settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        <span id="nav-settings">Settings</span>
+    <a href="#" class="nav-item" data-target="view-history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/><path d="M12 7v5l3 2"/></svg>
+        <span id="txt-nav-history">歷史</span>
+    </a>
+    <a href="#" class="nav-item" data-target="view-stats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19V3"/></svg>
+        <span id="txt-nav-stats">統計</span>
+    </a>
+    <a href="#" class="nav-item" data-target="view-profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M5 20c1.8-3.4 4.1-5 7-5s5.2 1.6 7 5"></path></svg>
+        <span id="txt-nav-profile">我的</span>
     </a>
 </nav>
 
@@ -319,10 +226,15 @@
     </div>
 </div>
 <div class="modal-overlay" id="fav-modal">
-    <div class="modal">
-        <h3>⭐ <span id="txt-fav-title">常吃食物清單</span></h3>
-        <div style="max-height: 300px; overflow-y: auto; text-align: left;" id="fav-list-container"></div>
-        <button id="btn-fav-close" style="margin-top: 15px; background: #95a5a6;">關閉</button>
+    <div class="modal modal--sheet modal--favorites">
+        <div class="modal-sheet-header">
+            <div>
+                <h3><span id="txt-fav-title">常吃食物清單</span></h3>
+                <p class="modal-sheet-copy" id="txt-fav-copy">收藏後可直接加入早餐、午餐、晚餐或點心。</p>
+            </div>
+            <button type="button" class="modal-close-btn" id="btn-fav-close" aria-label="Close">×</button>
+        </div>
+        <div class="favorite-collection" id="fav-list-container"></div>
     </div>
 </div>
 <div class="modal-overlay" id="lang-modal" style="display:none;">
@@ -332,9 +244,6 @@
             <div class="lang-option" data-lang="zh-TW">繁體中文</div>
             <div class="lang-option" data-lang="zh-CN">简体中文</div>
             <div class="lang-option" data-lang="en">English</div>
-            <div class="lang-option" data-lang="ja">日本語</div>
-            <div class="lang-option" data-lang="ko">한국어</div>
-            <div class="lang-option" data-lang="ar">العربية</div>
         </div>
         <button class="lang-cancel-btn" id="btn-lang-cancel">取消</button>
     </div>
@@ -346,12 +255,25 @@
     </div>
 </div>
 <div class="modal-overlay" id="favorite-meal-modal" style="display:none;">
-    <div class="modal">
-        <h3><span id="txt-fav-meal-title">選擇要加入的餐次</span></h3>
-        <p id="fav-meal-food-name" style="font-weight:700; margin:0 0 10px;"></p>
-        <p id="txt-fav-meal-ask">這份食物要加入哪一餐？</p>
-        <div class="meal-selector" id="favorite-meal-buttons"></div>
-        <button id="btn-fav-meal-close" style="margin-top: 15px; background: #95a5a6;">取消</button>
+    <div class="modal modal--sheet modal--favorite-quick-add">
+        <div class="modal-sheet-header">
+            <div>
+                <h3><span id="txt-fav-meal-title">加入今天的餐次</span></h3>
+                <p class="modal-sheet-copy" id="txt-fav-meal-ask">先選擇要加入哪一餐，再立即記到今天。</p>
+            </div>
+            <button type="button" class="modal-close-btn" id="btn-fav-meal-close" aria-label="Close">×</button>
+        </div>
+        <section class="favorite-quick-add-card" aria-labelledby="fav-meal-food-name">
+            <div class="favorite-quick-add-card__header">
+                <div>
+                    <div class="favorite-quick-add-card__eyebrow" id="txt-fav-meal-eyebrow">收藏餐點</div>
+                    <p id="fav-meal-food-name" class="favorite-quick-add-card__title"></p>
+                </div>
+                <div class="favorite-quick-add-card__score" id="fav-meal-health-score">--</div>
+            </div>
+            <div class="favorite-quick-add-card__metrics" id="fav-meal-metrics"></div>
+        </section>
+        <div class="favorite-meal-choice-grid" id="favorite-meal-buttons"></div>
     </div>
 </div>
 <div class="modal-overlay" id="home-log-modal" style="display:none;">
@@ -359,75 +281,19 @@
         <div class="modal-sheet-header">
             <div>
                 <h3 id="txt-home-log-modal-title">記錄今天飲食</h3>
-                <p class="modal-sheet-copy" id="txt-home-log-modal-copy">選一個入口開始記錄，不把編輯表單直接放在首頁。</p>
+                <p class="modal-sheet-copy" id="txt-home-log-modal-copy">先挑最快的入口開始，讓今天的日記保持乾淨好讀。</p>
             </div>
             <button type="button" class="modal-close-btn" id="btn-home-log-close" aria-label="Close">×</button>
         </div>
         <div class="home-log-launcher">
-            <button type="button" class="home-log-launcher-card" id="btn-home-log-common">
-                <span class="home-log-launcher-title" id="btn-home-log-common-label">常見餐點</span>
-                <span class="home-log-launcher-copy" id="txt-home-log-common-copy">從常見外食開始，份量與加料放在下一層處理。</span>
-            </button>
             <button type="button" class="home-log-launcher-card" id="btn-home-log-favorites">
                 <span class="home-log-launcher-title" id="btn-home-log-favorites-label">常吃食物</span>
-                <span class="home-log-launcher-copy" id="txt-home-log-favorites-copy">從收藏裡挑一筆，最快回到今天的餐次裡。</span>
+                <span class="home-log-launcher-copy" id="txt-home-log-favorites-copy">從收藏裡挑一筆，直接加到今天的早餐、午餐、晚餐或點心。</span>
             </button>
             <button type="button" class="home-log-launcher-card" id="btn-home-log-manual">
-                <span class="home-log-launcher-title" id="btn-home-log-manual-label">手動輸入</span>
-                <span class="home-log-launcher-copy" id="txt-home-log-manual-copy">真的需要自訂食物或營養時，再打開完整輸入。</span>
+                <span class="home-log-launcher-title" id="btn-home-log-manual-label">新增食物</span>
+                <span class="home-log-launcher-copy" id="txt-home-log-manual-copy">前往新增介面，直接使用 AI 照片分析食物。</span>
             </button>
-        </div>
-    </div>
-</div>
-<div class="modal-overlay" id="food-preset-modal" style="display:none;">
-    <div class="modal modal--sheet">
-        <div class="modal-sheet-header">
-            <div>
-                <h3 id="txt-food-preset-modal-title">🍜 常用外食</h3>
-                <p class="modal-sheet-copy" id="txt-food-preset-modal-copy">先挑一個常見外食，再用簡單選項快速加入今天。</p>
-            </div>
-            <button type="button" class="modal-close-btn" id="btn-food-preset-close" aria-label="Close">×</button>
-        </div>
-        <div id="food-preset-panel" class="food-preset-panel"></div>
-    </div>
-</div>
-<div class="modal-overlay" id="manual-entry-modal" style="display:none;">
-    <div class="modal modal--sheet modal--wide">
-        <div class="modal-sheet-header">
-            <div>
-                <h3 id="txt-manual-modal-title">手動輸入</h3>
-                <p class="modal-sheet-copy" id="txt-manual-modal-copy">需要自訂食物或手動調整營養時，再到這裡輸入。</p>
-            </div>
-            <button type="button" class="modal-close-btn" id="btn-manual-entry-close" aria-label="Close">×</button>
-        </div>
-        <div class="home-log-form home-log-form--modal">
-            <label id="txt-manual-label">手動輸入</label>
-            <div class="manual-grid">
-                <input type="text" id="manual-name" placeholder="食物名稱 (必填)">
-                <input type="number" id="manual-cal" placeholder="熱量 kcal (必填)">
-            </div>
-
-            <div class="small-input-group">
-                <input type="number" id="manual-pro" placeholder="蛋白質">
-                <input type="number" id="manual-fat" placeholder="脂肪">
-                <input type="number" id="manual-carb" placeholder="碳水">
-                <input type="number" id="manual-sugar" placeholder="糖">
-            </div>
-            <div class="small-input-group">
-                <input type="number" id="manual-sod" placeholder="鈉 (mg)">
-                <input type="number" id="manual-sat" placeholder="飽和脂肪">
-                <input type="number" id="manual-trans" placeholder="反式脂肪">
-                <input type="number" id="manual-fiber" placeholder="膳食纖維">
-            </div>
-            <div class="manual-select-row">
-                <select id="manual-type"></select>
-            </div>
-
-            <button id="btn-add-record" style="background-color: #95a5a6;">➕ 加入記錄</button>
-            <div class="fav-controls">
-                <button class="btn-fav-save" id="btn-fav-save-main">⭐ <span id="btn-fav-save">加入最愛</span></button>
-                <button class="btn-fav-load" id="btn-fav-load-main">📂 <span id="btn-fav-load">選擇常吃食物</span></button>
-            </div>
         </div>
     </div>
 </div>

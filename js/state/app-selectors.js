@@ -1,5 +1,6 @@
 import {
     getFoodCalorieHistory,
+    getFoodLogHistory,
     getFoodProteinHistory
 } from '../repositories/food-log-repository.js';
 import { getWeightTrend } from '../repositories/weight-repository.js';
@@ -18,6 +19,30 @@ export function selectNutritionTotals(state = getAppState()) {
     return summarizeNutrition(state?.foodItems || []);
 }
 
+function roundValue(value, digits = 1) {
+    const factor = 10 ** digits;
+    return Math.round((Number(value) || 0) * factor) / factor;
+}
+
+function createMacroSnapshotHistory(days = 7, baseDate) {
+    return getFoodLogHistory(days, baseDate).map((entry) => {
+        const totals = summarizeNutrition(entry?.items || []).totals;
+        const protein = roundValue(totals.pro, 1);
+        const fat = roundValue(totals.fat, 1);
+        const carb = roundValue(totals.carb, 1);
+
+        return {
+            date: entry?.date || '',
+            label: entry?.label || String(entry?.date || '').slice(5),
+            protein,
+            fat,
+            carb,
+            calories: Math.round(Number(totals.cal) || 0),
+            totalMacros: roundValue(protein + fat + carb, 1)
+        };
+    });
+}
+
 export function createDashboardChartsViewModel(state = getAppState(), { range = 7, weightDays = 30 } = {}) {
     const totals = selectNutritionTotals(state);
     const baseDate = state?.selectedDate;
@@ -28,15 +53,11 @@ export function createDashboardChartsViewModel(state = getAppState(), { range = 
         weeklyCalories: getFoodCalorieHistory(7, baseDate),
         calorieTrend: getFoodCalorieHistory(range, baseDate),
         proteinTrend: getFoodProteinHistory(range, baseDate),
+        macroSnapshot: createMacroSnapshotHistory(range, baseDate),
         weightTrend: getWeightTrend(weightDays, baseDate),
         mealRhythm: createMealRhythmViewModel(state, { days: 7 }),
         nutritionFocus: createDashboardNutritionFocusViewModel(state, { days: 7 })
     };
-}
-
-function roundValue(value, digits = 1) {
-    const factor = 10 ** digits;
-    return Math.round((Number(value) || 0) * factor) / factor;
 }
 
 function resolveMealCoverage(state, dailyViewModel) {
@@ -71,6 +92,8 @@ export function createHomeCompanionViewModel(state = getAppState()) {
         goalType: resolvedState?.currentGoalType || resolvedState?.profile?.goalType || 'lose'
     });
     const proteinTarget = Math.max(0, Number(macroGoals.protein) || 0);
+    const fatTarget = Math.max(0, Number(macroGoals.fat) || 0);
+    const carbTarget = Math.max(0, Number(macroGoals.carb) || 0);
     const proteinCurrent = roundValue(daily.totals.pro, 1);
     const proteinRemaining = Math.max(0, roundValue(proteinTarget - proteinCurrent, 1));
     const mealCoverage = resolveMealCoverage(resolvedState, daily);
@@ -97,6 +120,8 @@ export function createHomeCompanionViewModel(state = getAppState()) {
         proteinTarget,
         proteinCurrent,
         proteinRemaining,
+        fatTarget,
+        carbTarget,
         mealCoverage,
         daily,
         pet,

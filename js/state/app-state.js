@@ -1,7 +1,11 @@
 import { getFoodCalorieHistory, loadFoodLog } from '../repositories/food-log-repository.js';
 import { loadFavoriteFoods } from '../repositories/favorites-repository.js';
 import { loadProfileRecord } from '../repositories/profile-repository.js';
-import { loadAppLanguage, loadAppTheme } from '../repositories/settings-repository.js';
+import {
+    loadAppLanguage,
+    loadAppTheme,
+    normalizeSupportedLanguage
+} from '../repositories/settings-repository.js';
 import { loadDailyUsage } from '../repositories/usage-repository.js';
 import { loadWeight } from '../repositories/weight-repository.js';
 import { normalizeTempAIResult } from '../domain/ai-analysis-domain.js';
@@ -96,7 +100,7 @@ function buildInitialSource(overrides = {}) {
 
     return {
         selectedDate,
-        curLang: String(overrides.curLang || loadAppLanguage()),
+        curLang: normalizeSupportedLanguage(overrides.curLang || loadAppLanguage()),
         curTheme: String(overrides.curTheme || loadAppTheme()),
         targetCalories: normalizeNumber(overrides.targetCalories, 2000),
         currentMealMode,
@@ -121,7 +125,7 @@ function normalizeStateSource(source) {
 
     return {
         selectedDate,
-        curLang: String(source?.curLang || 'zh-TW'),
+        curLang: normalizeSupportedLanguage(source?.curLang || 'zh-TW'),
         curTheme: String(source?.curTheme || 'light'),
         targetCalories: normalizeNumber(source?.targetCalories, 2000),
         currentMealMode,

@@ -36,6 +36,129 @@ const PET_STATUS_STEPS = [
     }
 ];
 
+// --- Extended states (overlay states with priority) ---
+// Higher-priority states override the base nutrition-based state.
+// Priority order (high→low): celebrating > excited > sleeping > lonely > starving > (base nutrition state)
+
+export const PET_OVERLAY_STATES = Object.freeze({
+    celebrating: {
+        key: 'celebrating',
+        frameKey: 'celebrating',
+        messageKey: 'petMsgCelebrating',
+        mood: 'celebrating',
+        priority: 50
+    },
+    excited: {
+        key: 'excited',
+        frameKey: 'excited',
+        messageKey: 'petMsgExcited',
+        mood: 'excited',
+        priority: 40
+    },
+    sleeping: {
+        key: 'sleeping',
+        frameKey: 'sleeping',
+        messageKey: 'petMsgSleeping',
+        mood: 'sleeping',
+        priority: 30
+    },
+    lonely: {
+        key: 'lonely',
+        frameKey: 'lonely',
+        messageKey: 'petMsgLonely',
+        mood: 'lonely',
+        priority: 20
+    },
+    starving: {
+        key: 'starving',
+        frameKey: 'starving',
+        messageKey: 'petMsgStarving',
+        mood: 'starving',
+        priority: 10
+    }
+});
+
+export function resolveOverlayState({
+    hour = new Date().getHours(),
+    minutesSinceLastOpen = 0,
+    allQuestsComplete = false,
+    justLevelledUp = false,
+    ratio = 0,
+    hoursWithoutLog = 0
+} = {}) {
+    if (justLevelledUp) return PET_OVERLAY_STATES.celebrating;
+    if (allQuestsComplete) return PET_OVERLAY_STATES.excited;
+    if (hour >= 23 || hour < 6) return PET_OVERLAY_STATES.sleeping;
+    if (minutesSinceLastOpen >= 1440) return PET_OVERLAY_STATES.lonely;
+    if (ratio < 0.1 && hoursWithoutLog >= 6) return PET_OVERLAY_STATES.starving;
+    return null;
+}
+
+// --- Interaction response system ---
+
+export const PET_INTERACTION_TYPES = Object.freeze({
+    TAP: 'tap',
+    LONG_PRESS: 'long_press',
+    COMBO: 'combo'
+});
+
+const INTERACTION_RESPONSES = Object.freeze({
+    tap: {
+        hungry:   { animClass: 'pet-anim--tilt',   dialogKey: 'petTapHungry',   effect: 'none',   bondDelta: 0 },
+        low:      { animClass: 'pet-anim--wag',    dialogKey: 'petTapLow',      effect: 'none',   bondDelta: 1 },
+        mid:      { animClass: 'pet-anim--wiggle',  dialogKey: 'petTapMid',      effect: 'hearts', bondDelta: 1 },
+        balanced: { animClass: 'pet-anim--spin',    dialogKey: 'petTapBalanced', effect: 'stars',  bondDelta: 2 },
+        full:     { animClass: 'pet-anim--flop',    dialogKey: 'petTapFull',     effect: 'sweat',  bondDelta: 0 },
+        sleeping: { animClass: 'pet-anim--roll',    dialogKey: 'petTapSleeping', effect: 'zzz',    bondDelta: 0 },
+        lonely:   { animClass: 'pet-anim--rush',    dialogKey: 'petTapLonely',   effect: 'hearts', bondDelta: 5 },
+        starving: { animClass: 'pet-anim--tilt',    dialogKey: 'petTapStarving', effect: 'none',   bondDelta: 0 },
+        excited:  { animClass: 'pet-anim--bounce',  dialogKey: 'petTapExcited',  effect: 'stars',  bondDelta: 2 },
+        celebrating: { animClass: 'pet-anim--bounce', dialogKey: 'petTapCelebrating', effect: 'confetti', bondDelta: 3 }
+    },
+    long_press: [
+        { threshold: 1.5, animClass: 'pet-anim--squint', dialogKey: 'petLongPress1', effect: 'none',   bondDelta: 1 },
+        { threshold: 3.0, animClass: 'pet-anim--belly',  dialogKey: 'petLongPress2', effect: 'hearts', bondDelta: 2 },
+        { threshold: 5.0, animClass: 'pet-anim--sleep',  dialogKey: 'petLongPress3', effect: 'zzz',    bondDelta: 3 }
+    ],
+    combo: [
+        { threshold: 3, animClass: 'pet-anim--wag-fast',  dialogKey: 'petCombo3', effect: 'bounce',   bondDelta: 2 },
+        { threshold: 5, animClass: 'pet-anim--spin-fast', dialogKey: 'petCombo5', effect: 'confetti', bondDelta: 3 },
+        { threshold: 7, animClass: 'pet-anim--dizzy',     dialogKey: 'petCombo7', effect: 'spiral',   bondDelta: 1 }
+    ]
+});
+
+export function getInteractionResponse({ type, mood = 'hungry', comboCount = 0, holdSeconds = 0 } = {}) {
+    if (type === PET_INTERACTION_TYPES.TAP) {
+        const moodResponses = INTERACTION_RESPONSES.tap;
+        return moodResponses[mood] || moodResponses.hungry;
+    }
+
+    if (type === PET_INTERACTION_TYPES.LONG_PRESS) {
+        const steps = INTERACTION_RESPONSES.long_press;
+        for (let i = steps.length - 1; i >= 0; i -= 1) {
+            if (holdSeconds >= steps[i].threshold) return steps[i];
+        }
+        return steps[0];
+    }
+
+    if (type === PET_INTERACTION_TYPES.COMBO) {
+        const steps = INTERACTION_RESPONSES.combo;
+        for (let i = steps.length - 1; i >= 0; i -= 1) {
+            if (comboCount >= steps[i].threshold) return steps[i];
+        }
+        return steps[0];
+    }
+
+    return INTERACTION_RESPONSES.tap.hungry;
+}
+
+// Cooldown durations (ms)
+export const PET_INTERACTION_COOLDOWNS = Object.freeze({
+    [PET_INTERACTION_TYPES.TAP]: 2000,
+    [PET_INTERACTION_TYPES.LONG_PRESS]: 5000,
+    [PET_INTERACTION_TYPES.COMBO]: 10000
+});
+
 export const PET_DEFAULT_INTERACTION_KEYS = Object.freeze([
     'petInteractMsg1',
     'petInteractMsg2',
@@ -114,12 +237,13 @@ export function buildPetState({
     targetCalories = 0,
     loggedMeals = 0,
     streak = 0,
-    bond = 0
+    bond = 0,
+    overlayContext = null
 } = {}) {
     const calories = Math.max(0, toNumber(totalCalories));
     const target = Math.max(0, toNumber(targetCalories, 2000)) || 2000;
     const ratio = Math.min(calories / target, 1.4);
-    const status = PET_STATUS_STEPS.find((step) => ratio >= step.minRatio) || PET_STATUS_STEPS[PET_STATUS_STEPS.length - 1];
+    const baseStatus = PET_STATUS_STEPS.find((step) => ratio >= step.minRatio) || PET_STATUS_STEPS[PET_STATUS_STEPS.length - 1];
     const progress = calculatePetProgress({
         totalCalories: calories,
         targetCalories: target,
@@ -128,12 +252,17 @@ export function buildPetState({
         bond
     });
 
+    const overlay = overlayContext ? resolveOverlayState(overlayContext) : null;
+    const status = overlay || baseStatus;
+
     return {
         key: status.key,
         ratio,
         frameKey: status.frameKey,
         messageKey: status.messageKey,
         mood: status.mood,
+        baseKey: baseStatus.key,
+        baseMood: baseStatus.mood,
         progress: createPetProgressSnapshot({
             ...progress,
             mood: status.mood

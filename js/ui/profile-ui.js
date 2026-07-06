@@ -33,26 +33,10 @@ function syncSelectOptions(select, options, selectedValue) {
 
 export function syncProfilePreferenceInputs(lang = 'en', profile = {}) {
     const copy = getProfileUiCopy(lang);
-    const regionSelect = document.getElementById('region');
-    const regionRow = regionSelect?.closest('.settings-item');
-    const regionLabels = regionRow ? [...regionRow.querySelectorAll('label')] : [];
-    const regionLabel = regionLabels[0] || document.getElementById('lbl-region');
     const diningLabel = document.getElementById('lbl-dining-out-frequency');
     const diningSelect = document.getElementById('dining-out-frequency');
 
-    regionLabels.slice(1).forEach((label) => label.remove());
-    if (regionLabel && regionLabel.id !== 'lbl-region') {
-        regionLabel.id = 'lbl-region';
-    }
-
-    if (regionLabel) regionLabel.innerText = copy.regionLabel;
     if (diningLabel) diningLabel.innerText = copy.diningOutFrequencyLabel;
-
-    syncSelectOptions(
-        regionSelect,
-        Object.entries(copy.regionOptions).map(([value, label]) => ({ value, label })),
-        regionSelect?.value || String(profile?.region || '').trim()
-    );
 
     syncSelectOptions(
         diningSelect,
@@ -72,7 +56,6 @@ export function renderOnboardingCard(profile = {}, lang = 'en') {
     const copy = getProfileUiCopy(lang);
 
     container.hidden = config.isComplete;
-    container.dataset.region = config.region || '';
     container.dataset.diningOutFrequency = config.diningOutFrequency || '';
     if (config.isComplete) {
         clearElement(container);
@@ -87,10 +70,6 @@ export function renderOnboardingCard(profile = {}, lang = 'en') {
         .filter(Boolean);
 
     const metaRow = createElement('div', { className: 'onboarding-meta' }, [
-        createElement('span', {
-            className: 'coach-stat-chip',
-            text: `${copy.regionLabel}: ${copy.regionOptions[config.region] || copy.onboardingRegionValue}`
-        }),
         createElement('span', {
             className: 'coach-stat-chip',
             text: `${copy.diningOutFrequencyLabel}: ${copy.diningOutOptions[config.diningOutFrequency] || config.diningOutFrequency}`

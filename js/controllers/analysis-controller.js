@@ -31,14 +31,18 @@ function setAnalysisFlow(flow, reason = 'analysis:state') {
 
 function readAnalysisInputs() {
     const input = document.getElementById('image-upload');
-    const file = input?.files?.[0] || null;
     const textOnlyInput = document.getElementById('ai-text-desc');
     const imageDescInput = document.getElementById('ai-desc');
+    const textPanel = document.getElementById('add-panel-text');
+    const photoPanel = document.getElementById('add-panel-photo');
+    const textPanelVisible = textPanel ? textPanel.hidden !== true : Boolean(textOnlyInput);
+    const photoPanelVisible = photoPanel ? photoPanel.hidden !== true : Boolean(input?.files?.[0] || imageDescInput?.value?.trim());
+    const file = photoPanelVisible ? input?.files?.[0] || null : null;
 
     return {
         file,
-        textDesc: textOnlyInput ? textOnlyInput.value.trim() : '',
-        imageDesc: imageDescInput ? imageDescInput.value.trim() : ''
+        textDesc: textOnlyInput && textPanelVisible ? textOnlyInput.value.trim() : '',
+        imageDesc: imageDescInput && photoPanelVisible ? imageDescInput.value.trim() : ''
     };
 }
 
@@ -97,12 +101,14 @@ function resetAnalysisInputs() {
     const textGroup = document.getElementById('ai-text-only-group');
     const descGroup = document.getElementById('ai-desc-group');
     const textInput = document.getElementById('ai-text-desc');
+    const textPanelVisible = document.getElementById('add-panel-text')?.hidden === false;
+    const photoPanelVisible = document.getElementById('add-panel-photo')?.hidden === false;
 
     if (imageUpload) imageUpload.value = '';
     if (imageDesc) imageDesc.value = '';
     if (textInput) textInput.value = '';
-    if (descGroup) descGroup.style.display = 'none';
-    if (textGroup) textGroup.style.display = 'block';
+    if (descGroup) descGroup.style.display = photoPanelVisible ? 'grid' : 'none';
+    if (textGroup) textGroup.style.display = textPanelVisible ? 'block' : 'none';
     clearPreviewImage(preview);
 }
 
@@ -357,13 +363,14 @@ export function handleFileSelect(input) {
     const descGroup = document.getElementById('ai-desc-group');
     const textDescEl = document.getElementById('ai-text-desc');
     const imgDescEl = document.getElementById('ai-desc');
+    const photoPanelVisible = document.getElementById('add-panel-photo')?.hidden === false;
 
     if (textDescEl && imgDescEl && textDescEl.value.trim() && !imgDescEl.value.trim()) {
         imgDescEl.value = textDescEl.value;
     }
     if (textDescEl) textDescEl.value = '';
     if (textOnlyGroup) textOnlyGroup.style.display = 'none';
-    if (descGroup) descGroup.style.display = 'block';
+    if (descGroup) descGroup.style.display = photoPanelVisible ? 'grid' : 'none';
     clearPendingAnalysisRequest();
 
     setAnalysisFlow({

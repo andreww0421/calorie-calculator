@@ -7,7 +7,10 @@ export default function App({
     onQuickLog = noop,
     onOpenAI = noop,
     onOpenFavorites = noop,
-    onOpenTodayMeals = noop,
+    onSetSelectedDate = noop,
+    onShiftDate = noop,
+    onFavoriteMealItem = noop,
+    onDeleteMealItem = noop,
     onOpenRhythm = noop,
     onOpenDailySummary = noop
 }) {
@@ -16,7 +19,10 @@ export default function App({
             onQuickLog={onQuickLog}
             onOpenAI={onOpenAI}
             onOpenFavorites={onOpenFavorites}
-            onOpenTodayMeals={onOpenTodayMeals}
+            onSetSelectedDate={onSetSelectedDate}
+            onShiftDate={onShiftDate}
+            onFavoriteMealItem={onFavoriteMealItem}
+            onDeleteMealItem={onDeleteMealItem}
             onOpenRhythm={onOpenRhythm}
             onOpenDailySummary={onOpenDailySummary}
         />

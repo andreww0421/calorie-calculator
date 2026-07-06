@@ -1,10 +1,21 @@
 import { bindUIActions, closeModal, openDailySummaryDetails, openFavModal, openModal, switchView } from './ui.js';
-import { setupTurnstileHandlers } from './controllers/analysis-controller.js';
+import {
+    handleFileSelect,
+    setupTurnstileHandlers,
+    startAnalysis,
+    syncAnalysisInputState
+} from './controllers/analysis-controller.js';
+import { dispatchAppAction } from './state/app-actions.js';
 import { getAppState, subscribeAppState } from './state/app-state.js';
 import {
     addRecordToFav,
+    addManualFood,
+    applySelectedFoodPreset,
     confirmAddFood,
-    deleteItem
+    deleteItem,
+    quickAddSelectedFoodPreset,
+    saveToFavorites,
+    syncManualFoodPresetUI
 } from './controllers/record-controller.js';
 import { bootstrapApp } from './controllers/bootstrap-controller.js';
 import {
@@ -12,6 +23,8 @@ import {
     getDetailSurfaceState,
     subscribeDetailSurfaceState
 } from './ui/detail-surface-bridge.js';
+import { clickFileInput } from './platform.js';
+import { clampDateString, shiftLocalDateString } from './utils.js';
 
 function openTodayMealsDatePicker() {
     const input = document.getElementById('current-date');
@@ -24,6 +37,19 @@ function openTodayMealsDatePicker() {
     input.click();
 }
 
+function setSelectedDate(date) {
+    const requestedDate = String(date || '').trim();
+    if (!requestedDate) return;
+    dispatchAppAction('SET_SELECTED_DATE', {
+        date: clampDateString(requestedDate)
+    });
+}
+
+function shiftSelectedDate(offsetDays) {
+    const { selectedDate } = getAppState();
+    setSelectedDate(shiftLocalDateString(selectedDate, offsetDays));
+}
+
 if (typeof window !== 'undefined') {
     window.__woofAppStateBridge = {
         getAppState,
@@ -34,25 +60,47 @@ if (typeof window !== 'undefined') {
         subscribe: subscribeDetailSurfaceState,
         clear: clearDetailSurfaceState
     };
+    window.__woofAddBridge = {
+        clickFileInput,
+        handleFileSelect,
+        syncAnalysisInputState,
+        startAnalysis,
+        addManualFood,
+        saveToFavorites,
+        openFavorites() {
+            openFavModal();
+        },
+        syncManualFoodPresetUI,
+        quickAddSelectedFoodPreset,
+        applySelectedFoodPreset
+    };
     window.__woofUiBridge = {
         openHomeLogModal() {
             openModal('home-log-modal');
         },
         openDashboardView() {
-            switchView('view-dashboard');
+            switchView('view-stats');
         },
         openAIView() {
-            switchView('view-ai');
+            switchView('view-add');
         },
         openSettingsView() {
-            switchView('view-settings');
+            switchView('view-profile');
         },
         openFavorites() {
             openFavModal();
         },
         openTodayMealsDatePicker,
+        setSelectedDate,
+        shiftSelectedDate,
+        addRecordToFavorites(index) {
+            addRecordToFav(index);
+        },
+        deleteMealRecord(index) {
+            deleteItem(index);
+        },
         openRhythmView() {
-            switchView('view-dashboard');
+            switchView('view-stats');
         },
         openDailySummaryDetail() {
             openDailySummaryDetails();

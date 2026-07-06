@@ -1,0 +1,390 @@
+.react-shell {
+    min-height: 100vh;
+    padding: 24px 20px 112px;
+    position: relative;
+    color: #1f2d22;
+}
+
+.react-shell::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(circle at 0% 0%, rgba(116, 168, 92, 0.18), transparent 28%),
+        radial-gradient(circle at 100% 0%, rgba(227, 190, 92, 0.14), transparent 24%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0));
+    pointer-events: none;
+}
+
+.react-shell__chrome,
+.react-shell__viewport,
+.react-shell__nav {
+    position: relative;
+    z-index: 1;
+}
+
+.react-shell__chrome {
+    max-width: 1160px;
+    margin: 0 auto 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.react-shell__brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.react-shell__brand-mark {
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #4c7c4b, #8aaa59);
+    color: #fffef5;
+    font: 700 1rem/1 "Segoe UI", sans-serif;
+    box-shadow: 0 16px 32px rgba(76, 124, 75, 0.22);
+}
+
+.react-shell__brand-title {
+    font: 700 1rem/1.1 "Segoe UI", sans-serif;
+}
+
+.react-shell__brand-copy {
+    margin-top: 4px;
+    color: rgba(31, 45, 34, 0.68);
+    font-size: 0.92rem;
+}
+
+.react-shell__date-chip {
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(76, 124, 75, 0.12);
+    backdrop-filter: blur(14px);
+    font-weight: 600;
+}
+
+.react-shell__viewport {
+    max-width: 1160px;
+    margin: 0 auto;
+}
+
+.react-shell__surface {
+    background: rgba(255, 255, 255, 0.74);
+    border: 1px solid rgba(76, 124, 75, 0.12);
+    border-radius: 32px;
+    padding: 28px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 22px 54px rgba(47, 65, 52, 0.08);
+}
+
+.react-shell__surface-header {
+    margin-bottom: 22px;
+}
+
+.react-shell__eyebrow {
+    margin-bottom: 10px;
+    color: #5e8158;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.react-shell__title {
+    margin: 0;
+    font: 700 clamp(1.8rem, 3vw, 2.8rem)/1.02 Georgia, "Times New Roman", serif;
+}
+
+.react-shell__description {
+    max-width: 760px;
+    margin: 10px 0 0;
+    color: rgba(31, 45, 34, 0.72);
+    line-height: 1.6;
+}
+
+.react-shell__summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.react-shell__summary-grid--wide {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.react-shell__summary-tile {
+    min-height: 132px;
+    padding: 18px;
+    border-radius: 24px;
+    background: #f6f6ef;
+    border: 1px solid rgba(77, 96, 72, 0.08);
+}
+
+.react-shell__summary-tile--accent {
+    background: linear-gradient(135deg, #4d7b4b, #769a4c);
+    color: #f8f7ee;
+}
+
+.react-shell__summary-label {
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.72;
+}
+
+.react-shell__summary-value {
+    margin-top: 14px;
+    font-size: clamp(1.7rem, 3vw, 2.4rem);
+    font-weight: 700;
+}
+
+.react-shell__summary-detail {
+    margin-top: 8px;
+    font-size: 0.92rem;
+    opacity: 0.76;
+}
+
+.react-shell__card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.react-shell__split-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 14px;
+}
+
+.react-shell__card,
+.react-shell__list-card {
+    padding: 20px;
+    border-radius: 24px;
+    background: rgba(245, 246, 239, 0.96);
+    border: 1px solid rgba(77, 96, 72, 0.08);
+}
+
+.react-shell__card-kicker {
+    color: #6d8b61;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.react-shell__card-title {
+    margin: 10px 0 8px;
+    font: 700 1.28rem/1.15 Georgia, "Times New Roman", serif;
+}
+
+.react-shell__card-copy {
+    margin: 0;
+    color: rgba(31, 45, 34, 0.72);
+    line-height: 1.6;
+}
+
+.react-shell__bullet-list {
+    display: grid;
+    gap: 8px;
+    margin: 18px 0 20px;
+    color: rgba(31, 45, 34, 0.76);
+}
+
+.react-shell__form-card {
+    display: grid;
+    gap: 16px;
+}
+
+.react-shell__form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.react-shell__field {
+    display: grid;
+    gap: 8px;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.react-shell__field input,
+.react-shell__field select {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid rgba(77, 96, 72, 0.16);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #1f2d22;
+    font: 500 0.95rem/1.2 "Segoe UI", sans-serif;
+}
+
+.react-shell__action-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.react-shell__primary-button {
+    min-width: 220px;
+    padding: 14px 18px;
+    border: 0;
+    border-radius: 999px;
+    background: #1f2d22;
+    color: #f8f7ee;
+    font: 600 0.95rem/1 "Segoe UI", sans-serif;
+    cursor: pointer;
+}
+
+.react-shell__ghost-button,
+.react-shell__mini-button {
+    padding: 12px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(31, 45, 34, 0.12);
+    background: rgba(255, 255, 255, 0.72);
+    color: #1f2d22;
+    font: 600 0.88rem/1 "Segoe UI", sans-serif;
+    cursor: pointer;
+}
+
+.react-shell__mini-button {
+    padding: 8px 12px;
+}
+
+.react-shell__mini-button--danger {
+    color: #8b2c2c;
+}
+
+.react-shell__inline-feedback {
+    color: #4d7b4b;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.react-shell__list-row,
+.react-shell__profile-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+}
+
+.react-shell__list-row + .react-shell__list-row,
+.react-shell__profile-row + .react-shell__profile-row {
+    border-top: 1px solid rgba(77, 96, 72, 0.08);
+}
+
+.react-shell__list-title {
+    font-weight: 700;
+}
+
+.react-shell__list-meta {
+    margin-top: 4px;
+    color: rgba(31, 45, 34, 0.6);
+    font-size: 0.92rem;
+    text-transform: capitalize;
+}
+
+.react-shell__list-stats {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    color: rgba(31, 45, 34, 0.74);
+    font-size: 0.94rem;
+}
+
+.react-shell__empty-state {
+    padding: 20px 0;
+    color: rgba(31, 45, 34, 0.68);
+    line-height: 1.6;
+}
+
+.react-shell__nav {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    display: inline-flex;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 999px;
+    background: rgba(23, 32, 26, 0.88);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 18px 40px rgba(23, 32, 26, 0.24);
+}
+
+.react-shell__nav-item {
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(248, 247, 238, 0.72);
+    font: 600 0.92rem/1 "Segoe UI", sans-serif;
+    cursor: pointer;
+}
+
+.react-shell__nav-item.is-active {
+    background: #f3f1e4;
+    color: #1f2d22;
+}
+
+@media (max-width: 900px) {
+    .react-shell__summary-grid,
+    .react-shell__summary-grid--wide,
+    .react-shell__card-grid,
+    .react-shell__split-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .react-shell__chrome {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    .react-shell {
+        padding: 16px 14px 104px;
+    }
+
+    .react-shell__surface {
+        padding: 20px;
+        border-radius: 24px;
+    }
+
+    .react-shell__form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .react-shell__nav {
+        width: calc(100% - 20px);
+        justify-content: space-between;
+        overflow-x: auto;
+    }
+
+    .react-shell__nav-item {
+        flex: 1 0 auto;
+        white-space: nowrap;
+    }
+
+    .react-shell__list-row,
+    .react-shell__profile-row {
+        flex-direction: column;
+    }
+
+    .react-shell__list-stats {
+        justify-content: flex-start;
+    }
+}

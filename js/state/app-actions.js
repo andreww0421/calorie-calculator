@@ -4,7 +4,11 @@ import {
 } from '../repositories/food-log-repository.js';
 import { saveFavoriteFoods } from '../repositories/favorites-repository.js';
 import { saveProfileRecord } from '../repositories/profile-repository.js';
-import { saveAppLanguage, saveAppTheme } from '../repositories/settings-repository.js';
+import {
+    normalizeSupportedLanguage,
+    saveAppLanguage,
+    saveAppTheme
+} from '../repositories/settings-repository.js';
 import { getAppState, refreshAppState } from './app-state.js';
 import { cloneNutrition } from '../domain/nutrition-schema.js';
 import { createOnboardingConfig } from '../domain/profile-domain.js';
@@ -101,7 +105,7 @@ export function dispatchAppAction(type, payload = {}) {
 
     switch (type) {
     case 'SET_LANGUAGE': {
-        const lang = String(payload.lang || state.curLang || 'zh-TW');
+        const lang = normalizeSupportedLanguage(payload.lang || state.curLang || 'zh-TW');
         saveAppLanguage(lang);
         return refreshAppState({
             curLang: lang

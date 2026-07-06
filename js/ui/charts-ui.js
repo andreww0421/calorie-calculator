@@ -25,7 +25,6 @@ import {
     buildDashboardSummaryMetrics,
     renderCoachCard,
     renderDashboardNutritionFocusCard,
-    renderDashboardSummary,
     renderMealRhythmCards,
     trackVisibleRhythmSummaryViews
 } from './dashboard-summary-ui.js';
@@ -41,7 +40,7 @@ import {
 } from './meal-list-ui.js';
 import { openDailySummaryDetails } from './daily-summary-ui.js';
 
-const VIEW_ORDER = ['view-daily', 'view-dashboard', 'view-ai', 'view-settings'];
+const VIEW_ORDER = ['view-daily', 'view-add', 'view-history', 'view-stats', 'view-profile'];
 
 export function switchView(targetId) {
     const currentView = document.querySelector('.view-section.active-view');
@@ -72,13 +71,13 @@ export function switchView(targetId) {
         nav.classList.toggle('active', nav.getAttribute('data-target') === targetId);
     });
 
-    if (targetId === 'view-dashboard') {
+    if (targetId === 'view-stats') {
         trackVisibleRhythmSummaryViews(getAppState());
         void ensureDashboardChartsReady();
         return;
     }
 
-    if (targetId === 'view-ai') {
+    if (targetId === 'view-add') {
         void initializeTurnstileWidget().then(() => {
             executeTurnstile();
         });
@@ -90,13 +89,10 @@ export function switchView(targetId) {
 
 export function setChartRange(days) {
     setDashboardChartRange(days);
-    const btn7 = document.getElementById('btn-chart-7d');
-    const btn30 = document.getElementById('btn-chart-30d');
-
-    if (btn7 && btn30) {
-        btn7.classList.toggle('active-range', days === 7);
-        btn30.classList.toggle('active-range', days === 30);
-    }
+    [7, 30, 90].forEach((range) => {
+        const button = document.getElementById(`btn-chart-${range}d`);
+        if (button) button.classList.toggle('active-range', days === range);
+    });
 
     updateTrendCharts(days);
 }
@@ -119,7 +115,6 @@ function renderCompanionSurface(state, viewModel) {
     renderCoachCard(viewModel);
     renderMealRhythmCards(state);
     renderDashboardNutritionFocusCard(state);
-    renderDashboardSummary(state);
 
     updateCharts(viewModel.totals, chartData);
     updateTrendCharts(dashboardChartRange, chartData);

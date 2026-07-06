@@ -7,23 +7,19 @@ import {
     previewWeightChart,
     petInteraction,
     switchView,
-    setChartRange,
-    toggleTheme
+    setChartRange
 } from '../ui.js';
+import {
+    initializeAppShellInteractions,
+    setAddMode
+} from '../ui/app-shell-ui.js';
 import { getAppState } from '../state/app-state.js';
-import { clickFileInput } from '../platform.js';
 import { exportBackup } from '../repositories/backup-repository.js';
 import { dispatchAppAction } from '../state/app-actions.js';
 import { calculateProfile, changeDate, handleImportData, saveCurrentWeight } from './profile-controller.js';
-import { handleFileSelect, startAnalysis, syncAnalysisInputState, tryCloseAnalysisModal } from './analysis-controller.js';
+import { tryCloseAnalysisModal } from './analysis-controller.js';
 import {
-    addManualFood,
-    applySelectedFoodPreset,
-    openManualEntryModal,
-    quickAddSelectedFoodPreset,
-    saveToFavorites,
-    saveAIResultToFavorites,
-    syncManualFoodPresetUI
+    saveAIResultToFavorites
 } from './record-controller.js';
 import { clearDetailSurfaceState } from '../ui/detail-surface-bridge.js';
 import { clampDateString, shiftLocalDateString } from '../utils.js';
@@ -32,15 +28,8 @@ function bindEventListener(id, eventName, handler) {
     document.getElementById(id)?.addEventListener(eventName, handler);
 }
 
-function openSelectedDatePicker() {
-    const input = document.getElementById('current-date');
-    if (!input) return;
-    input.focus?.({ preventScroll: true });
-    if (typeof input.showPicker === 'function') {
-        input.showPicker();
-        return;
-    }
-    input.click();
+function isReactIslandMounted(rootId) {
+    return document.getElementById(rootId)?.dataset.mounted === 'true';
 }
 
 function shiftSelectedDate(offsetDays) {
@@ -50,21 +39,12 @@ function shiftSelectedDate(offsetDays) {
 }
 
 export function setupEventListeners() {
+    const statsReactMounted = isReactIslandMounted('stats-react-root');
+
+    initializeAppShellInteractions();
     bindEventListener('current-date', 'change', changeDate);
-    bindEventListener('image-upload', 'change', function onFileChange() {
-        handleFileSelect(this);
-    });
-    document.getElementById('ai-text-desc')?.addEventListener('input', syncAnalysisInputState);
-    document.getElementById('ai-desc')?.addEventListener('input', syncAnalysisInputState);
-    bindEventListener('btn-take-photo', 'click', () => {
-        clickFileInput(document.getElementById('image-upload'));
-    });
-    bindEventListener('analyze-btn', 'click', startAnalysis);
-    bindEventListener('btn-add-record', 'click', addManualFood);
-    bindEventListener('btn-fav-save-main', 'click', saveToFavorites);
-    bindEventListener('btn-fav-load-main', 'click', () => openFavModal());
     document.getElementById('btn-home-ai')?.addEventListener('click', () => {
-        switchView('view-ai');
+        switchView('view-add');
     });
     document.getElementById('btn-home-log-hub')?.addEventListener('click', () => {
         openModal('home-log-modal');
@@ -72,22 +52,8 @@ export function setupEventListeners() {
     document.getElementById('btn-home-favorites')?.addEventListener('click', () => {
         openFavModal();
     });
-    document.addEventListener('click', (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) return;
-        const quickLogButton = target.closest('.woof-home__action-button--primary');
-        if (!quickLogButton) return;
-        if (!quickLogButton.closest('#home-react-root')) return;
-        openModal('home-log-modal');
-    });
     document.getElementById('btn-home-log-close')?.addEventListener('click', () => {
         closeModal('home-log-modal');
-    });
-    document.getElementById('btn-home-log-common')?.addEventListener('click', () => {
-        closeModal('home-log-modal');
-        syncManualFoodPresetUI();
-        openModal('food-preset-modal');
-        document.getElementById('food-preset-select')?.focus();
     });
     document.getElementById('btn-home-log-favorites')?.addEventListener('click', () => {
         closeModal('home-log-modal');
@@ -95,45 +61,11 @@ export function setupEventListeners() {
     });
     document.getElementById('btn-home-log-manual')?.addEventListener('click', () => {
         closeModal('home-log-modal');
-        openManualEntryModal();
+        setAddMode('photo');
+        switchView('view-add');
     });
-    document.getElementById('btn-manual-entry-close')?.addEventListener('click', () => {
-        closeModal('manual-entry-modal');
-    });
-    document.getElementById('btn-food-preset-close')?.addEventListener('click', () => {
-        closeModal('food-preset-modal');
-    });
-    document.getElementById('btn-change-log-date')?.addEventListener('click', openSelectedDatePicker);
     document.getElementById('btn-dashboard-date-prev')?.addEventListener('click', () => shiftSelectedDate(-1));
     document.getElementById('btn-dashboard-date-next')?.addEventListener('click', () => shiftSelectedDate(1));
-    document.getElementById('food-preset-panel')?.addEventListener('change', (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) return;
-        if (target.id === 'food-preset-region') {
-            syncManualFoodPresetUI({ region: target.value, resetPreset: true, resetModifiers: true });
-            return;
-        }
-        if (target.id === 'food-preset-select') {
-            syncManualFoodPresetUI({ presetId: target.value, resetModifiers: true });
-            return;
-        }
-        if (target.dataset.groupId) {
-            syncManualFoodPresetUI();
-        }
-    });
-    document.getElementById('food-preset-panel')?.addEventListener('click', (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) return;
-        if (target.id === 'btn-quick-add-food-preset') {
-            quickAddSelectedFoodPreset();
-            return;
-        }
-        if (target.id === 'btn-preset-advanced-fill') {
-            applySelectedFoodPreset();
-            closeModal('food-preset-modal');
-            openManualEntryModal();
-        }
-    });
     bindEventListener('meal-mode', 'change', () => calculateProfile());
     document.getElementById('goal-type')?.addEventListener('change', () => calculateProfile());
     bindEventListener('btn-calc', 'click', () => calculateProfile());
@@ -174,21 +106,22 @@ export function setupEventListeners() {
         if (!(target instanceof HTMLElement)) return;
         if (target.id !== 'btn-open-onboarding') return;
 
-        switchView('view-settings');
+        switchView('view-profile');
         requestAnimationFrame(() => {
-            document.getElementById('region')?.focus();
+            document.getElementById('age')?.focus();
         });
     });
 
-    const btnSaveWeight = document.getElementById('btn-save-weight');
-    if (btnSaveWeight) btnSaveWeight.addEventListener('click', saveCurrentWeight);
-    document.getElementById('daily-weight-input')?.addEventListener('input', (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLInputElement)) return;
-        previewWeightChart(target.value, { state: getAppState() });
-    });
+    if (!statsReactMounted) {
+        const btnSaveWeight = document.getElementById('btn-save-weight');
+        if (btnSaveWeight) btnSaveWeight.addEventListener('click', saveCurrentWeight);
+        document.getElementById('daily-weight-input')?.addEventListener('input', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement)) return;
+            previewWeightChart(target.value, { state: getAppState() });
+        });
+    }
 
-    bindEventListener('btn-toggle-theme-setting', 'click', toggleTheme);
     bindEventListener('btn-open-lang-setting', 'click', openLangModal);
     bindEventListener('btn-export-setting', 'click', exportBackup);
     bindEventListener('import-file', 'change', function onImportChange() {
@@ -206,8 +139,12 @@ export function setupEventListeners() {
         });
     });
 
-    const toggle7 = document.getElementById('btn-chart-7d');
-    const toggle30 = document.getElementById('btn-chart-30d');
-    if (toggle7) toggle7.addEventListener('click', () => setChartRange(7));
-    if (toggle30) toggle30.addEventListener('click', () => setChartRange(30));
+    if (!statsReactMounted) {
+        const toggle7 = document.getElementById('btn-chart-7d');
+        const toggle30 = document.getElementById('btn-chart-30d');
+        const toggle90 = document.getElementById('btn-chart-90d');
+        if (toggle7) toggle7.addEventListener('click', () => setChartRange(7));
+        if (toggle30) toggle30.addEventListener('click', () => setChartRange(30));
+        if (toggle90) toggle90.addEventListener('click', () => setChartRange(90));
+    }
 }

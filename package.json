@@ -12,14 +12,20 @@
     "preview:react": "vite preview --config vite.config.js",
     "build:react-home": "node scripts/build-react-home.mjs",
     "build:react:island": "npm run build:react-home",
+    "build:capacitor:web": "npm run build:react:island && node js/tools/build-capacitor-web.mjs",
+    "cap:add:ios": "npm run build:capacitor:web && npx cap add ios",
+    "cap:sync:ios": "npm run build:capacitor:web && npx cap sync ios",
     "test": "node --test",
     "verify": "npm run build:react:island && npm test"
   },
   "dependencies": {
+    "@capacitor/core": "^8.3.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/ios": "^8.3.4",
     "@vitejs/plugin-react": "^4.3.4",
     "vite": "^5.4.8"
   }
