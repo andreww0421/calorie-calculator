@@ -40,7 +40,7 @@ import {
 } from './meal-list-ui.js';
 import { openDailySummaryDetails } from './daily-summary-ui.js';
 
-const VIEW_ORDER = ['view-daily', 'view-add', 'view-history', 'view-stats', 'view-profile'];
+const VIEW_ORDER = ['view-daily', 'view-history', 'view-add', 'view-stats', 'view-profile'];
 
 export function switchView(targetId) {
     const currentView = document.querySelector('.view-section.active-view');

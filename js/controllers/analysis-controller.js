@@ -8,7 +8,6 @@ import { DAILY_LIMIT, isDevMode } from '../env.js';
 import {
     clearPreviewImage,
     getTurnstileStatus,
-    initializeTurnstileWidget,
     markTurnstileUnavailable,
     refreshTurnstile,
     registerTurnstileCallbacks,
@@ -306,14 +305,6 @@ export function setupTurnstileHandlers() {
             syncTurnstileAvailability(errorCode);
         }
     });
-
-    initializeTurnstileWidget()
-        .then(() => syncTurnstileAvailability())
-        .catch((error) => {
-            console.error('Turnstile bootstrap failed.', error);
-            markTurnstileUnavailable(error?.message || 'TURNSTILE_UNAVAILABLE');
-            syncTurnstileAvailability(error?.message);
-        });
 }
 
 export function tryCloseAnalysisModal() {
