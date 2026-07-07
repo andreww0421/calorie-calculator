@@ -8,6 +8,9 @@ import {
 let previewObjectUrl = null;
 let turnstileScriptPromise = null;
 let turnstileInitPromise = null;
+let turnstileTokenRequest = null;
+
+const TURNSTILE_TOKEN_TIMEOUT_MS = 20000;
 
 const turnstileState = {
     widgetId: null,
@@ -55,6 +58,28 @@ function setTurnstileContainerVisibility(isVisible, selector = TURNSTILE_WIDGET_
 function clearTurnstileUnavailableState() {
     turnstileState.unavailableReason = '';
     turnstileState.lastErrorCode = '';
+}
+
+function settleTurnstileTokenRequest(method, value) {
+    const request = turnstileTokenRequest;
+    if (!request) return;
+
+    turnstileTokenRequest = null;
+    clearTimeout(request.timeoutId);
+    request[method](value);
+}
+
+function rejectTurnstileTokenRequest(reason = 'TURNSTILE_UNAVAILABLE') {
+    settleTurnstileTokenRequest('reject', new Error(String(reason || 'TURNSTILE_UNAVAILABLE')));
+}
+
+export function isRetryableTurnstileError(errorCode = '') {
+    const code = String(errorCode || '');
+    return code === '110600'
+        || code === '110620'
+        || code === '200500'
+        || code.startsWith('300')
+        || code.startsWith('600');
 }
 
 function loadTurnstileScript() {
@@ -129,6 +154,7 @@ export function markTurnstileUnavailable(reason = 'TURNSTILE_UNAVAILABLE') {
     turnstileState.initialized = false;
     turnstileState.isExecuting = false;
     turnstileState.lastToken = '';
+    rejectTurnstileTokenRequest(turnstileState.unavailableReason);
     setTurnstileContainerVisibility(false);
 }
 
@@ -177,10 +203,15 @@ export async function initializeTurnstileWidget(selector = TURNSTILE_WIDGET_SELE
                     sitekey: TURNSTILE_SITE_KEY,
                     size: 'invisible',
                     execution: 'execute',
-                    retry: 'never',
+                    retry: 'auto',
+                    'retry-interval': 3000,
+                    'refresh-expired': 'auto',
+                    'refresh-timeout': 'auto',
                     callback: (token) => {
                         turnstileState.isExecuting = false;
                         turnstileState.lastToken = String(token || '');
+                        turnstileState.lastErrorCode = '';
+                        settleTurnstileTokenRequest('resolve', turnstileState.lastToken);
                         window.onTurnstileSuccess?.(turnstileState.lastToken);
                     },
                     'expired-callback': () => {
@@ -188,7 +219,19 @@ export async function initializeTurnstileWidget(selector = TURNSTILE_WIDGET_SELE
                         turnstileState.lastToken = '';
                     },
                     'timeout-callback': () => window.onTurnstileTimeout?.(),
-                    'error-callback': (errorCode) => window.onTurnstileError?.(errorCode)
+                    'error-callback': (errorCode) => {
+                        turnstileState.isExecuting = false;
+                        turnstileState.lastToken = '';
+                        turnstileState.lastErrorCode = String(errorCode || '');
+
+                        const retryable = isRetryableTurnstileError(errorCode);
+                        if (!retryable) {
+                            rejectTurnstileTokenRequest(errorCode || 'TURNSTILE_UNAVAILABLE');
+                        }
+
+                        const callbackResult = window.onTurnstileError?.(errorCode);
+                        return typeof callbackResult === 'boolean' ? callbackResult : !retryable;
+                    }
                 });
             }
 
@@ -249,6 +292,46 @@ export function executeTurnstile(selector = TURNSTILE_WIDGET_SELECTOR) {
     }
 }
 
+export async function requestTurnstileToken(selector = TURNSTILE_WIDGET_SELECTOR, {
+    timeoutMs = TURNSTILE_TOKEN_TIMEOUT_MS
+} = {}) {
+    const status = await initializeTurnstileWidget(selector);
+    if (!status.supportedHost) {
+        throw new Error('TURNSTILE_UNSUPPORTED_DOMAIN');
+    }
+    if (!status.initialized || status.unavailableReason) {
+        const reason = status.lastErrorCode || status.unavailableReason || 'TURNSTILE_UNAVAILABLE';
+        throw new Error(reason === '110200' ? 'TURNSTILE_UNSUPPORTED_DOMAIN' : 'TURNSTILE_UNAVAILABLE');
+    }
+
+    const existingToken = getTurnstileToken(selector);
+    if (existingToken) return existingToken;
+    if (turnstileTokenRequest) return turnstileTokenRequest.promise;
+
+    let resolveRequest;
+    let rejectRequest;
+    const promise = new Promise((resolve, reject) => {
+        resolveRequest = resolve;
+        rejectRequest = reject;
+    });
+
+    turnstileTokenRequest = {
+        promise,
+        resolve: resolveRequest,
+        reject: rejectRequest,
+        timeoutId: setTimeout(() => {
+            resetTurnstile(selector);
+            rejectTurnstileTokenRequest('TURNSTILE_UNAVAILABLE');
+        }, Math.max(Number(timeoutMs) || TURNSTILE_TOKEN_TIMEOUT_MS, 1000))
+    };
+
+    if (!executeTurnstile(selector)) {
+        rejectTurnstileTokenRequest('TURNSTILE_UNAVAILABLE');
+    }
+
+    return promise;
+}
+
 export function refreshTurnstile(selector = TURNSTILE_WIDGET_SELECTOR) {
     if (turnstileState.unavailableReason) return;
     resetTurnstile(selector);
@@ -274,8 +357,8 @@ export function registerTurnstileCallbacks({ onSuccess, onTimeout, onError } = {
         turnstileState.isExecuting = false;
         turnstileState.lastToken = '';
         turnstileState.lastErrorCode = String(errorCode || '');
-        if (typeof onError === 'function') onError(errorCode);
-        return true;
+        if (typeof onError === 'function') return onError(errorCode);
+        return !isRetryableTurnstileError(errorCode);
     };
 }
 

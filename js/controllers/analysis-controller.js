@@ -8,8 +8,8 @@ import { DAILY_LIMIT, isDevMode } from '../env.js';
 import {
     clearPreviewImage,
     getTurnstileStatus,
+    isRetryableTurnstileError,
     markTurnstileUnavailable,
-    refreshTurnstile,
     registerTurnstileCallbacks,
     showPreviewImage
 } from '../platform.js';
@@ -295,14 +295,20 @@ export function setupTurnstileHandlers() {
             void resumePendingAnalysisRequestIfReady();
         },
         onTimeout: () => {
-            console.warn('Turnstile token expired. Refreshing widget.');
-            refreshTurnstile();
+            console.warn('Turnstile challenge timed out. Waiting for the automatic refresh.');
+            return true;
         },
         onError: (errorCode) => {
+            if (isRetryableTurnstileError(errorCode)) {
+                console.warn(`Turnstile encountered a temporary error (${errorCode || 'unknown'}). Retrying automatically.`);
+                return false;
+            }
+
             console.error(`Turnstile failed to initialize (${errorCode || 'unknown'}).`);
             clearPendingAnalysisRequest();
             markTurnstileUnavailable(errorCode || 'TURNSTILE_UNAVAILABLE');
             syncTurnstileAvailability(errorCode);
+            return true;
         }
     });
 }

@@ -12,6 +12,7 @@ const copyEntries = [
     'manifest.json',
     'sw.js',
     'calorie_icon.png',
+    'calorie_icon-128.png',
     'favicon.svg',
     'pet_placeholder.svg',
     'dog_animation',

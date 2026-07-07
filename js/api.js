@@ -1,36 +1,14 @@
 import { WORKER_URL } from './env.js';
 import { getAppState } from './state/app-state.js';
 import {
-    executeTurnstile,
-    getTurnstileToken,
-    getTurnstileStatus,
-    initializeTurnstileWidget,
-    refreshTurnstile,
+    requestTurnstileToken,
     resetTurnstile
 } from './platform.js';
 import { extractAnalysisFromGeminiPayload } from './domain/ai-analysis-domain.js';
 
 async function postToWorker(payload, logLabel) {
-    await initializeTurnstileWidget();
-
-    const turnstileToken = getTurnstileToken();
-    if (!turnstileToken) {
-        const turnstileStatus = getTurnstileStatus();
-        const errorCode = String(turnstileStatus.lastErrorCode || turnstileStatus.unavailableReason || '');
-
-        if (errorCode === '110200' || errorCode === 'TURNSTILE_UNSUPPORTED_DOMAIN') {
-            throw new Error('TURNSTILE_UNSUPPORTED_DOMAIN');
-        }
-
-        if (errorCode) {
-            throw new Error('TURNSTILE_UNAVAILABLE');
-        }
-
-        executeTurnstile();
-        throw new Error("Turnstile_Pending");
-    }
-
     try {
+        const turnstileToken = await requestTurnstileToken();
         console.log(logLabel);
 
         const resp = await fetch(WORKER_URL, {
@@ -51,7 +29,8 @@ async function postToWorker(payload, logLabel) {
             throw new Error(rawText ? rawText.slice(0, 300) : `HTTP ${resp.status}`);
         }
 
-        refreshTurnstile();
+        // Tokens are single-use. Reset without pre-generating the next token so it cannot expire while idle.
+        resetTurnstile();
 
         if (!resp.ok || data.error) {
             const errorPayload = data?.error ?? data ?? rawText ?? `HTTP ${resp.status}`;

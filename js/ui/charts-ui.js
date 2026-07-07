@@ -2,7 +2,7 @@ import { createDailyViewModel, getAppState } from '../state/app-state.js';
 import { createPetViewModel } from '../state/pet-selectors.js';
 import { createDashboardChartsViewModel } from '../state/app-selectors.js';
 import { getTexts } from './shared-ui.js';
-import { executeTurnstile, initializeTurnstileWidget } from '../platform.js';
+import { initializeTurnstileWidget } from '../platform.js';
 import { getExtraUiText } from './locale-ui.js';
 import {
     dashboardChartRange,
@@ -78,9 +78,7 @@ export function switchView(targetId) {
     }
 
     if (targetId === 'view-add') {
-        void initializeTurnstileWidget().then(() => {
-            executeTurnstile();
-        });
+        void initializeTurnstileWidget();
         return;
     }
 
@@ -111,14 +109,16 @@ function renderDailySurface(viewModel, extra, t) {
 }
 
 function renderCompanionSurface(state, viewModel) {
-    const chartData = createDashboardChartsViewModel(state, { range: dashboardChartRange });
     renderCoachCard(viewModel);
     renderMealRhythmCards(state);
     renderDashboardNutritionFocusCard(state);
 
-    updateCharts(viewModel.totals, chartData);
-    updateTrendCharts(dashboardChartRange, chartData);
-    updateWeightChart(chartData.weightTrend);
+    if (document.getElementById('view-stats')?.classList.contains('active-view')) {
+        const chartData = createDashboardChartsViewModel(state, { range: dashboardChartRange });
+        updateCharts(viewModel.totals, chartData);
+        updateTrendCharts(dashboardChartRange, chartData);
+        updateWeightChart(chartData.weightTrend);
+    }
     updatePetStatus(createPetViewModel(state));
 }
 

@@ -293,12 +293,17 @@ class CDPSession {
   }
 
   async evaluate(expression) {
-    const result = await this.send('Runtime.evaluate', {
-      expression,
-      awaitPromise: true,
-      returnByValue: true
-    });
-    return result.result?.value;
+    try {
+      const result = await this.send('Runtime.evaluate', {
+        expression,
+        awaitPromise: true,
+        returnByValue: true
+      });
+      return result.result?.value;
+    } catch (error) {
+      const preview = String(expression).replace(/\s+/g, ' ').trim().slice(0, 160);
+      throw new Error(`${error.message} [expression: ${preview}]`, { cause: error });
+    }
   }
 
   async setFileInputFiles(selector, files) {
@@ -413,14 +418,13 @@ async function run() {
     const iconHref = await client.evaluate(`
       document.querySelector('link[rel="icon"]')?.getAttribute('href') || ''
     `);
-    assert(/calorie_icon\.png$/i.test(iconHref), `App icon should point to calorie_icon.png, got ${iconHref}`);
+    assert(/calorie_icon-128\.png$/i.test(iconHref), `App icon should point to calorie_icon-128.png, got ${iconHref}`);
     results.push('App icon uses the original black-background logo');
 
     if (!URL_ARG) {
-      await client.evaluate(`
-        localStorage.clear();
-        location.reload();
-      `);
+      await client.evaluate('localStorage.clear(); true');
+      await client.send('Page.reload', { ignoreCache: true });
+      await delay(100);
       await waitForDocumentReady(client, 15000);
       await delay(2500);
     }
@@ -661,12 +665,16 @@ async function run() {
             const unit = node.querySelector('.woof-detail__hero-unit');
             return unit ? Math.abs(number.getBoundingClientRect().bottom - unit.getBoundingClientRect().bottom) : 0;
           })),
+        navBackdropFilter: getComputedStyle(document.querySelector('.bottom-nav')).backdropFilter,
+        navFitsViewport: document.querySelector('.bottom-nav').getBoundingClientRect().right <= window.innerWidth + 1,
         horizontalOverflow: document.documentElement.scrollWidth - window.innerWidth
       }))()`);
       assert(mobileMetricState.viewportWidth === 375, `Expected a 375px mobile viewport, got ${mobileMetricState.viewportWidth}.`);
       assert(mobileMetricState.metricFirstRowCount === 1, `Mobile metric grid should use one compact row per metric, got ${mobileMetricState.metricFirstRowCount} cards on the first row.`);
       assert(mobileMetricState.clippedMetricCount === 0, `Mobile metric values should not clip, got ${mobileMetricState.clippedMetricCount} clipped values.`);
       assert(mobileMetricState.maxUnitAlignmentDelta <= 4, `Mobile units should align to the number baseline, delta ${mobileMetricState.maxUnitAlignmentDelta}px.`);
+      assert(mobileMetricState.navBackdropFilter === 'none', `Mobile navigation should avoid live backdrop blur, got ${mobileMetricState.navBackdropFilter}.`);
+      assert(mobileMetricState.navFitsViewport, 'Mobile navigation should fit inside the viewport.');
       assert(mobileMetricState.horizontalOverflow <= 1, `Mobile detail should not overflow horizontally by ${mobileMetricState.horizontalOverflow}px.`);
       await client.send('Emulation.clearDeviceMetricsOverride');
       await delay(250);

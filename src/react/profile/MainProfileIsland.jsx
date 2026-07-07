@@ -35,7 +35,15 @@ export default function MainProfileIsland() {
     return (
         <section className="profile-hero-card" data-profile-react-surface="true">
             <div className="profile-hero-card__icon-shell">
-                <img src="calorie_icon.png" alt="" className="profile-hero-card__icon" />
+                <img
+                    src="calorie_icon-128.png"
+                    alt=""
+                    className="profile-hero-card__icon"
+                    width="64"
+                    height="64"
+                    loading="lazy"
+                    decoding="async"
+                />
             </div>
             <div className="profile-hero-card__copy">
                 <div className="section-kicker">{copy.kicker}</div>
