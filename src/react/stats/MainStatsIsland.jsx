@@ -7,10 +7,7 @@ import { buildDashboardSummaryMetrics } from '../../../js/ui/dashboard-summary-u
 import {
     ensureDashboardChartsReady,
     previewWeightChart,
-    setDashboardChartRange,
-    updateCharts,
-    updateTrendCharts,
-    updateWeightChart
+    setDashboardChartRange
 } from '../../../js/ui/dashboard-charts-ui.js';
 import { createDashboardChartsViewModel } from '../../../js/state/app-selectors.js';
 import { createPetViewModel } from '../../../js/state/pet-selectors.js';
@@ -55,18 +52,6 @@ export default function MainStatsIsland() {
         setWeightDraft(String(state.loggedWeight ?? ''));
     }, [state.loggedWeight]);
 
-    React.useEffect(() => {
-        void ensureDashboardChartsReady();
-    }, []);
-
-    React.useEffect(() => {
-        const nextChartData = createDashboardChartsViewModel(state, { range, weightDays: 30 });
-        setDashboardChartRange(range);
-        updateCharts(nextChartData.totals, nextChartData);
-        updateTrendCharts(range, nextChartData);
-        updateWeightChart(nextChartData.weightTrend);
-    }, [range, state]);
-
     return (
         <div data-stats-react-surface="true">
             <div className="surface-heading">
@@ -90,9 +75,11 @@ export default function MainStatsIsland() {
                             className={`range-btn${range === days ? ' active-range' : ''}`}
                             type="button"
                             onClick={() => {
+                                setDashboardChartRange(days);
                                 React.startTransition(() => {
                                     setRange(days);
                                 });
+                                void ensureDashboardChartsReady();
                             }}
                         >
                             {getRangeLabel(days, copy)}

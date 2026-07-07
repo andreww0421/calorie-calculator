@@ -1520,7 +1520,6 @@
     display: block;
     width: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 20px 34px rgba(31, 33, 64, 0.16));
 }
 
 .woof-pet__sprite--base {

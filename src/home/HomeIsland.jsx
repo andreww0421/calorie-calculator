@@ -273,7 +273,14 @@ export function HomeIsland({
         <main className="woof-home" data-surface="home">
             <header className="woof-home__today-header">
                 <div className="woof-home__today-brand">
-                    <img className="woof-home__today-logo" src="calorie_icon.png" alt="" />
+                    <img
+                        className="woof-home__today-logo"
+                        src="calorie_icon-128.png"
+                        alt=""
+                        width="54"
+                        height="54"
+                        decoding="async"
+                    />
                     <div>
                         <div className="woof-home__today-kicker">{copy.appName}</div>
                         <h1 className="woof-home__today-title">{copy.screenTitle}</h1>
