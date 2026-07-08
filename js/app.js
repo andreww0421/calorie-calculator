@@ -1,5 +1,12 @@
 import { bindUIActions, closeModal, openDailySummaryDetails, openFavModal, openModal, switchView } from './ui.js';
 import {
+    getAddMealType,
+    getAddMode,
+    setAddMealType,
+    setAddMode
+} from './ui/app-shell-ui.js';
+import { updateMealUI } from './ui/settings-ui.js';
+import {
     handleFileSelect,
     setupTurnstileHandlers,
     startAnalysis,
@@ -67,6 +74,11 @@ if (typeof window !== 'undefined') {
         startAnalysis,
         addManualFood,
         saveToFavorites,
+        updateMealUI,
+        getAddMode,
+        getAddMealType,
+        setAddMode,
+        setAddMealType,
         openFavorites() {
             openFavModal();
         },

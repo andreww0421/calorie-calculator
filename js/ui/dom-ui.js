@@ -53,7 +53,14 @@ export function appendChildren(parent, children = []) {
 }
 
 export function createButton(label, onClick, options = {}) {
-    const button = createElement('button', { ...options, text: label });
+    const button = createElement('button', {
+        ...options,
+        attrs: {
+            type: 'button',
+            ...(options.attrs || {})
+        },
+        text: label
+    });
     if (typeof onClick === 'function') {
         button.addEventListener('click', onClick);
     }

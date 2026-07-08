@@ -711,6 +711,139 @@ async function run() {
       assert(aiSurface.statusNoteVisible || aiSurface.turnstileWidgetVisible, 'AI view should expose a visible verification surface or note.');
       results.push('AI view remains usable');
 
+      await client.evaluate(`document.querySelector('[data-add-meal-type="lunch"]')?.click()`);
+      await delay(250);
+      const aiMealSubmitState = await client.evaluate(`
+        (async () => {
+          const actionModule = await import('./js/state/app-actions.js');
+          const beforeItems = window.__woofAppStateBridge?.getAppState?.()?.foodItems?.length || 0;
+          actionModule.dispatchAppAction('SET_TEMP_AI_RESULT', {
+            result: {
+              name: 'Smoke AI Meal',
+              nutri: {
+                calories: 420,
+                protein: 24,
+                fat: 12,
+                carbohydrate: 48,
+                sugar: 4,
+                sodium: 600,
+                saturatedFat: 3,
+                transFat: 0,
+                fiber: 5
+              },
+              items: [{ name: 'Chicken rice', weight: '250g' }],
+              healthScore: 72
+            },
+            saved: false,
+            openModal: true
+          });
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          const buttons = [...document.querySelectorAll('#modal-meal-buttons button')]
+            .map((button) => ({
+              text: button.innerText.trim(),
+              type: button.getAttribute('type') || '',
+              className: button.className
+            }));
+          document.querySelector('#modal-meal-buttons .meal-btn.lunch')?.click();
+          await new Promise(resolve => setTimeout(resolve, 250));
+          const state = window.__woofAppStateBridge?.getAppState?.() || {};
+          const lastItem = state.foodItems?.[state.foodItems.length - 1] || null;
+
+          return {
+            beforeItems,
+            afterItems: state.foodItems?.length || 0,
+            buttons,
+            lastType: lastItem?.type || '',
+            lastName: lastItem?.name || '',
+            lastCalories: Number(lastItem?.nutri?.calories || 0),
+            saved: Boolean(state.tempAIResultSaved),
+            flowStatus: String(state.analysisFlow?.status || '')
+          };
+        })()
+      `);
+      assert(aiMealSubmitState.buttons.length > 0, 'AI result modal should render meal selection buttons.');
+      assert(
+        aiMealSubmitState.buttons.every((button) => button.type === 'button'),
+        `AI meal buttons should be inert button controls, got ${JSON.stringify(aiMealSubmitState.buttons)}.`
+      );
+      assert(
+        aiMealSubmitState.afterItems === aiMealSubmitState.beforeItems + 1,
+        `Clicking an AI result meal button should add one food item. State: ${JSON.stringify(aiMealSubmitState)}`
+      );
+      assert(aiMealSubmitState.lastType === 'lunch', `AI result should save to lunch, got ${aiMealSubmitState.lastType}.`);
+      assert(aiMealSubmitState.lastName === 'Smoke AI Meal', `AI result should keep the meal name, got ${aiMealSubmitState.lastName}.`);
+      assert(aiMealSubmitState.lastCalories === 420, `AI result should keep nutrition data, got ${aiMealSubmitState.lastCalories} kcal.`);
+      assert(aiMealSubmitState.saved && aiMealSubmitState.flowStatus === 'saved', 'AI result should be marked saved after selecting a meal.');
+      results.push('AI result meal buttons add the analyzed meal to today');
+
+      await client.send('Emulation.setDeviceMetricsOverride', {
+        width: 375,
+        height: 812,
+        deviceScaleFactor: 1,
+        mobile: true
+      });
+      await delay(250);
+      const mobileAiMealSubmitState = await client.evaluate(`
+        (async () => {
+          const actionModule = await import('./js/state/app-actions.js');
+          const beforeItems = window.__woofAppStateBridge?.getAppState?.()?.foodItems?.length || 0;
+          actionModule.dispatchAppAction('SET_TEMP_AI_RESULT', {
+            result: {
+              name: 'Smoke Mobile AI Meal',
+              nutri: {
+                calories: 260,
+                protein: 16,
+                fat: 8,
+                carbohydrate: 32,
+                sugar: 6,
+                sodium: 420,
+                saturatedFat: 2,
+                transFat: 0,
+                fiber: 4
+              },
+              items: [{ name: 'Mobile snack', weight: '1 serving' }],
+              healthScore: 68
+            },
+            saved: false,
+            openModal: true
+          });
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          const selector = document.getElementById('modal-meal-buttons');
+          const buttons = [...document.querySelectorAll('#modal-meal-buttons button')];
+          document.querySelector('#modal-meal-buttons .meal-btn.snack')?.click();
+          await new Promise(resolve => setTimeout(resolve, 250));
+          const state = window.__woofAppStateBridge?.getAppState?.() || {};
+          const lastItem = state.foodItems?.[state.foodItems.length - 1] || null;
+
+          return {
+            viewportWidth: window.innerWidth,
+            selectorFitsViewport: selector ? selector.getBoundingClientRect().right <= window.innerWidth + 1 : false,
+            buttonCount: buttons.length,
+            beforeItems,
+            afterItems: state.foodItems?.length || 0,
+            lastType: lastItem?.type || '',
+            lastName: lastItem?.name || '',
+            lastCalories: Number(lastItem?.nutri?.calories || 0),
+            saved: Boolean(state.tempAIResultSaved),
+            flowStatus: String(state.analysisFlow?.status || '')
+          };
+        })()
+      `);
+      assert(mobileAiMealSubmitState.viewportWidth === 375, `Expected 375px mobile viewport for AI submit, got ${mobileAiMealSubmitState.viewportWidth}.`);
+      assert(mobileAiMealSubmitState.buttonCount > 0, 'Mobile AI result modal should render meal buttons.');
+      assert(mobileAiMealSubmitState.selectorFitsViewport, 'Mobile AI meal selector should fit inside the viewport.');
+      assert(
+        mobileAiMealSubmitState.afterItems === mobileAiMealSubmitState.beforeItems + 1,
+        `Mobile AI meal button should add one food item. State: ${JSON.stringify(mobileAiMealSubmitState)}`
+      );
+      assert(mobileAiMealSubmitState.lastType === 'snack', `Mobile AI result should save to snack, got ${mobileAiMealSubmitState.lastType}.`);
+      assert(mobileAiMealSubmitState.lastName === 'Smoke Mobile AI Meal', `Mobile AI result should keep the meal name, got ${mobileAiMealSubmitState.lastName}.`);
+      assert(mobileAiMealSubmitState.lastCalories === 260, `Mobile AI result should keep nutrition data, got ${mobileAiMealSubmitState.lastCalories} kcal.`);
+      assert(mobileAiMealSubmitState.saved && mobileAiMealSubmitState.flowStatus === 'saved', 'Mobile AI result should be marked saved after selecting a meal.');
+      await client.send('Emulation.clearDeviceMetricsOverride');
+      await delay(250);
+      results.push('Mobile AI result meal buttons add the analyzed meal to today');
+
       if (RUN_REAL_AI) {
         await exerciseRealAiFlow(client, results, { requireResult: false });
 

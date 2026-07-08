@@ -1,13 +1,11 @@
 import React from 'react';
 import { getLocaleTranslations } from '../../../js/locales/index.js';
-import {
-    getAddMealType,
-    getAddMode,
-    setAddMealType,
-    setAddMode
-} from '../../../js/ui/app-shell-ui.js';
-import { updateMealUI } from '../../../js/ui/settings-ui.js';
 import { useAppState } from '../hooks/useAppState.js';
+
+const ADD_MODES = Object.freeze(['photo', 'text', 'manual']);
+const MEAL_TYPES = Object.freeze(['breakfast', 'lunch', 'dinner', 'snack']);
+const DEFAULT_ADD_MODE = 'photo';
+const DEFAULT_MEAL_TYPE = 'breakfast';
 
 const ADD_BRIDGE_FALLBACK = Object.freeze({
     clickFileInput() {},
@@ -16,7 +14,16 @@ const ADD_BRIDGE_FALLBACK = Object.freeze({
     startAnalysis() {},
     addManualFood() {},
     saveToFavorites() {},
-    openFavorites() {}
+    openFavorites() {},
+    updateMealUI() {},
+    setAddMode() {},
+    setAddMealType() {},
+    getAddMode() {
+        return DEFAULT_ADD_MODE;
+    },
+    getAddMealType() {
+        return DEFAULT_MEAL_TYPE;
+    }
 });
 
 const ADD_SURFACE_COPY = Object.freeze({
@@ -138,6 +145,16 @@ function getAddBridge() {
     return globalThis.window?.__woofAddBridge || ADD_BRIDGE_FALLBACK;
 }
 
+function readAddMode() {
+    const mode = getAddBridge().getAddMode?.();
+    return ADD_MODES.includes(mode) ? mode : DEFAULT_ADD_MODE;
+}
+
+function readAddMealType() {
+    const mealType = getAddBridge().getAddMealType?.();
+    return MEAL_TYPES.includes(mealType) ? mealType : DEFAULT_MEAL_TYPE;
+}
+
 function getAddSurfaceCopy(lang = 'en') {
     return ADD_SURFACE_COPY[lang]
         || ADD_SURFACE_COPY[String(lang || 'en').split('-')[0]]
@@ -251,8 +268,8 @@ export default function MainAddShellIsland() {
     const copy = getAddSurfaceCopy(state.curLang);
     const mealLabels = t.meals || {};
     const addBridge = getAddBridge();
-    const [mode, setModeState] = React.useState(() => getAddMode());
-    const [mealType, setMealTypeState] = React.useState(() => getAddMealType());
+    const [mode, setModeState] = React.useState(readAddMode);
+    const [mealType, setMealTypeState] = React.useState(readAddMealType);
     const fileInputRef = React.useRef(null);
 
     const addModes = [
@@ -272,9 +289,10 @@ export default function MainAddShellIsland() {
     React.useEffect(() => subscribeAddShell(setModeState, setMealTypeState), []);
 
     React.useEffect(() => {
-        updateMealUI();
-        setAddMealType(mealType);
-        setAddMode(mode);
+        const bridge = getAddBridge();
+        bridge.updateMealUI?.();
+        bridge.setAddMealType?.(mealType);
+        bridge.setAddMode?.(mode);
     }, [mealType, mode, state.curLang, state.currentMealMode, state.targetCalories]);
 
     return (
@@ -296,7 +314,7 @@ export default function MainAddShellIsland() {
                             aria-pressed={String(mode === item.id)}
                             onClick={() => {
                                 setModeState(item.id);
-                                setAddMode(item.id);
+                                getAddBridge().setAddMode?.(item.id);
                             }}
                         >
                             <span className="add-mode-pill__icon" aria-hidden="true">
@@ -320,7 +338,7 @@ export default function MainAddShellIsland() {
                             aria-pressed={String(mealType === item.id)}
                             onClick={() => {
                                 setMealTypeState(item.id);
-                                setAddMealType(item.id);
+                                getAddBridge().setAddMealType?.(item.id);
                             }}
                         >
                             <span className="add-meal-type-chip__icon" aria-hidden="true">
