@@ -5,7 +5,14 @@ import {
 } from '../domain/nutrition-presentation-domain.js';
 import { cloneNutrition } from '../domain/nutrition-schema.js';
 import { getFoodLogHistory } from '../repositories/food-log-repository.js';
-import { createDailyViewModel, getAppState } from './app-state.js';
+
+const EMPTY_NUTRITION_STATE = Object.freeze({
+    selectedDate: '',
+    targetCalories: 0,
+    currentGoalType: 'lose',
+    foodItems: Object.freeze([]),
+    profile: null
+});
 
 function roundValue(value, digits = 1) {
     const factor = 10 ** digits;
@@ -35,8 +42,25 @@ function createLoggedNutritionHistory(days = 7, baseDate) {
         .filter((entry) => Object.values(entry).some((value) => Number(value) > 0));
 }
 
-export function createDailyNutritionDetailViewModel(state = getAppState()) {
-    const daily = createDailyViewModel(state);
+function resolveNutritionState(state) {
+    return state && typeof state === 'object' ? state : EMPTY_NUTRITION_STATE;
+}
+
+function createDailyNutritionSummary(state = EMPTY_NUTRITION_STATE) {
+    const resolvedState = resolveNutritionState(state);
+    const totals = summarizeNutrition(resolvedState.foodItems);
+    const profileWeight = Math.max(0, Number(resolvedState.profile?.weight) || 0);
+
+    return {
+        selectedDate: resolvedState.selectedDate,
+        targetCalories: Number(resolvedState.targetCalories) || 0,
+        waterTarget: Math.round((profileWeight || 60) * 35),
+        totals: totals.totals
+    };
+}
+
+export function createDailyNutritionDetailViewModel(state = EMPTY_NUTRITION_STATE) {
+    const daily = createDailyNutritionSummary(state);
     const nutrition = mapTotalsToNutrition(daily.totals);
     const target = Number(daily.targetCalories) || 0;
 
@@ -49,9 +73,9 @@ export function createDailyNutritionDetailViewModel(state = getAppState()) {
     };
 }
 
-export function createDashboardNutritionFocusViewModel(state = getAppState(), { days = 7 } = {}) {
-    const resolvedState = state || getAppState();
-    const daily = createDailyViewModel(resolvedState);
+export function createDashboardNutritionFocusViewModel(state = EMPTY_NUTRITION_STATE, { days = 7 } = {}) {
+    const resolvedState = resolveNutritionState(state);
+    const daily = createDailyNutritionSummary(resolvedState);
     const nutrition = mapTotalsToNutrition(daily.totals);
     const weightKg = Math.max(0, Number(resolvedState?.profile?.weight) || 0);
     const macroGoals = calculateMacroGoals(daily.targetCalories, {

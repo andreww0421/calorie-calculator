@@ -2,16 +2,36 @@ import React from 'react';
 import { ChartIcon } from '../../home/SectionIcons.jsx';
 import { getLocaleTranslations } from '../../../js/locales/index.js';
 import { getStatsUiCopy } from '../../../js/locales/stats-ui-copy.js';
-import { saveCurrentWeight } from '../../../js/controllers/profile-controller.js';
-import { buildDashboardSummaryMetrics } from '../../../js/ui/dashboard-summary-ui.js';
-import {
-    ensureDashboardChartsReady,
-    previewWeightChart,
-    setDashboardChartRange
-} from '../../../js/ui/dashboard-charts-ui.js';
-import { createDashboardChartsViewModel } from '../../../js/state/app-selectors.js';
-import { createPetViewModel } from '../../../js/state/pet-selectors.js';
 import { useAppState } from '../hooks/useAppState.js';
+
+const EMPTY_STATS_VIEW_MODEL = Object.freeze({
+    chartData: Object.freeze({}),
+    pet: Object.freeze({}),
+    metrics: Object.freeze({
+        averageCalories: 0,
+        averageProtein: 0,
+        onTargetDays: 0,
+        streak: 0,
+        level: 1,
+        xpWidth: '0%',
+        energyWidth: '0%',
+        bondWidth: '0%'
+    })
+});
+
+const FALLBACK_STATS_BRIDGE = Object.freeze({
+    getDashboardViewModel() {
+        return EMPTY_STATS_VIEW_MODEL;
+    },
+    setDashboardChartRange() {},
+    ensureDashboardChartsReady() {},
+    previewWeightChart() {},
+    saveCurrentWeight() {}
+});
+
+function getStatsBridge() {
+    return globalThis.window?.__woofStatsBridge || FALLBACK_STATS_BRIDGE;
+}
 
 function getRangeLabel(days, copy) {
     return copy.rangeLabelFn ? copy.rangeLabelFn(days) : `${days} Days`;
@@ -42,9 +62,8 @@ export default function MainStatsIsland() {
     const [weightDraft, setWeightDraft] = React.useState(() => String(state.loggedWeight ?? ''));
     const t = getLocaleTranslations(state.curLang);
     const copy = getStatsUiCopy(state.curLang);
-    const chartData = createDashboardChartsViewModel(state, { range, weightDays: 30 });
-    const pet = createPetViewModel(state);
-    const metrics = buildDashboardSummaryMetrics(chartData, Number(state.targetCalories) || 0, pet);
+    const statsBridge = getStatsBridge();
+    const { metrics = EMPTY_STATS_VIEW_MODEL.metrics } = statsBridge.getDashboardViewModel(state, { range, weightDays: 30 }) || EMPTY_STATS_VIEW_MODEL;
     const activeRangeLabel = getRangeLabel(range, copy);
     const weightMeta = weightDraft ? `${weightDraft} kg` : '--';
 
@@ -75,11 +94,11 @@ export default function MainStatsIsland() {
                             className={`range-btn${range === days ? ' active-range' : ''}`}
                             type="button"
                             onClick={() => {
-                                setDashboardChartRange(days);
+                                getStatsBridge().setDashboardChartRange(days);
                                 React.startTransition(() => {
                                     setRange(days);
                                 });
-                                void ensureDashboardChartsReady();
+                                void getStatsBridge().ensureDashboardChartsReady();
                             }}
                         >
                             {getRangeLabel(days, copy)}
@@ -178,7 +197,7 @@ export default function MainStatsIsland() {
                         onChange={(event) => {
                             const nextValue = event.target.value;
                             setWeightDraft(nextValue);
-                            previewWeightChart(nextValue, { state });
+                            getStatsBridge().previewWeightChart(nextValue, { state });
                         }}
                     />
                     <button
@@ -186,7 +205,7 @@ export default function MainStatsIsland() {
                         className="weight-save-btn"
                         type="button"
                         onClick={() => {
-                            saveCurrentWeight();
+                            getStatsBridge().saveCurrentWeight();
                         }}
                     >
                         <span id="txt-weight-title">{copy.save}</span>

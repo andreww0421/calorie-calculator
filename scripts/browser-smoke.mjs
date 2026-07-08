@@ -915,9 +915,8 @@ async function run() {
         })()
       `);
       const switchedAway = await client.evaluate(`
-        (async () => {
-          const actionModule = await import('./js/state/app-actions.js');
-          actionModule.dispatchAppAction('SET_SELECTED_DATE', { date: '${previousDate}' });
+        (() => {
+          window.__woofUiBridge?.setSelectedDate?.('${previousDate}');
           return window.__woofAppStateBridge?.getAppState?.()?.selectedDate || '';
         })()
       `);
@@ -934,9 +933,8 @@ async function run() {
         'Date switch did not reset to empty day.'
       );
       const switchedBack = await client.evaluate(`
-        (async () => {
-          const actionModule = await import('./js/state/app-actions.js');
-          actionModule.dispatchAppAction('SET_SELECTED_DATE', { date: '${today}' });
+        (() => {
+          window.__woofUiBridge?.setSelectedDate?.('${today}');
           return window.__woofAppStateBridge?.getAppState?.()?.selectedDate || '';
         })()
       `);

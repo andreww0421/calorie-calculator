@@ -1,7 +1,15 @@
 import { getLocaleTranslations } from '../../js/locales/index.js';
 import { createDashboardNutritionFocusViewModel, createDailyNutritionDetailViewModel } from '../../js/state/nutrition-detail-selectors.js';
-import { getAppState } from '../../js/state/app-state.js';
 import { buildNutritionFocusContent, getDisplayDateLabel, getExtraUiText } from '../../js/ui/locale-ui.js';
+
+const EMPTY_DETAIL_STATE = Object.freeze({
+    selectedDate: '',
+    curLang: 'zh-TW',
+    targetCalories: 0,
+    currentGoalType: 'lose',
+    foodItems: Object.freeze([]),
+    profile: null
+});
 
 const DAILY_DETAIL_COPY = Object.freeze({
     en: Object.freeze({
@@ -270,7 +278,7 @@ function buildDailyDetailSurfaceViewModel(resolvedState) {
     };
 }
 
-function buildItemDetailSurfaceViewModel(item = {}, resolvedState = getAppState()) {
+function buildItemDetailSurfaceViewModel(item = {}, resolvedState = EMPTY_DETAIL_STATE) {
     const lang = resolvedState.curLang || 'en';
     const t = getLocaleTranslations(lang);
     const copy = getCopy(ITEM_DETAIL_COPY, lang);
@@ -352,8 +360,8 @@ function buildItemDetailSurfaceViewModel(item = {}, resolvedState = getAppState(
     };
 }
 
-export function buildDetailSurfaceViewModel(state = getAppState(), request = { kind: 'daily-summary' }) {
-    const resolvedState = state || getAppState();
+export function buildDetailSurfaceViewModel(state = EMPTY_DETAIL_STATE, request = { kind: 'daily-summary' }) {
+    const resolvedState = state || EMPTY_DETAIL_STATE;
     const kind = request?.kind || 'daily-summary';
 
     if (kind === 'item-detail') {

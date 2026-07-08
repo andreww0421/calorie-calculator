@@ -1,5 +1,4 @@
 import { getLocaleTranslations } from '../../../js/locales/index.js';
-import { createDailyViewModel } from '../../../js/state/app-state.js';
 import { useAppState } from '../hooks/useAppState.js';
 import { BookIcon } from '../../home/SectionIcons.jsx';
 import { getHistoryUiCopy } from '../../../js/locales/history-ui-copy.js';
@@ -47,13 +46,24 @@ function buildHistoryItems(items = [], untitledMeal = 'Untitled meal') {
         .sort((left, right) => MEAL_ORDER.indexOf(left.type) - MEAL_ORDER.indexOf(right.type) || left.index - right.index);
 }
 
+function summarizeHistoryNutrition(items = []) {
+    return items.reduce((totals, item) => {
+        const nutri = item?.nutri || {};
+        totals.cal += Number(nutri.calories) || 0;
+        totals.pro += Number(nutri.protein) || 0;
+        totals.carb += Number(nutri.carbohydrate) || 0;
+        totals.fat += Number(nutri.fat) || 0;
+        return totals;
+    }, { cal: 0, pro: 0, carb: 0, fat: 0 });
+}
+
 export default function MainHistoryIsland() {
     const state = useAppState();
-    const viewModel = createDailyViewModel(state);
     const translations = getLocaleTranslations(state.curLang);
     const copy = getHistoryUiCopy(state.curLang);
-    const totalCalories = Number(viewModel.totals.cal) || 0;
-    const targetCalories = Number(viewModel.targetCalories) || 0;
+    const totals = summarizeHistoryNutrition(state.foodItems);
+    const totalCalories = Number(totals.cal) || 0;
+    const targetCalories = Number(state.targetCalories) || 0;
     const progress = targetCalories > 0 ? Math.min(Math.round((totalCalories / targetCalories) * 100), 100) : 0;
     const items = buildHistoryItems(state.foodItems, copy.untitledMeal);
 
@@ -73,15 +83,15 @@ export default function MainHistoryIsland() {
                     <div className="history-summary-card__macro-row">
                         <div className="history-summary-card__macro">
                             <span className="history-summary-card__macro-label">{copy.protein}</span>
-                            <span>{`${formatOneDecimal(viewModel.totals.pro)}g`}</span>
+                            <span>{`${formatOneDecimal(totals.pro)}g`}</span>
                         </div>
                         <div className="history-summary-card__macro">
                             <span className="history-summary-card__macro-label">{copy.carbs}</span>
-                            <span>{`${formatOneDecimal(viewModel.totals.carb)}g`}</span>
+                            <span>{`${formatOneDecimal(totals.carb)}g`}</span>
                         </div>
                         <div className="history-summary-card__macro">
                             <span className="history-summary-card__macro-label">{copy.fats}</span>
-                            <span>{`${formatOneDecimal(viewModel.totals.fat)}g`}</span>
+                            <span>{`${formatOneDecimal(totals.fat)}g`}</span>
                         </div>
                     </div>
                 </div>

@@ -12,8 +12,17 @@ import {
     startAnalysis,
     syncAnalysisInputState
 } from './controllers/analysis-controller.js';
+import { saveCurrentWeight } from './controllers/profile-controller.js';
 import { dispatchAppAction } from './state/app-actions.js';
 import { getAppState, subscribeAppState } from './state/app-state.js';
+import { createDashboardChartsViewModel } from './state/app-selectors.js';
+import { createPetViewModel } from './state/pet-selectors.js';
+import { buildDashboardSummaryMetrics } from './ui/dashboard-summary-ui.js';
+import {
+    ensureDashboardChartsReady,
+    previewWeightChart,
+    setDashboardChartRange
+} from './ui/dashboard-charts-ui.js';
 import {
     addRecordToFav,
     addManualFood,
@@ -85,6 +94,24 @@ if (typeof window !== 'undefined') {
         syncManualFoodPresetUI,
         quickAddSelectedFoodPreset,
         applySelectedFoodPreset
+    };
+    window.__woofStatsBridge = {
+        getDashboardViewModel(state, options = {}) {
+            const resolvedState = state || getAppState();
+            const chartData = createDashboardChartsViewModel(resolvedState, options);
+            const pet = createPetViewModel(resolvedState);
+            const metrics = buildDashboardSummaryMetrics(
+                chartData,
+                Number(resolvedState.targetCalories) || 0,
+                pet
+            );
+
+            return { chartData, pet, metrics };
+        },
+        setDashboardChartRange,
+        ensureDashboardChartsReady,
+        previewWeightChart,
+        saveCurrentWeight
     };
     window.__woofUiBridge = {
         openHomeLogModal() {
