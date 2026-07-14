@@ -1465,51 +1465,208 @@
 /* ==================== Pet Stage ==================== */
 
 .woof-pet__stage {
+    --pet-stage-accent: #df7b3f;
+    --pet-stage-accent-2: #f2b24b;
+    --pet-stage-soft: #fff0dc;
+    --pet-stage-ink: #25170f;
     display: grid;
-    gap: 14px;
-    padding: 22px;
-    border-radius: 34px;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 36px;
     background:
-        radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.66) 34%, transparent 72%),
-        radial-gradient(circle at 82% 18%, rgba(255, 154, 107, 0.18), transparent 24%),
-        radial-gradient(circle at 18% 82%, rgba(122, 111, 224, 0.14), transparent 28%),
-        linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 244, 236, 0.98) 52%, rgba(244, 239, 255, 0.96) 100%);
-    border: 1px solid rgba(31, 33, 64, 0.08);
-    box-shadow: 0 30px 60px rgba(31, 33, 64, 0.1);
+        radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.92), transparent 28%),
+        radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--pet-stage-accent-2) 24%, transparent), transparent 30%),
+        radial-gradient(circle at 12% 88%, rgba(101, 163, 108, 0.14), transparent 32%),
+        linear-gradient(145deg, #fffaf1 0%, #f7eddc 48%, #fff6e6 100%);
+    border: 1px solid rgba(95, 61, 33, 0.12);
+    box-shadow: 0 26px 58px rgba(95, 61, 33, 0.13);
+    color: var(--pet-stage-ink);
+}
+
+.woof-pet__stage--hungry,
+.woof-pet__stage--starving {
+    --pet-stage-accent: #c86a3a;
+    --pet-stage-accent-2: #eda24f;
+    --pet-stage-soft: #fff1df;
+}
+
+.woof-pet__stage--low,
+.woof-pet__stage--mid {
+    --pet-stage-accent: #3d8f68;
+    --pet-stage-accent-2: #e1b84a;
+    --pet-stage-soft: #eff8e8;
+}
+
+.woof-pet__stage--balanced,
+.woof-pet__stage--excited,
+.woof-pet__stage--celebrating {
+    --pet-stage-accent: #28785a;
+    --pet-stage-accent-2: #f0b33f;
+    --pet-stage-soft: #ebf8df;
+}
+
+.woof-pet__stage--full,
+.woof-pet__stage--sleeping {
+    --pet-stage-accent: #9a6a34;
+    --pet-stage-accent-2: #dba84e;
+    --pet-stage-soft: #fff4de;
+}
+
+.woof-pet__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.woof-pet__kicker {
+    color: var(--pet-stage-accent);
+    font-size: 0.76rem;
+    font-weight: 900;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.woof-pet__status-title {
+    margin-top: 4px;
+    font-family: var(--woof-home-display);
+    color: var(--pet-stage-ink);
+    font-size: clamp(1.45rem, 5vw, 2.25rem);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+}
+
+.woof-pet__status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: max-content;
+    padding: 9px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(95, 61, 33, 0.12);
+    color: var(--pet-stage-accent);
+    font-size: 0.88rem;
+    font-weight: 900;
+    box-shadow: 0 12px 26px rgba(95, 61, 33, 0.08);
+}
+
+.woof-pet__status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--pet-stage-accent);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--pet-stage-accent) 16%, transparent);
 }
 
 .woof-pet__scene {
     position: relative;
-    min-height: 260px;
+    min-height: 248px;
     display: grid;
     place-items: center;
-    padding: 18px;
-    border-radius: 28px;
+    padding: 24px 18px 18px;
+    border-radius: 30px;
     overflow: hidden;
     background:
-        radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.66) 34%, transparent 72%),
-        radial-gradient(circle at 82% 18%, rgba(255, 154, 107, 0.18), transparent 24%),
-        radial-gradient(circle at 18% 82%, rgba(122, 111, 224, 0.14), transparent 28%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(244, 239, 255, 0.68));
-    border: 1px solid rgba(31, 33, 64, 0.08);
+        linear-gradient(180deg, rgba(255, 251, 240, 0.94), rgba(255, 245, 226, 0.78) 58%, rgba(234, 220, 188, 0.64) 58.5%, rgba(246, 235, 211, 0.84)),
+        radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.92), transparent 26%),
+        radial-gradient(circle at 78% 22%, color-mix(in srgb, var(--pet-stage-accent-2) 22%, transparent), transparent 30%);
+    border: 1px solid rgba(95, 61, 33, 0.1);
+    box-shadow: inset 0 -24px 50px rgba(95, 61, 33, 0.08);
+}
+
+.woof-pet__sun {
+    position: absolute;
+    top: 22px;
+    right: 28px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff8cf 0 32%, var(--pet-stage-accent-2) 34% 62%, transparent 64%);
+    opacity: 0.8;
+}
+
+.woof-pet__backdrop-line {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(95, 61, 33, 0.16), transparent);
+}
+
+.woof-pet__backdrop-line--one {
+    top: 38%;
+}
+
+.woof-pet__backdrop-line--two {
+    top: 58%;
+}
+
+.woof-pet__food-bowl {
+    position: absolute;
+    right: 28px;
+    bottom: 36px;
+    width: 66px;
+    height: 34px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+    padding-top: 8px;
+    border-radius: 12px 12px 24px 24px;
+    background: linear-gradient(180deg, #fff8ef, #dc8752 50%, #ab5e37 100%);
+    border: 1px solid rgba(95, 61, 33, 0.18);
+    box-shadow: 0 16px 24px rgba(95, 61, 33, 0.14);
+}
+
+.woof-pet__food-bowl::after {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: -5px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(95, 61, 33, 0.16);
+    filter: blur(4px);
+}
+
+.woof-pet__food-bowl-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #6f3b22;
 }
 
 .woof-pet__orb {
     position: absolute;
-    inset: auto 16% 10px;
-    height: 38px;
+    left: 20%;
+    right: 20%;
+    bottom: 24px;
+    height: 34px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(31, 33, 64, 0.18), rgba(31, 33, 64, 0.04) 72%, transparent 74%);
-    filter: blur(10px);
+    background: radial-gradient(circle, rgba(95, 61, 33, 0.22), rgba(95, 61, 33, 0.05) 72%, transparent 74%);
+    filter: blur(9px);
 }
 
 .woof-pet__character {
     position: relative;
-    width: 160px;
+    z-index: 2;
+    width: min(42vw, 176px);
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, filter 0.2s ease;
+    animation: petIdleBreath 3.6s ease-in-out infinite;
+    filter: drop-shadow(0 18px 16px rgba(95, 61, 33, 0.16));
+}
+
+.woof-pet__character:hover,
+.woof-pet__character:focus-visible {
+    outline: none;
+    transform: translateY(-4px) scale(1.02);
+    filter: drop-shadow(0 22px 18px rgba(95, 61, 33, 0.18));
 }
 
 .woof-pet__character:active {
@@ -1520,6 +1677,11 @@
     display: block;
     width: 100%;
     object-fit: contain;
+}
+
+@keyframes petIdleBreath {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-5px) scale(1.025); }
 }
 
 .woof-pet__sprite--base {
@@ -1759,6 +1921,71 @@
     100% { opacity: 0; transform: translateY(-50px) scale(0.4); }
 }
 
+/* --- Nutrition-linked care panel --- */
+
+.woof-pet__care-panel {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.woof-pet__care-row {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding: 13px;
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at 80% 10%, color-mix(in srgb, var(--pet-stage-accent-2) 18%, transparent), transparent 34%),
+        rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(95, 61, 33, 0.1);
+    box-shadow: 0 12px 26px rgba(95, 61, 33, 0.08);
+}
+
+.woof-pet__care-label {
+    color: rgba(37, 23, 15, 0.62);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.woof-pet__care-value {
+    color: var(--pet-stage-ink);
+    font-family: var(--woof-home-display);
+    font-size: 1.08rem;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+}
+
+.woof-pet__care-track {
+    position: relative;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(95, 61, 33, 0.1);
+}
+
+.woof-pet__care-track span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    min-width: 8px;
+    max-width: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--pet-stage-accent), var(--pet-stage-accent-2));
+    box-shadow: 0 0 16px color-mix(in srgb, var(--pet-stage-accent) 30%, transparent);
+    transition: width 0.45s ease;
+}
+
+.woof-pet__care-track--protein span {
+    background: linear-gradient(90deg, #347a5b, #8cc46f);
+}
+
+.woof-pet__care-track--meal span {
+    background: linear-gradient(90deg, #cc7a39, #f0bd4e);
+}
+
 /* --- Progress stats --- */
 
 .woof-pet__stats {
@@ -1857,6 +2084,45 @@
     font-family: var(--woof-home-display);
 }
 
+.woof-pet__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 2px 0;
+}
+
+.woof-pet__tap-hint {
+    min-width: 0;
+    color: rgba(37, 23, 15, 0.66);
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.woof-pet__feed-button {
+    flex-shrink: 0;
+    min-height: 42px;
+    padding: 0 15px;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--pet-stage-accent), var(--pet-stage-accent-2));
+    color: #fffaf2;
+    font-size: 0.86rem;
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    box-shadow: 0 16px 28px color-mix(in srgb, var(--pet-stage-accent) 22%, transparent);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.woof-pet__feed-button:hover,
+.woof-pet__feed-button:focus-visible {
+    outline: none;
+    transform: translateY(-2px);
+    box-shadow: 0 20px 34px color-mix(in srgb, var(--pet-stage-accent) 28%, transparent);
+}
+
 /* ==================== Responsive ==================== */
 
 @media (max-width: 760px) {
@@ -1877,6 +2143,15 @@
     }
 
     .woof-home__motivation-footer {
+        display: grid;
+        justify-items: start;
+    }
+
+    .woof-pet__care-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .woof-pet__footer {
         display: grid;
         justify-items: start;
     }
@@ -1924,7 +2199,15 @@
     }
 
     .woof-pet__character {
-        width: 130px;
+        width: 132px;
+    }
+
+    .woof-pet__header {
+        display: grid;
+    }
+
+    .woof-pet__status-pill {
+        justify-self: start;
     }
 
     .woof-pet__meters {

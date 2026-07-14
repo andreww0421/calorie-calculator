@@ -63,7 +63,22 @@ export default function MainStatsIsland() {
     const t = getLocaleTranslations(state.curLang);
     const copy = getStatsUiCopy(state.curLang);
     const statsBridge = getStatsBridge();
-    const { metrics = EMPTY_STATS_VIEW_MODEL.metrics } = statsBridge.getDashboardViewModel(state, { range, weightDays: 30 }) || EMPTY_STATS_VIEW_MODEL;
+    const statsViewModel = React.useMemo(
+        () => statsBridge.getDashboardViewModel(state, { range, weightDays: 30 }) || EMPTY_STATS_VIEW_MODEL,
+        [
+            statsBridge,
+            range,
+            state.selectedDate,
+            state.curLang,
+            state.targetCalories,
+            state.currentMealMode,
+            state.currentGoalType,
+            state.loggedWeight,
+            state.foodItems,
+            state.profile
+        ]
+    );
+    const { metrics = EMPTY_STATS_VIEW_MODEL.metrics } = statsViewModel;
     const activeRangeLabel = getRangeLabel(range, copy);
     const weightMeta = weightDraft ? `${weightDraft} kg` : '--';
 

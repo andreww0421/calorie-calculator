@@ -86,6 +86,20 @@ test('dispatchAppAction updates language, date, foods, favorites, AI draft, and 
     assert.equal(state.favoriteFoods.length, 1);
     assert.equal(state.favoriteFoods[0].name, 'Chicken Bowl');
 
+    const favoriteSnapshot = state;
+    appActions.dispatchAppAction('ADD_FAVORITE', {
+        favorite: {
+            name: 'Chicken Bowl',
+            nutri: {
+                calories: 520,
+                protein: 40
+            }
+        }
+    });
+    state = appState.getAppState();
+    assert.strictEqual(state, favoriteSnapshot);
+    assert.equal(state.favoriteFoods.length, 1);
+
     appActions.dispatchAppAction('SET_TEMP_AI_RESULT', {
         result: {
             name: 'AI Shake',

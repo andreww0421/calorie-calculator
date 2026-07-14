@@ -35,9 +35,57 @@ const HOME_SURFACE_COPY = Object.freeze({
     })
 });
 
+const PET_STATUS_LABELS = Object.freeze({
+    en: Object.freeze({
+        hungry: 'Waiting for the first bite',
+        low: 'Warming up',
+        mid: 'Sniffing the next meal',
+        balanced: 'Happy and balanced',
+        full: 'Full and resting',
+        sleeping: 'Sleepy companion',
+        lonely: 'Missed you',
+        starving: 'Very hungry',
+        excited: 'Daily quests complete',
+        celebrating: 'Level-up mood',
+        default: 'Companion mode'
+    }),
+    'zh-TW': Object.freeze({
+        hungry: '等第一口飯飯',
+        low: '開始有精神',
+        mid: '正在尋找下一餐',
+        balanced: '開心又穩定',
+        full: '吃飽休息中',
+        sleeping: '睏睏陪伴中',
+        lonely: '好想你',
+        starving: '肚子很餓',
+        excited: '今日任務完成',
+        celebrating: '升級開心中',
+        default: '陪伴模式'
+    }),
+    'zh-CN': Object.freeze({
+        hungry: '等第一口饭饭',
+        low: '开始有精神',
+        mid: '正在寻找下一餐',
+        balanced: '开心又稳定',
+        full: '吃饱休息中',
+        sleeping: '困困陪伴中',
+        lonely: '好想你',
+        starving: '肚子很饿',
+        excited: '今日任务完成',
+        celebrating: '升级开心中',
+        default: '陪伴模式'
+    })
+});
+
 function toSafeText(value, fallback = '') {
     if (value === null || value === undefined) return fallback;
     return String(value);
+}
+
+function getPetStatusLabels(lang = 'en') {
+    return PET_STATUS_LABELS[lang]
+        || PET_STATUS_LABELS[String(lang || 'en').split('-')[0]]
+        || PET_STATUS_LABELS.en;
 }
 
 function roundDisplayValue(value, digits = 1) {
@@ -130,16 +178,36 @@ export function buildHomeIslandViewModel(state) {
             pet: {
                 ...companion.pet,
                 resolvedMessage: toSafeText(t?.[companion.pet?.messageKey], '') || toSafeText(companion.pet?.messageKey, ''),
-                equipped: companion.pet?.equipped || {}
+                equipped: companion.pet?.equipped || {},
+                nutrition: {
+                    calorieProgressPercent: Number(companion.calorieProgressPercent) || 0,
+                    proteinPercent: companion.proteinTarget > 0
+                        ? Math.min(Math.round((companion.proteinCurrent / companion.proteinTarget) * 100), 199)
+                        : 0,
+                    proteinCurrent: companion.proteinCurrent,
+                    proteinTarget: companion.proteinTarget,
+                    loggedMeals: Number(companion.mealCoverage?.loggedMeals) || 0,
+                    plannedMeals: Number(companion.mealCoverage?.plannedMeals) || 0,
+                    nextMealType: getMealTypeLabel(companion.mealCoverage?.nextMealType, companion.lang)
+                }
             }
         },
         petStageCopy: {
             pet: islandCopy.pet || 'Companion',
+            kicker: toSafeText(islandCopy.petStage?.kicker, islandCopy.pet || 'Companion'),
             bondLabel: toSafeText(islandCopy.petStage?.bondLabel, t?.petBondLabel || 'Bond'),
             energyLabel: toSafeText(islandCopy.petStage?.energyLabel, t?.petEnergyLabel || 'Energy'),
             streakLabel: toSafeText(islandCopy.petStage?.streakLabel, t?.petStreakLabel || 'Streak'),
             dayUnit: toSafeText(islandCopy.petStage?.dayUnit, t?.petDayUnit || 'd'),
-            petTapLabel: toSafeText(islandCopy.petStage?.tapLabel, t?.petTapLabel || 'Interact with your companion')
+            petTapLabel: toSafeText(islandCopy.petStage?.tapLabel, t?.petTapLabel || 'Interact with your companion'),
+            tapHint: toSafeText(islandCopy.petStage?.tapHint, ''),
+            nextMealHint: toSafeText(islandCopy.petStage?.nextMealHint, ''),
+            feedAction: toSafeText(islandCopy.petStage?.feedAction, homeCopy.hero?.actions?.log || 'Log meal'),
+            carePanelLabel: toSafeText(islandCopy.petStage?.carePanelLabel, 'Nutrition status'),
+            caloriesLabel: toSafeText(islandCopy.metrics?.calories, 'Calories'),
+            proteinLabel: toSafeText(islandCopy.metrics?.protein, 'Protein'),
+            mealsLabel: toSafeText(islandCopy.metrics?.meals, 'Meals'),
+            statusLabels: getPetStatusLabels(companion.lang)
         },
         resolveDialogText: (key) => toSafeText(t?.[key], ''),
         copy: {

@@ -85,11 +85,16 @@ const en = {
         protein: 'Protein'
     },
     petStage: {
+        kicker: 'Interactive companion',
         bondLabel: 'Bond',
         energyLabel: 'Energy',
         streakLabel: 'Streak',
         dayUnit: 'd',
-        tapLabel: 'Interact with your companion'
+        tapLabel: 'Interact with your companion',
+        tapHint: 'Tap the dog for a mood check.',
+        nextMealHint: 'Next: {meal}',
+        feedAction: 'Feed / add meal',
+        carePanelLabel: 'Companion nutrition status'
     },
     formatDayCount: (value) => `${value}d`,
     formatMealCoverage: (loggedMeals, plannedMeals) => `${loggedMeals}/${plannedMeals}`,
@@ -180,11 +185,16 @@ const zhTW = mergeDeep(en, {
         protein: '蛋白質'
     },
     petStage: {
+        kicker: '互動汪卡',
         bondLabel: '羈絆',
         energyLabel: '能量',
         streakLabel: '連續',
         dayUnit: '天',
-        tapLabel: '和夥伴互動'
+        tapLabel: '和夥伴互動',
+        tapHint: '點一下狗狗，看看牠現在的心情。',
+        nextMealHint: '下一餐：{meal}',
+        feedAction: '餵食 / 新增餐點',
+        carePanelLabel: '狗狗營養狀態'
     },
     quickActions: '快速操作',
     today: '今天',
@@ -272,11 +282,16 @@ const zhCN = mergeDeep(en, {
         protein: '蛋白质'
     },
     petStage: {
+        kicker: '互动汪卡',
         bondLabel: '羁绊',
         energyLabel: '能量',
         streakLabel: '连续',
         dayUnit: '天',
-        tapLabel: '和伙伴互动'
+        tapLabel: '和伙伴互动',
+        tapHint: '点一下狗狗，看看它现在的心情。',
+        nextMealHint: '下一餐：{meal}',
+        feedAction: '喂食 / 新增餐点',
+        carePanelLabel: '狗狗营养状态'
     },
     quickActions: '快速操作',
     today: '今天',

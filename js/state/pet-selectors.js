@@ -32,9 +32,14 @@ export function createPetViewModel(state = getAppState()) {
         totals: totals.totals,
         coach,
         calorieHistory,
+        key: pet.key,
         statusKey: pet.key,
         frameKey: pet.frameKey,
         messageKey: pet.messageKey,
+        mood: pet.mood,
+        baseKey: pet.baseKey,
+        baseMood: pet.baseMood,
+        ratio: pet.ratio,
         progress: pet.progress,
         interactionMessageKeys: PET_DEFAULT_INTERACTION_KEYS
     };
