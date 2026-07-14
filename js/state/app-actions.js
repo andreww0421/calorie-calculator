@@ -177,13 +177,20 @@ export function dispatchAppAction(type, payload = {}) {
 
     case 'ADD_FAVORITE': {
         const favorite = cloneFavorite(payload.favorite);
+        const favoriteName = favorite.name.trim();
+        const alreadyExists = favoriteName && state.favoriteFoods.some(
+            (entry) => entry.name.trim() === favoriteName
+        );
+        if (alreadyExists) {
+            return state;
+        }
         const nextFavorites = [...state.favoriteFoods, favorite];
         saveFavoriteFoods(nextFavorites);
         return refreshAppState({
             favoriteFoods: nextFavorites
         }, {
             reason: 'favorite:add',
-            favoriteName: favorite.name
+            favoriteName
         });
     }
 

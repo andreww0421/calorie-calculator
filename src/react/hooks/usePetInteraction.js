@@ -18,8 +18,8 @@ export function usePetInteraction({ mood = 'hungry', onBondChange } = {}) {
         setInteraction(null);
     }, []);
 
-    const triggerInteraction = useCallback((type, extra = {}) => {
-        if (cooldownRef.current) return;
+    const triggerInteraction = useCallback((type, extra = {}, options = {}) => {
+        if (cooldownRef.current && !options.ignoreCooldown) return;
 
         const response = getInteractionResponse({ type, mood, ...extra });
         setInteraction({ type, ...response, timestamp: Date.now() });
@@ -60,21 +60,28 @@ export function usePetInteraction({ mood = 'hungry', onBondChange } = {}) {
             return;
         }
 
-        // Tap — track combo
+        // Tap responds immediately; quick repeated taps can still upgrade into a combo.
         comboRef.current.count += 1;
         clearTimeout(comboRef.current.timer);
 
         if (comboRef.current.count >= 3) {
             const comboCount = comboRef.current.count;
             comboRef.current.count = 0;
-            triggerInteraction(PET_INTERACTION_TYPES.COMBO, { comboCount });
+            triggerInteraction(PET_INTERACTION_TYPES.COMBO, { comboCount }, { ignoreCooldown: true });
             return;
         }
 
         comboRef.current.timer = setTimeout(() => {
             comboRef.current.count = 0;
-            triggerInteraction(PET_INTERACTION_TYPES.TAP);
         }, COMBO_WINDOW_MS);
+
+        triggerInteraction(PET_INTERACTION_TYPES.TAP, {}, { ignoreCooldown: true });
+    }, [triggerInteraction]);
+
+    const handleKeyDown = useCallback((event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        triggerInteraction(PET_INTERACTION_TYPES.TAP, {}, { ignoreCooldown: true });
     }, [triggerInteraction]);
 
     const handlePointerCancel = useCallback(() => {
@@ -89,7 +96,8 @@ export function usePetInteraction({ mood = 'hungry', onBondChange } = {}) {
             onPointerDown: handlePointerDown,
             onPointerUp: handlePointerUp,
             onPointerCancel: handlePointerCancel,
-            onPointerLeave: handlePointerCancel
+            onPointerLeave: handlePointerCancel,
+            onKeyDown: handleKeyDown
         }
     };
 }

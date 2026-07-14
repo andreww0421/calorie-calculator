@@ -131,6 +131,44 @@ test('app state snapshots clone nutrition data and preserve backward-compatible 
     assert.equal(state.profile.diningOutFrequency, 'often');
 });
 
+test('analysis-only updates preserve data references used by expensive React selectors', async () => {
+    const { initializeAppState, refreshAppState, getAppState } = await loadAppStateModule();
+    initializeAppState({
+        selectedDate: '2026-03-29',
+        foodItems: [{
+            type: 'breakfast',
+            name: 'Oats',
+            nutri: { calories: 320, protein: 18 }
+        }],
+        favoriteFoods: [{
+            name: 'Chicken Bowl',
+            nutri: { calories: 520, protein: 40 }
+        }],
+        profile: {
+            age: '31',
+            height: '165',
+            weight: '61.2'
+        }
+    });
+
+    const previous = getAppState();
+    refreshAppState({
+        analysisFlow: {
+            ...previous.analysisFlow,
+            status: 'cooldown',
+            cooldownRemaining: 14
+        }
+    }, { reason: 'analysis:cooldown' });
+    const next = getAppState();
+
+    assert.notStrictEqual(next, previous);
+    assert.notStrictEqual(next.analysisFlow, previous.analysisFlow);
+    assert.strictEqual(next.foodItems, previous.foodItems);
+    assert.strictEqual(next.favoriteFoods, previous.favoriteFoods);
+    assert.strictEqual(next.profile, previous.profile);
+    assert.strictEqual(next.tempAIResult, previous.tempAIResult);
+});
+
 test('createDailyViewModel anchors calorie history to the selected date', async () => {
     const { createDailyViewModel } = await loadAppStateModule();
     const today = getLocalDateString();

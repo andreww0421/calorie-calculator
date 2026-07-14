@@ -1,66 +1,30 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
+import {
+  getAppState,
+  subscribeAppState
+} from '../../../js/state/app-state.js';
 
-const FALLBACK_APP_STATE = Object.freeze({
-  selectedDate: '',
-  curLang: 'zh-TW',
-  curTheme: 'light',
-  targetCalories: 0,
-  currentMealMode: '4',
-  currentGoalType: 'lose',
-  loggedWeight: '',
-  foodItems: Object.freeze([]),
-  favoriteFoods: Object.freeze([]),
-  tempAIResult: null,
-  tempAIResultSaved: false,
-  analysisFlow: Object.freeze({
-    status: 'idle',
-    source: 'none',
-    cooldownRemaining: 0,
-    quotaExceeded: false,
-    isSoftError: false,
-    lastError: '',
-    verificationUnavailable: false,
-    verificationMessage: ''
-  }),
-  profile: null
-});
-
-const FALLBACK_BRIDGE = Object.freeze({
-  getAppState() {
-    return FALLBACK_APP_STATE;
-  },
-  subscribeAppState() {
-    return () => {};
-  }
+const LOCAL_APP_STATE_BRIDGE = Object.freeze({
+  getAppState,
+  subscribeAppState
 });
 
 function getBridge() {
-  return globalThis.window?.__woofAppStateBridge || FALLBACK_BRIDGE;
+  const bridge = globalThis.window?.__woofAppStateBridge;
+  if (
+    typeof bridge?.getAppState === 'function'
+    && typeof bridge?.subscribeAppState === 'function'
+  ) {
+    return bridge;
+  }
+  return LOCAL_APP_STATE_BRIDGE;
 }
 
 export function useAppState() {
-  const [bridgeReady, setBridgeReady] = useState(() => Boolean(globalThis.window?.__woofAppStateBridge));
-
-  useEffect(() => {
-    if (bridgeReady || typeof window === 'undefined') return undefined;
-
-    let frameId = 0;
-    const waitForBridge = () => {
-      if (window.__woofAppStateBridge) {
-        setBridgeReady(true);
-        return;
-      }
-      frameId = window.requestAnimationFrame(waitForBridge);
-    };
-
-    frameId = window.requestAnimationFrame(waitForBridge);
-    return () => window.cancelAnimationFrame(frameId);
-  }, [bridgeReady]);
-
   const bridge = getBridge();
   return useSyncExternalStore(
     bridge.subscribeAppState,
     bridge.getAppState,
-    bridge.getAppState
+    getAppState
   );
 }

@@ -117,11 +117,9 @@ function buildInitialSource(overrides = {}) {
 
 function normalizeStateSource(source) {
     const selectedDate = String(source?.selectedDate || getLocalDateString());
-    const profile = cloneProfile(source?.profile) || cloneProfile(loadProfileRecord());
+    const profile = cloneProfile(source?.profile);
     const currentMealMode = String(source?.currentMealMode || profile?.mealMode || '4');
     const currentGoalType = String(source?.currentGoalType || profile?.goalType || 'lose');
-    const usage = loadDailyUsage();
-    const quotaExceeded = usage.count >= DAILY_LIMIT;
 
     return {
         selectedDate,
@@ -130,24 +128,53 @@ function normalizeStateSource(source) {
         targetCalories: normalizeNumber(source?.targetCalories, 2000),
         currentMealMode,
         currentGoalType,
-        loggedWeight: source?.loggedWeight ?? loadWeight(selectedDate),
+        loggedWeight: source?.loggedWeight ?? null,
         foodItems: cloneFoodEntries(source?.foodItems),
         favoriteFoods: cloneFoodEntries(source?.favoriteFoods),
         tempAIResult: cloneAiResult(source?.tempAIResult),
         tempAIResultSaved: Boolean(source?.tempAIResultSaved),
-        analysisFlow: cloneAnalysisFlow(source?.analysisFlow, quotaExceeded),
+        analysisFlow: cloneAnalysisFlow(source?.analysisFlow),
         profile
     };
 }
 
-function buildSnapshot(source) {
+const REUSABLE_SNAPSHOT_FIELDS = Object.freeze([
+    'foodItems',
+    'favoriteFoods',
+    'tempAIResult',
+    'profile',
+    'analysisFlow'
+]);
+
+function cloneSnapshotField(field, source) {
+    switch (field) {
+    case 'foodItems':
+    case 'favoriteFoods':
+        return cloneFoodEntries(source[field]);
+    case 'tempAIResult':
+        return cloneAiResult(source.tempAIResult);
+    case 'profile':
+        return cloneProfile(source.profile);
+    case 'analysisFlow':
+        return cloneAnalysisFlow(source.analysisFlow);
+    default:
+        return source[field];
+    }
+}
+
+function buildSnapshot(source, previousState = null, changedFields = null) {
+    const nestedFields = Object.fromEntries(
+        REUSABLE_SNAPSHOT_FIELDS.map((field) => [
+            field,
+            previousState && changedFields && !changedFields.has(field)
+                ? previousState[field]
+                : cloneSnapshotField(field, source)
+        ])
+    );
+
     return Object.freeze({
         ...source,
-        foodItems: cloneFoodEntries(source.foodItems),
-        favoriteFoods: cloneFoodEntries(source.favoriteFoods),
-        tempAIResult: cloneAiResult(source.tempAIResult),
-        profile: cloneProfile(source.profile),
-        analysisFlow: cloneAnalysisFlow(source.analysisFlow),
+        ...nestedFields,
         updatedAt: Date.now()
     });
 }
@@ -169,6 +196,7 @@ export function initializeAppState(overrides = {}, meta = {}) {
 
 export function refreshAppState(overrides = {}, meta = {}) {
     const previousState = appState;
+    const changedFields = new Set(Object.keys(overrides));
     const nextSource = {
         ...appStateSource,
         ...overrides
@@ -179,14 +207,16 @@ export function refreshAppState(overrides = {}, meta = {}) {
         nextSource.selectedDate = selectedDate;
         if (overrides.foodItems === undefined) {
             nextSource.foodItems = loadFoodLog(selectedDate);
+            changedFields.add('foodItems');
         }
         if (overrides.loggedWeight === undefined) {
             nextSource.loggedWeight = loadWeight(selectedDate);
+            changedFields.add('loggedWeight');
         }
     }
 
     appStateSource = normalizeStateSource(nextSource);
-    appState = buildSnapshot(appStateSource);
+    appState = buildSnapshot(appStateSource, previousState, changedFields);
     emitState(previousState, meta);
     return appState;
 }
